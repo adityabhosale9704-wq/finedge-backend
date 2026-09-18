@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Employees</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f4f5f7;
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 32px 16px;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+  }
+
+  h1 {
+    margin: 0 0 20px;
+    font-size: 22px;
+    color: #1a1a1a;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+  }
+
+  th {
+    background: #f9fafb;
+    color: #555;
+    font-weight: 600;
+  }
+
+  tr:hover td {
+    background: #fafafa;
+  }
+
+  .status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    text-transform: capitalize;
+  }
+
+  .status-active {
+    background: #e6f4ea;
+    color: #1e7e34;
+  }
+
+  .status-inactive {
+    background: #fdecea;
+    color: #b71c1c;
+  }
+
+  .status-other {
+    background: #eef1f4;
+    color: #555;
+  }
+
+  .message {
+    padding: 24px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Employees</h1>
+    <div id="content">
+      <div class="message">Loading employees...</div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadEmployees();
+    }
+
+    async function loadEmployees() {
+      const content = document.getElementById('content');
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/v1/employees/', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load employees.');
+        }
+
+        const employees = await response.json();
+        renderEmployees(employees);
+      } catch (err) {
+        window.location.href = 'login.html';
+      }
+    }
+
+    function renderEmployees(employees) {
+      const content = document.getElementById('content');
+
+      if (!employees || employees.length === 0) {
+        content.innerHTML = '<div class="message">No employees found.</div>';
+        return;
+      }
+
+      const rows = employees.map(function (emp) {
+        const statusClass = emp.status === 'active'
+          ? 'status-active'
+          : (emp.status === 'inactive' ? 'status-inactive' : 'status-other');
+
+        return '<tr>' +
+          '<td>' + escapeHtml(emp.name) + '</td>' +
+          '<td>' + escapeHtml(emp.department) + '</td>' +
+          '<td>' + escapeHtml(emp.designation) + '</td>' +
+          '<td>' + escapeHtml(emp.branch) + '</td>' +
+          '<td><span class="status ' + statusClass + '">' + escapeHtml(emp.status) + '</span></td>' +
+          '</tr>';
+      }).join('');
+
+      content.innerHTML =
+        '<table>' +
+        '<thead><tr><th>Name</th><th>Department</th><th>Designation</th><th>Branch</th><th>Status</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>';
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+  </script>
+
+</body>
+</html>
