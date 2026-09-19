@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'employees',
     'positions',
     'recruitment',
+    'tasks',
 ]
 
 MIDDLEWARE = [

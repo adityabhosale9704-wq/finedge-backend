@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TAT / Task Tracking</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f4f5f7;
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 32px 16px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .top-nav {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .top-nav a {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: #eef1f4;
+    color: #444;
+    font-size: 14px;
+    text-decoration: none;
+  }
+
+  .top-nav a:hover {
+    background: #e2e6ea;
+  }
+
+  .top-nav a.active {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    color: #1a1a1a;
+  }
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 17px;
+    color: #1a1a1a;
+  }
+
+  .page-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .form-error {
+    display: none;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: #fdecea;
+    color: #b71c1c;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #444;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .field input:focus,
+  .field select:focus {
+    outline: none;
+    border-color: #4a90e2;
+  }
+
+  .form-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    background: #3a7bc8;
+  }
+
+  .btn-secondary {
+    background: #e5e7eb;
+    color: #333;
+  }
+
+  .btn-secondary:hover {
+    background: #d5d8dc;
+  }
+
+  .btn-edit {
+    background: #eef1f4;
+    color: #1a1a1a;
+  }
+
+  .btn-edit:hover {
+    background: #dfe3e8;
+  }
+
+  .btn-delete {
+    background: #fdecea;
+    color: #b71c1c;
+  }
+
+  .btn-delete:hover {
+    background: #f8d3d0;
+  }
+
+  .btn-done {
+    background: #e6f4ea;
+    color: #1e7e34;
+  }
+
+  .btn-done:hover {
+    background: #d5ecdc;
+  }
+
+  .btn-undo {
+    background: #eef1f4;
+    color: #444;
+  }
+
+  .btn-undo:hover {
+    background: #dfe3e8;
+  }
+
+  .btn-row {
+    padding: 5px 10px;
+    font-size: 13px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .kpi-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: #eef1f4;
+    color: #444;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+  }
+
+  .tab:hover {
+    background: #e2e6ea;
+  }
+
+  .tab.active {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+  }
+
+  th {
+    background: #f9fafb;
+    color: #555;
+    font-weight: 600;
+  }
+
+  tr:hover td {
+    background: #fafafa;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .chip-green {
+    background: #e6f4ea;
+    color: #1e7e34;
+  }
+
+  .chip-amber {
+    background: #fff4e0;
+    color: #a06400;
+  }
+
+  .chip-red {
+    background: #fdecea;
+    color: #b71c1c;
+  }
+
+  .chip-navy {
+    background: #e8eefb;
+    color: #2a5db0;
+  }
+
+  .message {
+    padding: 24px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <a href="employees.html">Employees</a>
+    <a href="positions.html">Employee IDs</a>
+    <a href="recruitment.html">Recruitment</a>
+    <a href="tasks.html" class="active">Tasks</a>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h1>TAT / Task Tracking</h1>
+      <button type="button" class="btn-primary" id="add-task-button">+ New Task</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Early</div>
+        <div class="kpi-value" id="kpi-early">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">On Time</div>
+        <div class="kpi-value" id="kpi-ontime">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Delayed</div>
+        <div class="kpi-value" id="kpi-delayed">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Overdue</div>
+        <div class="kpi-value" id="kpi-overdue">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Open</div>
+        <div class="kpi-value" id="kpi-open">0</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="All" id="tab-All">All (0)</button>
+      <button type="button" class="tab" data-tab="Open" id="tab-Open">Open (0)</button>
+      <button type="button" class="tab" data-tab="Early" id="tab-Early">Early (0)</button>
+      <button type="button" class="tab" data-tab="On Time" id="tab-On Time">On Time (0)</button>
+      <button type="button" class="tab" data-tab="Delayed" id="tab-Delayed">Delayed (0)</button>
+      <button type="button" class="tab" data-tab="Overdue" id="tab-Overdue">Overdue (0)</button>
+    </div>
+
+    <div id="page-error" class="form-error"></div>
+    <div id="tasks-content">
+      <div class="message">Loading tasks...</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="task-modal-overlay">
+    <div class="modal-card">
+      <h2 id="task-modal-title">New Task</h2>
+      <div id="task-form-error" class="form-error"></div>
+      <form id="task-form">
+        <div class="field">
+          <label for="task-title">Title</label>
+          <input type="text" id="task-title" required>
+        </div>
+        <div class="field">
+          <label for="task-department">Department</label>
+          <input type="text" id="task-department" required>
+        </div>
+        <div class="field">
+          <label for="task-assigned-to">Assigned To</label>
+          <select id="task-assigned-to" required></select>
+        </div>
+        <div class="field">
+          <label for="task-tat-days">TAT (days)</label>
+          <input type="number" id="task-tat-days" min="1" value="3" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="task-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="task-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const TASKS_API_BASE = 'http://127.0.0.1:8000/api/v1/tasks/';
+    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadAll();
+    }
+
+    let allTasks = [];
+    let allEmployees = [];
+    let currentTab = 'All';
+
+    const pageError = document.getElementById('page-error');
+
+    function showPageError(message) {
+      pageError.textContent = message;
+      pageError.style.display = 'block';
+    }
+
+    function hidePageError() {
+      pageError.textContent = '';
+      pageError.style.display = 'none';
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    async function loadAll() {
+      hidePageError();
+      try {
+        const [tasksResponse, employeesResponse] = await Promise.all([
+          fetch(TASKS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch(EMPLOYEES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } })
+        ]);
+
+        if (handleUnauthorized(tasksResponse) || handleUnauthorized(employeesResponse)) {
+          return;
+        }
+
+        if (!tasksResponse.ok || !employeesResponse.ok) {
+          throw new Error('Failed to load tasks.');
+        }
+
+        allTasks = await tasksResponse.json();
+        allEmployees = await employeesResponse.json();
+        renderAll();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong while loading tasks.');
+      }
+    }
+
+    const TAB_NAMES = ['All', 'Open', 'Early', 'On Time', 'Delayed', 'Overdue'];
+
+    function renderAll() {
+      renderKpis();
+      renderTabs();
+      renderTasksTable();
+    }
+
+    function renderKpis() {
+      const countByStatus = function (statusName) {
+        return allTasks.filter(function (t) { return t.status === statusName; }).length;
+      };
+      document.getElementById('kpi-early').textContent = countByStatus('Early');
+      document.getElementById('kpi-ontime').textContent = countByStatus('On Time');
+      document.getElementById('kpi-delayed').textContent = countByStatus('Delayed');
+      document.getElementById('kpi-overdue').textContent = countByStatus('Overdue');
+      document.getElementById('kpi-open').textContent = countByStatus('Open');
+    }
+
+    function renderTabs() {
+      TAB_NAMES.forEach(function (name) {
+        const count = name === 'All'
+          ? allTasks.length
+          : allTasks.filter(function (t) { return t.status === name; }).length;
+        const tabBtn = document.getElementById('tab-' + name);
+        tabBtn.textContent = name + ' (' + count + ')';
+        tabBtn.classList.toggle('active', name === currentTab);
+      });
+    }
+
+    TAB_NAMES.forEach(function (name) {
+      document.getElementById('tab-' + name).addEventListener('click', function () {
+        currentTab = name;
+        renderAll();
+      });
+    });
+
+    function statusChipClass(statusName) {
+      if (statusName === 'Early' || statusName === 'On Time') {
+        return 'chip-green';
+      }
+      if (statusName === 'Delayed') {
+        return 'chip-amber';
+      }
+      if (statusName === 'Overdue') {
+        return 'chip-red';
+      }
+      return 'chip-navy';
+    }
+
+    function renderTasksTable() {
+      const content = document.getElementById('tasks-content');
+
+      const filtered = currentTab === 'All'
+        ? allTasks
+        : allTasks.filter(function (t) { return t.status === currentTab; });
+
+      if (filtered.length === 0) {
+        content.innerHTML = '<div class="message">No tasks found in this category.</div>';
+        return;
+      }
+
+      const rows = filtered.map(function (task) {
+        const actionBtn = task.done
+          ? '<button type="button" class="btn-undo btn-row undo-btn" data-id="' + escapeHtml(task.id) + '">&#8634; Undo</button>'
+          : '<button type="button" class="btn-done btn-row done-btn" data-id="' + escapeHtml(task.id) + '">&#10003; Mark Done</button>';
+
+        return '<tr>' +
+          '<td>' + escapeHtml(task.title) + '</td>' +
+          '<td>' + escapeHtml(task.department) + '</td>' +
+          '<td>' + escapeHtml(task.assigned_to_name) + '</td>' +
+          '<td>' + escapeHtml(task.assigned_date) + '</td>' +
+          '<td>' + escapeHtml(task.due_date) + ' (' + escapeHtml(task.tat_days) + 'd)</td>' +
+          '<td><span class="chip ' + statusChipClass(task.status) + '">' + escapeHtml(task.status) + '</span></td>' +
+          '<td>' +
+          actionBtn +
+          '<button type="button" class="btn-edit btn-row edit-task-btn" data-id="' + escapeHtml(task.id) + '">&#9998; Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-task-btn" data-id="' + escapeHtml(task.id) + '">&#10005; Delete</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
+
+      content.innerHTML =
+        '<table>' +
+        '<thead><tr><th>Task</th><th>Department</th><th>Assigned To</th><th>Assigned Date</th><th>Due Date (TAT)</th><th>Status</th><th>Actions</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>';
+
+      content.querySelectorAll('.done-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleTaskDone(btn.getAttribute('data-id'));
+        });
+      });
+
+      content.querySelectorAll('.undo-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleTaskUndo(btn.getAttribute('data-id'));
+        });
+      });
+
+      content.querySelectorAll('.edit-task-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const task = allTasks.find(function (t) { return t.id === btn.getAttribute('data-id'); });
+          if (task) {
+            openTaskModal('edit', task);
+          }
+        });
+      });
+
+      content.querySelectorAll('.delete-task-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleDeleteTask(btn.getAttribute('data-id'));
+        });
+      });
+    }
+
+    // ---------- Task modal ----------
+
+    const taskModalOverlay = document.getElementById('task-modal-overlay');
+    const taskModalTitle = document.getElementById('task-modal-title');
+    const taskForm = document.getElementById('task-form');
+    const taskFormError = document.getElementById('task-form-error');
+    const taskSubmitButton = document.getElementById('task-submit-button');
+    const taskCancelButton = document.getElementById('task-cancel-button');
+    const taskAssignedToSelect = document.getElementById('task-assigned-to');
+
+    let editingTaskId = null;
+
+    document.getElementById('add-task-button').addEventListener('click', function () {
+      openTaskModal('add', null);
+    });
+    taskForm.addEventListener('submit', handleTaskSubmit);
+    taskCancelButton.addEventListener('click', closeTaskModal);
+    taskModalOverlay.addEventListener('click', function (event) {
+      if (event.target === taskModalOverlay) {
+        closeTaskModal();
+      }
+    });
+
+    function populateAssignedToSelect(selectedId) {
+      taskAssignedToSelect.innerHTML = allEmployees.map(function (emp) {
+        const selected = emp.id === selectedId ? ' selected' : '';
+        return '<option value="' + escapeHtml(emp.id) + '"' + selected + '>' + escapeHtml(emp.name) + '</option>';
+      }).join('');
+    }
+
+    function openTaskModal(mode, task) {
+      editingTaskId = mode === 'edit' && task ? task.id : null;
+      taskModalTitle.textContent = mode === 'edit' ? 'Edit Task' : 'New Task';
+      taskSubmitButton.textContent = mode === 'edit' ? 'Update' : 'Add';
+
+      document.getElementById('task-title').value = task ? (task.title || '') : '';
+      document.getElementById('task-department').value = task ? (task.department || '') : '';
+      document.getElementById('task-tat-days').value = task ? (task.tat_days || 3) : 3;
+      populateAssignedToSelect(task ? task.assigned_to : null);
+
+      taskFormError.style.display = 'none';
+      taskFormError.textContent = '';
+      taskModalOverlay.classList.add('open');
+    }
+
+    function closeTaskModal() {
+      taskModalOverlay.classList.remove('open');
+      taskForm.reset();
+      editingTaskId = null;
+    }
+
+    async function handleTaskSubmit(event) {
+      event.preventDefault();
+      taskSubmitButton.disabled = true;
+      taskFormError.style.display = 'none';
+
+      const payload = {
+        title: document.getElementById('task-title').value,
+        department: document.getElementById('task-department').value,
+        assigned_to: taskAssignedToSelect.value,
+        tat_days: parseInt(document.getElementById('task-tat-days').value, 10)
+      };
+
+      const isEditing = editingTaskId !== null;
+      const url = isEditing ? TASKS_API_BASE + editingTaskId + '/' : TASKS_API_BASE;
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not save task.');
+        }
+
+        closeTaskModal();
+        loadAll();
+      } catch (err) {
+        taskFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        taskFormError.style.display = 'block';
+      } finally {
+        taskSubmitButton.disabled = false;
+      }
+    }
+
+    async function handleTaskDone(taskId) {
+      hidePageError();
+      try {
+        const response = await fetch(TASKS_API_BASE + taskId + '/done/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not mark task done.');
+        }
+
+        loadAll();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    async function handleTaskUndo(taskId) {
+      hidePageError();
+      try {
+        const response = await fetch(TASKS_API_BASE + taskId + '/undo/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not undo task completion.');
+        }
+
+        loadAll();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    async function handleDeleteTask(taskId) {
+      const confirmed = confirm('Are you sure you want to delete this task?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(TASKS_API_BASE + taskId + '/', {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok && response.status !== 204) {
+          throw new Error('Could not delete task.');
+        }
+
+        loadAll();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+  </script>
+
+</body>
+</html>
