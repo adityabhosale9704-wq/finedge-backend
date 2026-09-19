@@ -3,116 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <title>Dashboard</title>
+<link rel="stylesheet" href="shared.css">
 <style>
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    min-height: 100vh;
-    background: #f4f5f7;
-    font-family: Arial, Helvetica, sans-serif;
-    padding: 32px 16px;
-  }
-
-  .container {
-    max-width: 1100px;
-    margin: 0 auto;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    padding: 24px;
-    margin-bottom: 24px;
-  }
-
-  .top-nav {
-    max-width: 1100px;
-    margin: 0 auto 20px;
-    display: flex;
-    gap: 8px;
-  }
-
-  .top-nav a {
-    padding: 8px 16px;
-    border-radius: 6px;
-    background: #eef1f4;
-    color: #444;
-    font-size: 14px;
-    text-decoration: none;
-  }
-
-  .top-nav a:hover {
-    background: #e2e6ea;
-  }
-
-  .top-nav a.active {
-    background: #4a90e2;
-    color: #ffffff;
-  }
-
-  h1 {
-    margin: 0 0 4px;
-    font-size: 22px;
-    color: #1a1a1a;
-  }
-
-  h2 {
-    margin: 0 0 16px;
-    font-size: 17px;
-    color: #1a1a1a;
-  }
-
   .greeting-date {
     font-size: 14px;
     color: #666;
-  }
-
-  .form-error {
-    display: none;
-    margin-bottom: 16px;
-    padding: 10px 12px;
-    background: #fdecea;
-    color: #b71c1c;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    font-size: 13px;
-  }
-
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-  }
-
-  @media (max-width: 760px) {
-    .kpi-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  .kpi-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 14px 16px;
-  }
-
-  .kpi-label {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 6px;
-  }
-
-  .kpi-value {
-    font-size: 22px;
-    font-weight: 600;
-    color: #1a1a1a;
-  }
-
-  .kpi-sub {
-    font-size: 12px;
-    color: #666;
-    margin-top: 2px;
   }
 
   .dashboard-grid {
@@ -155,26 +50,6 @@
     margin-top: 2px;
   }
 
-  .tile-green {
-    background: #e6f4ea;
-    color: #1e7e34;
-  }
-
-  .tile-amber {
-    background: #fff4e0;
-    color: #a06400;
-  }
-
-  .tile-red {
-    background: #fdecea;
-    color: #b71c1c;
-  }
-
-  .tile-navy {
-    background: #e8eefb;
-    color: #2a5db0;
-  }
-
   .attention-list,
   .celebration-list {
     list-style: none;
@@ -210,21 +85,6 @@
     margin-right: 8px;
   }
 
-  .tag-task {
-    background: #fdecea;
-    color: #b71c1c;
-  }
-
-  .tag-requisition {
-    background: #fff4e0;
-    color: #a06400;
-  }
-
-  .tag-candidate {
-    background: #e8eefb;
-    color: #2a5db0;
-  }
-
   .celebration-badge {
     display: inline-block;
     padding: 2px 8px;
@@ -235,39 +95,21 @@
     margin-right: 8px;
   }
 
-  .btn-view {
-    background: #eef1f4;
-    color: #1a1a1a;
-    padding: 5px 10px;
-    font-size: 12px;
-    text-decoration: none;
-    border-radius: 4px;
-    display: inline-block;
-    white-space: nowrap;
-  }
-
-  .btn-view:hover {
-    background: #dfe3e8;
-  }
-
-  .message {
-    padding: 24px;
-    text-align: center;
-    color: #666;
-    font-size: 14px;
-  }
 </style>
 </head>
 <body>
 
   <div class="top-nav">
-    <a href="dashboard.html" class="active">Dashboard</a>
-    <a href="employees.html">Employees</a>
-    <a href="positions.html">Employee IDs</a>
-    <a href="recruitment.html">Recruitment</a>
-    <a href="tasks.html">Tasks</a>
-    <a href="admin.html">Admin Studio</a>
-    <a href="workindia.html">WorkIndia Import</a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="employees.html">Employees</a>
+      <a href="positions.html">Employee IDs</a>
+      <a href="recruitment.html">Recruitment</a>
+      <a href="tasks.html">Tasks</a>
+      <a href="admin.html">Admin Studio</a>
+      <a href="workindia.html">WorkIndia Import</a>
+    </div>
   </div>
 
   <div class="container">
@@ -276,7 +118,6 @@
   </div>
 
   <div class="container">
-    <div id="page-error" class="form-error"></div>
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label">Total Active Employees</div>
@@ -328,7 +169,7 @@
     <div class="container">
       <h2>Needs Attention</h2>
       <div id="attention-content">
-        <div class="message">Loading...</div>
+        <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
       </div>
     </div>
   </div>
@@ -336,7 +177,7 @@
   <div class="container">
     <h2>Upcoming Celebrations</h2>
     <div id="celebrations-content">
-      <div class="message">Loading...</div>
+      <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
     </div>
   </div>
 
@@ -354,11 +195,12 @@
       loadAll();
     }
 
-    const pageError = document.getElementById('page-error');
-
-    function showPageError(message) {
-      pageError.textContent = message;
-      pageError.style.display = 'block';
+    const navToggle = document.getElementById('nav-toggle');
+    const navLinks = document.getElementById('nav-links');
+    if (navToggle && navLinks) {
+      navToggle.addEventListener('click', function () {
+        navLinks.classList.toggle('open');
+      });
     }
 
     function escapeHtml(value) {
@@ -418,9 +260,14 @@
         renderAttention(requisitions, candidates, tasks);
         renderCelebrations(employees);
       } catch (err) {
-        showPageError(err.message || 'Something went wrong while loading the dashboard.');
-        document.getElementById('attention-content').innerHTML = '';
-        document.getElementById('celebrations-content').innerHTML = '';
+        const retryHtml = '<div class="error-state"><div>' +
+          escapeHtml(err.message || 'Could not load dashboard data.') +
+          '</div><button type="button" class="btn-secondary retry-dashboard-button">Retry</button></div>';
+        document.getElementById('attention-content').innerHTML = retryHtml;
+        document.getElementById('celebrations-content').innerHTML = retryHtml;
+        document.querySelectorAll('.retry-dashboard-button').forEach(function (btn) {
+          btn.addEventListener('click', loadAll);
+        });
       }
     }
 

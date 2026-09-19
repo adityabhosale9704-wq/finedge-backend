@@ -1,0 +1,606 @@
+/* ============================================================
+   Shared styles for the FinEdge internal app (all pages).
+   Page-specific layouts/components stay in each page's own
+   <style> block; only cross-page, duplicated rules live here.
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f4f5f7;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 32px 16px;
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 16px 10px;
+  }
+}
+
+/* ---------- Layout: container + top nav ---------- */
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+  /* Lets any wide table/content scroll horizontally on narrow
+     screens instead of squeezing or breaking the layout. */
+  overflow-x: auto;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+    border-radius: 6px;
+  }
+}
+
+.top-nav {
+  max-width: 1100px;
+  margin: 0 auto 20px;
+  position: relative;
+}
+
+.nav-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.top-nav a {
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: #eef1f4;
+  color: #444;
+  font-size: 14px;
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.top-nav a:hover {
+  background: #e2e6ea;
+}
+
+.top-nav a.active {
+  background: #4a90e2;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.nav-toggle {
+  display: none;
+  background: #eef1f4;
+  color: #444;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .nav-toggle {
+    display: inline-block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    z-index: 40;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .top-nav a {
+    width: 100%;
+  }
+}
+
+@media print {
+  .top-nav {
+    display: none !important;
+  }
+}
+
+/* ---------- Headings ---------- */
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  color: #1a1a1a;
+}
+
+h2 {
+  margin: 0 0 16px;
+  font-size: 17px;
+  color: #1a1a1a;
+}
+
+h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+
+/* ---------- Forms ---------- */
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #444;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 16px;
+}
+
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-actions {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.form-error {
+  display: none;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: #fdecea;
+  color: #b71c1c;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.success-message {
+  display: none;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: #e6f4ea;
+  color: #1e7e34;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* ---------- Buttons ---------- */
+
+button {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #4a90e2;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #3a7bc8;
+}
+
+.btn-primary:disabled {
+  background: #9cbde6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #d5d8dc;
+}
+
+.btn-edit {
+  background: #eef1f4;
+  color: #1a1a1a;
+}
+
+.btn-edit:hover {
+  background: #dfe3e8;
+}
+
+.btn-delete {
+  background: #fdecea;
+  color: #b71c1c;
+}
+
+.btn-delete:hover {
+  background: #f8d3d0;
+}
+
+.btn-approve,
+.btn-done {
+  background: #fff4e0;
+  color: #a06400;
+}
+
+.btn-approve:hover,
+.btn-done:hover {
+  background: #ffe9c2;
+}
+
+.btn-done {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.btn-done:hover {
+  background: #d5ecdc;
+}
+
+.btn-undo {
+  background: #eef1f4;
+  color: #444;
+}
+
+.btn-undo:hover {
+  background: #dfe3e8;
+}
+
+.btn-view {
+  background: #eef1f4;
+  color: #1a1a1a;
+  padding: 5px 10px;
+  font-size: 13px;
+  text-decoration: none;
+  border-radius: 4px;
+  display: inline-block;
+  white-space: nowrap;
+  margin-right: 6px;
+}
+
+.btn-view:hover {
+  background: #dfe3e8;
+}
+
+.btn-row,
+.icon-btn {
+  padding: 5px 10px;
+  font-size: 13px;
+  margin-right: 6px;
+  margin-bottom: 4px;
+}
+
+.icon-btn {
+  background: transparent;
+}
+
+.icon-btn:hover {
+  background: #eef1f4;
+}
+
+.icon-btn.icon-delete:hover {
+  background: #fdecea;
+}
+
+/* ---------- Tables ---------- */
+
+table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 14px;
+}
+
+th {
+  background: #f9fafb;
+  color: #555;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+tr:hover td {
+  background: #fafafa;
+}
+
+/* ---------- Status chips / badges ---------- */
+/* Two class names ("status" and "chip") were used interchangeably
+   across pages during earlier builds; both are kept working here
+   so every page renders identical-looking chips. */
+
+.status,
+.chip,
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.status-active,
+.chip-green,
+.badge-doc-ok,
+.tile-green {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.status-inactive,
+.chip-red,
+.tag-task {
+  background: #fdecea;
+  color: #b71c1c;
+}
+
+.status-other,
+.status-vacant,
+.chip-amber,
+.badge-new,
+.badge-doc-pending,
+.tag-requisition,
+.tile-amber {
+  background: #fff4e0;
+  color: #a06400;
+}
+
+.chip-navy,
+.badge-kra,
+.tag-candidate,
+.tile-navy {
+  background: #e8eefb;
+  color: #2a5db0;
+}
+
+.chip-gray,
+.badge-docs,
+.badge-not-uploaded,
+.badge-vacant-holder {
+  background: #eef1f4;
+  color: #888;
+  text-transform: none;
+}
+
+/* ---------- KPI cards ---------- */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 760px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpi-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.kpi-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.kpi-sub {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* ---------- Empty / loading / error states ---------- */
+
+.message {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 16px;
+  color: #666;
+  font-size: 14px;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #4a90e2;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 16px;
+  text-align: center;
+  color: #b71c1c;
+  font-size: 14px;
+}
+
+.error-state .btn-secondary {
+  margin-top: 4px;
+}
+
+/* ---------- Search input ---------- */
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  padding: 9px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+/* ---------- Tabs (Active/Leaver, task-status tabs, etc.) ---------- */
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: #eef1f4;
+  color: #444;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+
+.tab:hover {
+  background: #e2e6ea;
+}
+
+.tab.active {
+  background: #4a90e2;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.tab.disabled-tab {
+  color: #9aa1a8;
+}
+
+/* ---------- Modals ---------- */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+/* ---------- Toolbar (search + tabs rows) ---------- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}

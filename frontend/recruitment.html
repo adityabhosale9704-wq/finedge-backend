@@ -3,125 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <title>Recruitment</title>
+<link rel="stylesheet" href="shared.css">
 <style>
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    min-height: 100vh;
-    background: #f4f5f7;
-    font-family: Arial, Helvetica, sans-serif;
-    padding: 32px 16px;
-  }
-
-  .container {
-    max-width: 1100px;
-    margin: 0 auto;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    padding: 24px;
-    margin-bottom: 24px;
-  }
-
-  .top-nav {
-    max-width: 1100px;
-    margin: 0 auto 20px;
-    display: flex;
-    gap: 8px;
-  }
-
-  .top-nav a {
-    padding: 8px 16px;
-    border-radius: 6px;
-    background: #eef1f4;
-    color: #444;
-    font-size: 14px;
-    text-decoration: none;
-  }
-
-  .top-nav a:hover {
-    background: #e2e6ea;
-  }
-
-  .top-nav a.active {
-    background: #4a90e2;
-    color: #ffffff;
-  }
-
-  h1 {
-    margin: 0;
-    font-size: 22px;
-    color: #1a1a1a;
-  }
-
-  h2 {
-    margin: 0 0 16px;
-    font-size: 17px;
-    color: #1a1a1a;
-  }
-
-  h3 {
-    margin: 0 0 12px;
-    font-size: 15px;
-    color: #1a1a1a;
-  }
-
-  .page-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
   .header-actions {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
   }
 
-  .form-error {
-    display: none;
-    margin-bottom: 16px;
-    padding: 10px 12px;
-    background: #fdecea;
-    color: #b71c1c;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    font-size: 13px;
-  }
-
-  .field {
-    margin-bottom: 14px;
-  }
-
-  .field label {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 13px;
-    color: #444;
-  }
-
-  .field input,
-  .field select {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-
-  .field input:focus,
-  .field select:focus {
-    outline: none;
-    border-color: #4a90e2;
-  }
-
   .form-grid {
-    display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0 16px;
   }
@@ -130,192 +20,6 @@
     .form-grid {
       grid-template-columns: 1fr;
     }
-  }
-
-  .form-actions {
-    margin-top: 6px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-
-  button {
-    padding: 9px 16px;
-    border: none;
-    border-radius: 4px;
-    font-size: 14px;
-    cursor: pointer;
-  }
-
-  .btn-primary {
-    background: #4a90e2;
-    color: #ffffff;
-  }
-
-  .btn-primary:hover {
-    background: #3a7bc8;
-  }
-
-  .btn-secondary {
-    background: #e5e7eb;
-    color: #333;
-  }
-
-  .btn-secondary:hover {
-    background: #d5d8dc;
-  }
-
-  .btn-edit {
-    background: #eef1f4;
-    color: #1a1a1a;
-  }
-
-  .btn-edit:hover {
-    background: #dfe3e8;
-  }
-
-  .btn-delete {
-    background: #fdecea;
-    color: #b71c1c;
-  }
-
-  .btn-delete:hover {
-    background: #f8d3d0;
-  }
-
-  .btn-approve {
-    background: #fff4e0;
-    color: #a06400;
-  }
-
-  .btn-approve:hover {
-    background: #ffe9c2;
-  }
-
-  .btn-row {
-    padding: 5px 10px;
-    font-size: 13px;
-    margin-right: 6px;
-    margin-bottom: 4px;
-  }
-
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-
-  @media (max-width: 760px) {
-    .kpi-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  .kpi-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 14px 16px;
-  }
-
-  .kpi-label {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 6px;
-  }
-
-  .kpi-value {
-    font-size: 20px;
-    font-weight: 600;
-    color: #1a1a1a;
-  }
-
-  .kpi-sub {
-    font-size: 11px;
-    color: #999;
-    margin-top: 2px;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th, td {
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid #e0e0e0;
-    font-size: 14px;
-  }
-
-  th {
-    background: #f9fafb;
-    color: #555;
-    font-weight: 600;
-  }
-
-  tr:hover td {
-    background: #fafafa;
-  }
-
-  .chip {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-  }
-
-  .chip-green {
-    background: #e6f4ea;
-    color: #1e7e34;
-  }
-
-  .chip-amber {
-    background: #fff4e0;
-    color: #a06400;
-  }
-
-  .chip-red {
-    background: #fdecea;
-    color: #b71c1c;
-  }
-
-  .chip-navy {
-    background: #e8eefb;
-    color: #2a5db0;
-  }
-
-  .message {
-    padding: 24px;
-    text-align: center;
-    color: #666;
-    font-size: 14px;
-  }
-
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    z-index: 50;
-  }
-
-  .modal-overlay.open {
-    display: flex;
-  }
-
-  .modal-card {
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-    padding: 24px;
-    width: 100%;
-    max-width: 440px;
-    max-height: 85vh;
-    overflow-y: auto;
   }
 
   .candidate-grid {
@@ -368,13 +72,16 @@
 <body>
 
   <div class="top-nav">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="employees.html">Employees</a>
-    <a href="positions.html">Employee IDs</a>
-    <a href="recruitment.html" class="active">Recruitment</a>
-    <a href="tasks.html">Tasks</a>
-    <a href="admin.html">Admin Studio</a>
-    <a href="workindia.html">WorkIndia Import</a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    <div class="nav-links" id="nav-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="employees.html">Employees</a>
+      <a href="positions.html">Employee IDs</a>
+      <a href="recruitment.html" class="active">Recruitment</a>
+      <a href="tasks.html">Tasks</a>
+      <a href="admin.html">Admin Studio</a>
+      <a href="workindia.html">WorkIndia Import</a>
+    </div>
   </div>
 
   <div class="container">
@@ -414,14 +121,14 @@
   <div class="container">
     <h2>Live Requisitions</h2>
     <div id="requisitions-content">
-      <div class="message">Loading requisitions...</div>
+      <div class="loading-state"><div class="spinner"></div><div>Loading requisitions...</div></div>
     </div>
   </div>
 
   <div class="container">
     <h2>Candidates</h2>
     <div id="candidates-content">
-      <div class="message">Loading candidates...</div>
+      <div class="loading-state"><div class="spinner"></div><div>Loading candidates...</div></div>
     </div>
   </div>
 
@@ -545,6 +252,14 @@
       loadBranchOptions();
     }
 
+    const navToggle = document.getElementById('nav-toggle');
+    const navLinks = document.getElementById('nav-links');
+    if (navToggle && navLinks) {
+      navToggle.addEventListener('click', function () {
+        navLinks.classList.toggle('open');
+      });
+    }
+
     async function loadBranchOptions() {
       try {
         const response = await fetch(BRANCHES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
@@ -615,7 +330,14 @@
         allCandidates = await candResponse.json();
         renderAll();
       } catch (err) {
-        showPageError(err.message || 'Something went wrong while loading recruitment data.');
+        const retryHtml = '<div class="error-state"><div>' +
+          escapeHtml(err.message || 'Could not load recruitment data.') +
+          '</div><button type="button" class="btn-secondary retry-recruitment-button">Retry</button></div>';
+        document.getElementById('requisitions-content').innerHTML = retryHtml;
+        document.getElementById('candidates-content').innerHTML = retryHtml;
+        document.querySelectorAll('.retry-recruitment-button').forEach(function (btn) {
+          btn.addEventListener('click', loadAll);
+        });
       }
     }
 

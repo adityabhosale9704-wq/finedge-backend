@@ -3,343 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <title>Employees</title>
+<link rel="stylesheet" href="shared.css">
 <style>
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    min-height: 100vh;
-    background: #f4f5f7;
-    font-family: Arial, Helvetica, sans-serif;
-    padding: 32px 16px;
-  }
-
-  .container {
-    max-width: 1000px;
-    margin: 0 auto;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    padding: 24px;
-    margin-bottom: 24px;
-  }
-
-  .top-nav {
-    max-width: 1000px;
-    margin: 0 auto 20px;
-    display: flex;
-    gap: 8px;
-  }
-
-  .top-nav a {
-    padding: 8px 16px;
-    border-radius: 6px;
-    background: #eef1f4;
-    color: #444;
-    font-size: 14px;
-    text-decoration: none;
-  }
-
-  .top-nav a:hover {
-    background: #e2e6ea;
-  }
-
-  .top-nav a.active {
-    background: #4a90e2;
-    color: #ffffff;
-  }
-
-  @media print {
-    .top-nav {
-      display: none !important;
-    }
-  }
-
-  h1 {
-    margin: 0 0 20px;
-    font-size: 22px;
-    color: #1a1a1a;
-  }
-
-  h2 {
-    margin: 0 0 16px;
-    font-size: 17px;
-    color: #1a1a1a;
-  }
-
-  h3 {
-    margin: 0 0 12px;
-    font-size: 15px;
-    color: #1a1a1a;
-  }
-
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px 16px;
-  }
-
-  @media (max-width: 640px) {
-    .form-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .field label {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 13px;
-    color: #444;
-  }
-
-  .field input,
-  .field select {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-
-  .field input:focus,
-  .field select:focus {
-    outline: none;
-    border-color: #4a90e2;
-  }
-
-  .form-actions {
-    margin-top: 16px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-
-  button {
-    padding: 9px 16px;
-    border: none;
-    border-radius: 4px;
-    font-size: 14px;
-    cursor: pointer;
-  }
-
-  .btn-primary {
-    background: #4a90e2;
-    color: #ffffff;
-  }
-
-  .btn-primary:hover {
-    background: #3a7bc8;
-  }
-
-  .btn-secondary {
-    background: #e5e7eb;
-    color: #333;
-  }
-
-  .btn-secondary:hover {
-    background: #d5d8dc;
-  }
-
-  .btn-edit {
-    background: #eef1f4;
-    color: #1a1a1a;
-    padding: 5px 10px;
-    font-size: 13px;
-    margin-right: 6px;
-  }
-
-  .btn-edit:hover {
-    background: #dfe3e8;
-  }
-
-  .btn-delete {
-    background: #fdecea;
-    color: #b71c1c;
-    padding: 5px 10px;
-    font-size: 13px;
-  }
-
-  .btn-delete:hover {
-    background: #f8d3d0;
-  }
-
-  .form-error {
-    display: none;
-    margin-bottom: 16px;
-    padding: 10px 12px;
-    background: #fdecea;
-    color: #b71c1c;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    font-size: 13px;
-  }
-
-  .toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    align-items: center;
-    justify-content: space-between;
+  #list-view h1 {
     margin-bottom: 20px;
-  }
-
-  .tabs {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .tab {
-    padding: 8px 16px;
-    border-radius: 6px;
-    background: #eef1f4;
-    color: #444;
-    font-size: 14px;
-    cursor: pointer;
-    border: none;
-  }
-
-  .tab:hover {
-    background: #e2e6ea;
-  }
-
-  .tab.active {
-    background: #4a90e2;
-    color: #ffffff;
   }
 
   .tab.disabled-tab {
     color: #9aa1a8;
   }
 
-  .search-input {
-    flex: 1;
-    min-width: 200px;
-    max-width: 320px;
-    padding: 9px 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-
-  .search-input:focus {
-    outline: none;
-    border-color: #4a90e2;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th, td {
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid #e0e0e0;
-    font-size: 14px;
-  }
-
-  th {
-    background: #f9fafb;
-    color: #555;
-    font-weight: 600;
-  }
-
-  tr:hover td {
-    background: #fafafa;
-  }
-
   tr.clickable-row {
     cursor: pointer;
-  }
-
-  .status {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    text-transform: capitalize;
-  }
-
-  .status-active {
-    background: #e6f4ea;
-    color: #1e7e34;
-  }
-
-  .status-inactive {
-    background: #fdecea;
-    color: #b71c1c;
-  }
-
-  .status-other {
-    background: #eef1f4;
-    color: #555;
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-  }
-
-  .badge-docs {
-    background: #eef1f4;
-    color: #444;
-  }
-
-  .badge-kra {
-    background: #e8eefb;
-    color: #2a5db0;
-  }
-
-  .badge-new {
-    background: #fff4e0;
-    color: #a06400;
-  }
-
-  .badge-not-uploaded {
-    background: #eef1f4;
-    color: #888;
-  }
-
-  .badge-doc-pending {
-    background: #fff4e0;
-    color: #a06400;
-  }
-
-  .badge-doc-ok {
-    background: #e6f4ea;
-    color: #1e7e34;
-  }
-
-  .btn-view {
-    background: #eef1f4;
-    color: #1a1a1a;
-    padding: 5px 10px;
-    font-size: 13px;
-    text-decoration: none;
-    border-radius: 4px;
-    display: inline-block;
-    margin-right: 6px;
-  }
-
-  .btn-view:hover {
-    background: #dfe3e8;
   }
 
   .doc-summary {
     font-size: 13px;
     color: #666;
-  }
-
-  .message {
-    padding: 24px;
-    text-align: center;
-    color: #666;
-    font-size: 14px;
   }
 
   /* Profile view */
@@ -397,41 +77,8 @@
     flex-wrap: wrap;
   }
 
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-
-  @media (max-width: 760px) {
-    .kpi-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  .kpi-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 14px 16px;
-  }
-
-  .kpi-label {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 6px;
-  }
-
-  .kpi-value {
+  #profile-view .kpi-value {
     font-size: 16px;
-    font-weight: 600;
-    color: #1a1a1a;
-  }
-
-  .kpi-sub {
-    font-size: 12px;
-    color: #666;
-    margin-top: 2px;
   }
 
   .profile-tabs {
@@ -477,47 +124,6 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
-  }
-
-  .icon-btn {
-    background: transparent;
-    padding: 4px 8px;
-    font-size: 14px;
-    border-radius: 4px;
-  }
-
-  .icon-btn:hover {
-    background: #eef1f4;
-  }
-
-  .icon-btn.icon-delete:hover {
-    background: #fdecea;
-  }
-
-  /* Modal */
-
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    z-index: 50;
-  }
-
-  .modal-overlay.open {
-    display: flex;
-  }
-
-  .modal-card {
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-    padding: 24px;
-    width: 100%;
-    max-width: 360px;
   }
 
   @media print {
@@ -616,13 +222,16 @@
 <body>
 
   <div class="top-nav">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="employees.html" class="active">Employees</a>
-    <a href="positions.html">Employee IDs</a>
-    <a href="recruitment.html">Recruitment</a>
-    <a href="tasks.html">Tasks</a>
-    <a href="admin.html">Admin Studio</a>
-    <a href="workindia.html">WorkIndia Import</a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    <div class="nav-links" id="nav-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="employees.html" class="active">Employees</a>
+      <a href="positions.html">Employee IDs</a>
+      <a href="recruitment.html">Recruitment</a>
+      <a href="tasks.html">Tasks</a>
+      <a href="admin.html">Admin Studio</a>
+      <a href="workindia.html">WorkIndia Import</a>
+    </div>
   </div>
 
   <div class="container">
@@ -742,7 +351,7 @@
         <input type="text" id="search-input" class="search-input" placeholder="Search employees...">
       </div>
       <div id="content">
-        <div class="message">Loading employees...</div>
+        <div class="loading-state"><div class="spinner"></div><div>Loading employees...</div></div>
       </div>
     </div>
   </div>
@@ -907,6 +516,14 @@
       loadDepartmentAndBranchOptions();
     }
 
+    const navToggle = document.getElementById('nav-toggle');
+    const navLinks = document.getElementById('nav-links');
+    if (navToggle && navLinks) {
+      navToggle.addEventListener('click', function () {
+        navLinks.classList.toggle('open');
+      });
+    }
+
     async function loadDepartmentAndBranchOptions() {
       try {
         const [deptResponse, branchResponse] = await Promise.all([
@@ -999,7 +616,10 @@
         allEmployees = await response.json();
         renderEmployees();
       } catch (err) {
-        window.location.href = 'login.html';
+        content.innerHTML = '<div class="error-state"><div>' +
+          escapeHtml(err.message || 'Could not load employees.') +
+          '</div><button type="button" class="btn-secondary" id="retry-employees-button">Retry</button></div>';
+        document.getElementById('retry-employees-button').addEventListener('click', loadEmployees);
       }
     }
 
@@ -1062,8 +682,8 @@
           '<td><span class="badge badge-docs">' + escapeHtml(docsCount) + '</span></td>' +
           '<td>' + kraHtml + '</td>' +
           '<td>' +
-          '<button type="button" class="btn-edit" data-id="' + escapeHtml(emp.id) + '">Edit</button>' +
-          '<button type="button" class="btn-delete" data-id="' + escapeHtml(emp.id) + '">Delete</button>' +
+          '<button type="button" class="btn-edit btn-row" data-id="' + escapeHtml(emp.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row" data-id="' + escapeHtml(emp.id) + '">Delete</button>' +
           '</td>' +
           '</tr>';
       }).join('');
