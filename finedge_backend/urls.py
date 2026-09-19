@@ -26,6 +26,8 @@ urlpatterns = [
     path('api/v1/positions/', include('positions.urls')),
     path('api/v1/', include('recruitment.urls')),
     path('api/v1/tasks/', include('tasks.urls')),
+    path('api/v1/', include('admin_studio.urls')),
+    path('api/v1/', include('workindia.urls')),
 ]
 
 if settings.DEBUG:

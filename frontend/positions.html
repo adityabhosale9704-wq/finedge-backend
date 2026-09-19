@@ -315,6 +315,8 @@
     <a href="positions.html" class="active">Employee IDs</a>
     <a href="recruitment.html">Recruitment</a>
     <a href="tasks.html">Tasks</a>
+    <a href="admin.html">Admin Studio</a>
+    <a href="workindia.html">WorkIndia Import</a>
   </div>
 
   <div class="container">
@@ -357,11 +359,15 @@
         </div>
         <div class="field">
           <label for="position-department">Department</label>
-          <input type="text" id="position-department" required>
+          <select id="position-department" required>
+            <option value="" disabled selected>Select department</option>
+          </select>
         </div>
         <div class="field">
           <label for="position-branch">Branch</label>
-          <input type="text" id="position-branch" required>
+          <select id="position-branch" required>
+            <option value="" disabled selected>Select branch</option>
+          </select>
         </div>
         <div class="field">
           <label for="position-status">Status</label>
@@ -409,11 +415,45 @@
     const token = localStorage.getItem('authToken');
     const POSITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/positions/';
     const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+    const DEPARTMENTS_API_BASE = 'http://127.0.0.1:8000/api/v1/departments/';
+    const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
 
     if (!token) {
       window.location.href = 'login.html';
     } else {
       loadPositions();
+      loadDepartmentAndBranchOptions();
+    }
+
+    async function loadDepartmentAndBranchOptions() {
+      try {
+        const [deptResponse, branchResponse] = await Promise.all([
+          fetch(DEPARTMENTS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch(BRANCHES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } })
+        ]);
+
+        if (!deptResponse.ok || !branchResponse.ok) {
+          return;
+        }
+
+        const departments = await deptResponse.json();
+        const branches = await branchResponse.json();
+
+        const departmentSelect = document.getElementById('position-department');
+        const branchSelect = document.getElementById('position-branch');
+
+        departmentSelect.innerHTML = '<option value="" disabled selected>Select department</option>' +
+          departments.map(function (d) {
+            return '<option value="' + d.name.replace(/"/g, '&quot;') + '">' + d.name + '</option>';
+          }).join('');
+
+        branchSelect.innerHTML = '<option value="" disabled selected>Select branch</option>' +
+          branches.map(function (b) {
+            return '<option value="' + b.name.replace(/"/g, '&quot;') + '">' + b.name + '</option>';
+          }).join('');
+      } catch (err) {
+        // Leave the placeholder options in place if master data can't be loaded.
+      }
     }
 
     let allPositions = [];

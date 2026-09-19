@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'positions',
     'recruitment',
     'tasks',
+    'admin_studio',
+    'workindia',
 ]
 
 MIDDLEWARE = [

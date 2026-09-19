@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WorkIndia Import</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f4f5f7;
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 32px 16px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .top-nav {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .top-nav a {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: #eef1f4;
+    color: #444;
+    font-size: 14px;
+    text-decoration: none;
+  }
+
+  .top-nav a:hover {
+    background: #e2e6ea;
+  }
+
+  .top-nav a.active {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    color: #1a1a1a;
+  }
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 17px;
+    color: #1a1a1a;
+  }
+
+  .form-error {
+    display: none;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: #fdecea;
+    color: #b71c1c;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .success-message {
+    display: none;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: #e6f4ea;
+    color: #1e7e34;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .upload-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
+    padding: 9px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #4a90e2;
+  }
+
+  button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    background: #3a7bc8;
+  }
+
+  .btn-secondary {
+    background: #e5e7eb;
+    color: #333;
+  }
+
+  .btn-secondary:hover {
+    background: #d5d8dc;
+  }
+
+  .btn-row {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+  }
+
+  th {
+    background: #f9fafb;
+    color: #555;
+    font-weight: 600;
+  }
+
+  tr:hover td {
+    background: #fafafa;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .chip-green {
+    background: #e6f4ea;
+    color: #1e7e34;
+  }
+
+  .chip-gray {
+    background: #eef1f4;
+    color: #888;
+  }
+
+  .message {
+    padding: 24px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    padding: 24px;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #444;
+  }
+
+  .field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .form-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="employees.html">Employees</a>
+    <a href="positions.html">Employee IDs</a>
+    <a href="recruitment.html">Recruitment</a>
+    <a href="tasks.html">Tasks</a>
+    <a href="admin.html">Admin Studio</a>
+    <a href="workindia.html" class="active">WorkIndia Import</a>
+  </div>
+
+  <div class="container">
+    <h1>WorkIndia Import</h1>
+  </div>
+
+  <div class="container">
+    <h2>Upload CSV</h2>
+    <div id="upload-error" class="form-error"></div>
+    <div id="upload-success" class="success-message"></div>
+    <div class="upload-row">
+      <input type="file" id="csv-file-input" accept=".csv">
+      <button type="button" class="btn-primary" id="import-button">Import</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="toolbar">
+      <h2 style="margin-bottom: 0;">Imported Candidates</h2>
+      <input type="text" id="search-input" class="search-input" placeholder="Search name, city, skills...">
+    </div>
+    <div id="page-error" class="form-error"></div>
+    <div id="workindia-content">
+      <div class="message">Loading imported candidates...</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="promote-modal-overlay">
+    <div class="modal-card">
+      <h2>Promote to Candidate</h2>
+      <div id="promote-form-error" class="form-error"></div>
+      <form id="promote-form">
+        <div class="field">
+          <label for="promote-requisition-select">Requisition</label>
+          <select id="promote-requisition-select" required></select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="promote-submit-button">Promote</button>
+          <button type="button" class="btn-secondary" id="promote-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const WORKINDIA_API_BASE = 'http://127.0.0.1:8000/api/v1/workindia/';
+    const REQUISITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/requisitions/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadWorkindia();
+    }
+
+    let allCandidates = [];
+    let searchTerm = '';
+    let searchDebounceTimer = null;
+
+    const pageError = document.getElementById('page-error');
+    const uploadError = document.getElementById('upload-error');
+    const uploadSuccess = document.getElementById('upload-success');
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    function showPageError(message) {
+      pageError.textContent = message;
+      pageError.style.display = 'block';
+    }
+
+    function hidePageError() {
+      pageError.textContent = '';
+      pageError.style.display = 'none';
+    }
+
+    async function loadWorkindia() {
+      const content = document.getElementById('workindia-content');
+      hidePageError();
+
+      try {
+        const url = searchTerm
+          ? WORKINDIA_API_BASE + '?q=' + encodeURIComponent(searchTerm)
+          : WORKINDIA_API_BASE;
+
+        const response = await fetch(url, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load imported candidates.');
+        }
+
+        allCandidates = await response.json();
+        renderWorkindiaTable();
+      } catch (err) {
+        content.innerHTML = '';
+        showPageError(err.message || 'Something went wrong.');
+      }
+    }
+
+    function renderWorkindiaTable() {
+      const content = document.getElementById('workindia-content');
+
+      if (allCandidates.length === 0) {
+        content.innerHTML = '<div class="message">No imported candidates found.</div>';
+        return;
+      }
+
+      const rows = allCandidates.map(function (cand) {
+        const statusChip = cand.promoted
+          ? '<span class="chip chip-green">Promoted</span>'
+          : '<span class="chip chip-gray">Not yet</span>';
+
+        const actionCell = cand.promoted
+          ? ''
+          : '<button type="button" class="btn-primary btn-row promote-btn" data-id="' + escapeHtml(cand.id) + '">Promote to Candidate</button>';
+
+        return '<tr>' +
+          '<td>' + escapeHtml(cand.full_name) + '</td>' +
+          '<td>' + escapeHtml(cand.mobile) + '</td>' +
+          '<td>' + escapeHtml(cand.city) + '</td>' +
+          '<td>' + escapeHtml(cand.qualification) + '</td>' +
+          '<td>' + escapeHtml(cand.relevant_experience || cand.experience_level) + '</td>' +
+          '<td>' + escapeHtml(cand.skills) + '</td>' +
+          '<td>' + statusChip + '</td>' +
+          '<td>' + actionCell + '</td>' +
+          '</tr>';
+      }).join('');
+
+      content.innerHTML =
+        '<table>' +
+        '<thead><tr><th>Name</th><th>Mobile</th><th>City</th><th>Qualification</th><th>Experience</th><th>Skills</th><th>Status</th><th>Actions</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>';
+
+      content.querySelectorAll('.promote-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openPromoteModal(btn.getAttribute('data-id'));
+        });
+      });
+    }
+
+    document.getElementById('search-input').addEventListener('input', function (event) {
+      searchTerm = event.target.value.trim();
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(loadWorkindia, 300);
+    });
+
+    // ---------- CSV import ----------
+
+    document.getElementById('import-button').addEventListener('click', handleImport);
+
+    async function handleImport() {
+      uploadError.style.display = 'none';
+      uploadSuccess.style.display = 'none';
+
+      const fileInput = document.getElementById('csv-file-input');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        uploadError.textContent = 'Please choose a CSV file first.';
+        uploadError.style.display = 'block';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const importButton = document.getElementById('import-button');
+      importButton.disabled = true;
+
+      try {
+        const response = await fetch(WORKINDIA_API_BASE + 'import/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: formData
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not import CSV file.');
+        }
+
+        const data = await response.json();
+        uploadSuccess.textContent = 'Imported ' + data.imported + ' candidate(s) successfully.';
+        uploadSuccess.style.display = 'block';
+        fileInput.value = '';
+        loadWorkindia();
+      } catch (err) {
+        uploadError.textContent = err.message || 'Something went wrong. Please try again.';
+        uploadError.style.display = 'block';
+      } finally {
+        importButton.disabled = false;
+      }
+    }
+
+    // ---------- Promote modal ----------
+
+    const promoteModalOverlay = document.getElementById('promote-modal-overlay');
+    const promoteForm = document.getElementById('promote-form');
+    const promoteFormError = document.getElementById('promote-form-error');
+    const promoteSubmitButton = document.getElementById('promote-submit-button');
+    const promoteCancelButton = document.getElementById('promote-cancel-button');
+    const promoteRequisitionSelect = document.getElementById('promote-requisition-select');
+
+    let promotingCandidateId = null;
+
+    promoteForm.addEventListener('submit', handlePromoteSubmit);
+    promoteCancelButton.addEventListener('click', closePromoteModal);
+    promoteModalOverlay.addEventListener('click', function (event) {
+      if (event.target === promoteModalOverlay) {
+        closePromoteModal();
+      }
+    });
+
+    async function openPromoteModal(candId) {
+      promotingCandidateId = candId;
+      promoteFormError.style.display = 'none';
+      promoteRequisitionSelect.innerHTML = '<option value="">Loading requisitions...</option>';
+      promoteModalOverlay.classList.add('open');
+
+      try {
+        const response = await fetch(REQUISITIONS_API_BASE, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load requisitions.');
+        }
+
+        const requisitions = await response.json();
+
+        if (requisitions.length === 0) {
+          promoteRequisitionSelect.innerHTML = '<option value="">No requisitions available</option>';
+          return;
+        }
+
+        promoteRequisitionSelect.innerHTML = requisitions.map(function (req) {
+          return '<option value="' + escapeHtml(req.id) + '">' +
+            escapeHtml(req.role) + ' — ' + escapeHtml(req.branch) + '</option>';
+        }).join('');
+      } catch (err) {
+        promoteFormError.textContent = err.message || 'Could not load requisitions.';
+        promoteFormError.style.display = 'block';
+      }
+    }
+
+    function closePromoteModal() {
+      promoteModalOverlay.classList.remove('open');
+      promoteForm.reset();
+      promotingCandidateId = null;
+    }
+
+    async function handlePromoteSubmit(event) {
+      event.preventDefault();
+      if (!promotingCandidateId) {
+        return;
+      }
+
+      const requisitionId = promoteRequisitionSelect.value;
+      if (!requisitionId) {
+        promoteFormError.textContent = 'Please select a requisition.';
+        promoteFormError.style.display = 'block';
+        return;
+      }
+
+      promoteSubmitButton.disabled = true;
+      promoteFormError.style.display = 'none';
+
+      try {
+        const response = await fetch(WORKINDIA_API_BASE + promotingCandidateId + '/promote/', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ requisition_id: requisitionId })
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not promote candidate.');
+        }
+
+        closePromoteModal();
+        loadWorkindia();
+      } catch (err) {
+        promoteFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        promoteFormError.style.display = 'block';
+      } finally {
+        promoteSubmitButton.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>

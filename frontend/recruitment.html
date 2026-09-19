@@ -373,6 +373,8 @@
     <a href="positions.html">Employee IDs</a>
     <a href="recruitment.html" class="active">Recruitment</a>
     <a href="tasks.html">Tasks</a>
+    <a href="admin.html">Admin Studio</a>
+    <a href="workindia.html">WorkIndia Import</a>
   </div>
 
   <div class="container">
@@ -435,7 +437,9 @@
           </div>
           <div class="field">
             <label for="req-branch">Branch</label>
-            <input type="text" id="req-branch" required>
+            <select id="req-branch" required>
+              <option value="" disabled selected>Select branch</option>
+            </select>
           </div>
           <div class="field">
             <label for="req-openings">Openings</label>
@@ -532,11 +536,30 @@
     const token = localStorage.getItem('authToken');
     const REQUISITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/requisitions/';
     const CANDIDATES_API_BASE = 'http://127.0.0.1:8000/api/v1/candidates/';
+    const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
 
     if (!token) {
       window.location.href = 'login.html';
     } else {
       loadAll();
+      loadBranchOptions();
+    }
+
+    async function loadBranchOptions() {
+      try {
+        const response = await fetch(BRANCHES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!response.ok) {
+          return;
+        }
+        const branches = await response.json();
+        const branchSelect = document.getElementById('req-branch');
+        branchSelect.innerHTML = '<option value="" disabled selected>Select branch</option>' +
+          branches.map(function (b) {
+            return '<option value="' + b.name.replace(/"/g, '&quot;') + '">' + b.name + '</option>';
+          }).join('');
+      } catch (err) {
+        // Leave the placeholder option in place if master data can't be loaded.
+      }
     }
 
     let allRequisitions = [];
