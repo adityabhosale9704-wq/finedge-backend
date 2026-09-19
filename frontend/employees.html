@@ -17,18 +17,216 @@
   }
 
   .container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
     background: #ffffff;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .top-nav {
+    max-width: 1000px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .top-nav a {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: #eef1f4;
+    color: #444;
+    font-size: 14px;
+    text-decoration: none;
+  }
+
+  .top-nav a:hover {
+    background: #e2e6ea;
+  }
+
+  .top-nav a.active {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  @media print {
+    .top-nav {
+      display: none !important;
+    }
   }
 
   h1 {
     margin: 0 0 20px;
     font-size: 22px;
     color: #1a1a1a;
+  }
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 17px;
+    color: #1a1a1a;
+  }
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: #1a1a1a;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 16px;
+  }
+
+  @media (max-width: 640px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .field label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #444;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .field input:focus,
+  .field select:focus {
+    outline: none;
+    border-color: #4a90e2;
+  }
+
+  .form-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    background: #3a7bc8;
+  }
+
+  .btn-secondary {
+    background: #e5e7eb;
+    color: #333;
+  }
+
+  .btn-secondary:hover {
+    background: #d5d8dc;
+  }
+
+  .btn-edit {
+    background: #eef1f4;
+    color: #1a1a1a;
+    padding: 5px 10px;
+    font-size: 13px;
+    margin-right: 6px;
+  }
+
+  .btn-edit:hover {
+    background: #dfe3e8;
+  }
+
+  .btn-delete {
+    background: #fdecea;
+    color: #b71c1c;
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+
+  .btn-delete:hover {
+    background: #f8d3d0;
+  }
+
+  .form-error {
+    display: none;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: #fdecea;
+    color: #b71c1c;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: #eef1f4;
+    color: #444;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+  }
+
+  .tab:hover {
+    background: #e2e6ea;
+  }
+
+  .tab.active {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  .tab.disabled-tab {
+    color: #9aa1a8;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
+    padding: 9px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #4a90e2;
   }
 
   table {
@@ -51,6 +249,10 @@
 
   tr:hover td {
     background: #fafafa;
+  }
+
+  tr.clickable-row {
+    cursor: pointer;
   }
 
   .status {
@@ -76,25 +278,617 @@
     color: #555;
   }
 
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .badge-docs {
+    background: #eef1f4;
+    color: #444;
+  }
+
+  .badge-kra {
+    background: #e8eefb;
+    color: #2a5db0;
+  }
+
+  .badge-new {
+    background: #fff4e0;
+    color: #a06400;
+  }
+
+  .badge-not-uploaded {
+    background: #eef1f4;
+    color: #888;
+  }
+
+  .badge-doc-pending {
+    background: #fff4e0;
+    color: #a06400;
+  }
+
+  .badge-doc-ok {
+    background: #e6f4ea;
+    color: #1e7e34;
+  }
+
+  .btn-view {
+    background: #eef1f4;
+    color: #1a1a1a;
+    padding: 5px 10px;
+    font-size: 13px;
+    text-decoration: none;
+    border-radius: 4px;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  .btn-view:hover {
+    background: #dfe3e8;
+  }
+
+  .doc-summary {
+    font-size: 13px;
+    color: #666;
+  }
+
   .message {
     padding: 24px;
     text-align: center;
     color: #666;
     font-size: 14px;
   }
+
+  /* Profile view */
+
+  .avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #4a90e2;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .avatar-small {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .profile-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .profile-identity {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .profile-name {
+    font-size: 19px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .profile-subtitle {
+    font-size: 13px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  .profile-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 760px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .kpi-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .kpi-sub {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  .profile-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+  }
+
+  .kv-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 24px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 640px) {
+    .kv-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .kv-item {
+    border-bottom: 1px solid #f0f1f3;
+    padding-bottom: 8px;
+  }
+
+  .kv-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 3px;
+  }
+
+  .kv-value {
+    font-size: 14px;
+    color: #1a1a1a;
+  }
+
+  .section-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .icon-btn {
+    background: transparent;
+    padding: 4px 8px;
+    font-size: 14px;
+    border-radius: 4px;
+  }
+
+  .icon-btn:hover {
+    background: #eef1f4;
+  }
+
+  .icon-btn.icon-delete:hover {
+    background: #fdecea;
+  }
+
+  /* Modal */
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    padding: 24px;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  @media print {
+    .container:not(#profile-view) {
+      display: none !important;
+    }
+    .profile-actions,
+    .search-input,
+    .toolbar {
+      display: none !important;
+    }
+  }
+
+  /* Letters tab */
+
+  .letters-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .letters-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .saved-letters-list {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+  }
+
+  .saved-letters-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f1f3;
+    font-size: 14px;
+  }
+
+  .letterhead {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .letterhead h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+  }
+
+  .letter-meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 16px;
+  }
+
+  .letter-title {
+    text-align: center;
+    text-decoration: underline;
+    margin: 0 0 16px;
+    font-size: 15px;
+  }
+
+  .letter-body p {
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0 0 12px;
+  }
+
+  .letter-preview-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 24px;
+  }
+
+  @media print {
+    body.printing-letter .profile-header,
+    body.printing-letter .kpi-grid,
+    body.printing-letter .profile-tabs,
+    body.printing-letter #letter-generate-panel,
+    body.printing-letter #saved-letters-section {
+      display: none !important;
+    }
+    body.printing-letter .letter-preview-card {
+      border: none;
+      padding: 0;
+    }
+  }
 </style>
 </head>
 <body>
 
+  <div class="top-nav">
+    <a href="employees.html" class="active">Employees</a>
+    <a href="positions.html">Employee IDs</a>
+    <a href="recruitment.html">Recruitment</a>
+  </div>
+
   <div class="container">
-    <h1>Employees</h1>
-    <div id="content">
-      <div class="message">Loading employees...</div>
+    <h2 id="form-title">Add Employee</h2>
+    <div id="form-error" class="form-error"></div>
+    <form id="employee-form">
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="field">
+          <label for="phone">Phone</label>
+          <input type="text" id="phone" name="phone" required>
+        </div>
+        <div class="field">
+          <label for="department">Department</label>
+          <input type="text" id="department" name="department" required>
+        </div>
+        <div class="field">
+          <label for="designation">Designation</label>
+          <input type="text" id="designation" name="designation" required>
+        </div>
+        <div class="field">
+          <label for="branch">Branch</label>
+          <input type="text" id="branch" name="branch" required>
+        </div>
+        <div class="field">
+          <label for="date_of_joining">Date of Joining</label>
+          <input type="date" id="date_of_joining" name="date_of_joining" required>
+        </div>
+        <div class="field">
+          <label for="ctc">CTC</label>
+          <input type="number" id="ctc" name="ctc" step="any" required>
+        </div>
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status" name="status" required>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="blood_group">Blood Group</label>
+          <input type="text" id="blood_group" name="blood_group" maxlength="5" placeholder="e.g. O+">
+        </div>
+        <div class="field">
+          <label for="kra_score">KRA Score</label>
+          <input type="number" id="kra_score" name="kra_score" min="0" max="100" placeholder="e.g. 85">
+        </div>
+        <div class="field">
+          <label for="dob">Date of Birth</label>
+          <input type="date" id="dob" name="dob">
+        </div>
+        <div class="field">
+          <label for="marital_status">Marital Status</label>
+          <select id="marital_status" name="marital_status">
+            <option value="">Select</option>
+            <option value="Single">Single</option>
+            <option value="Married">Married</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 style="margin-top: 24px;">Statutory &amp; Bank</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label for="pan">PAN</label>
+          <input type="text" id="pan" name="pan" placeholder="e.g. ABCDE1234F">
+        </div>
+        <div class="field">
+          <label for="aadhaar">Aadhaar</label>
+          <input type="text" id="aadhaar" name="aadhaar" placeholder="e.g. 1234 5678 9012">
+        </div>
+        <div class="field">
+          <label for="uan">UAN (PF)</label>
+          <input type="text" id="uan" name="uan">
+        </div>
+        <div class="field">
+          <label for="esic">ESIC IP No.</label>
+          <input type="text" id="esic" name="esic">
+        </div>
+        <div class="field">
+          <label for="bank_account">Salary Bank Account</label>
+          <input type="text" id="bank_account" name="bank_account">
+        </div>
+      </div>
+      <div class="form-actions">
+        <label><input type="checkbox" id="pf_nomination_on_file"> PF nomination on file</label>
+        <label><input type="checkbox" id="gratuity_nomination_on_file"> Gratuity nomination on file</label>
+        <label><input type="checkbox" id="policy_accepted"> Policy handbook accepted</label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" id="submit-button" class="btn-primary">Add Employee</button>
+        <button type="button" id="cancel-edit-button" class="btn-secondary" style="display: none;">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="list-view">
+    <div class="container">
+      <h1>Employees</h1>
+      <div class="toolbar">
+        <div class="tabs">
+          <button type="button" class="tab active" id="tab-active" data-tab="active">Active (0)</button>
+          <button type="button" class="tab" id="tab-leaver" data-tab="leaver">Leaver (0)</button>
+        </div>
+        <input type="text" id="search-input" class="search-input" placeholder="Search employees...">
+      </div>
+      <div id="content">
+        <div class="message">Loading employees...</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="profile-view" class="container" style="display: none;">
+    <div class="profile-header">
+      <div class="profile-identity">
+        <div class="avatar" id="profile-avatar"></div>
+        <div>
+          <div class="profile-name" id="profile-name"></div>
+          <div class="profile-subtitle" id="profile-subtitle"></div>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <button type="button" class="btn-secondary" id="profile-back-button">&larr; Back</button>
+        <button type="button" class="btn-secondary" id="profile-print-button">&#128424; Print</button>
+        <button type="button" class="btn-secondary" id="profile-edit-button">&#9998; Edit</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Date of Joining</div>
+        <div class="kpi-value" id="kpi-doj">&mdash;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">CTC</div>
+        <div class="kpi-value" id="kpi-ctc">&mdash;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Blood Group</div>
+        <div class="kpi-value" id="kpi-blood-group">&mdash;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Emergency Contact</div>
+        <div class="kpi-value" id="kpi-emergency-name">&mdash;</div>
+        <div class="kpi-sub" id="kpi-emergency-phone"></div>
+      </div>
+    </div>
+
+    <div class="profile-tabs">
+      <button type="button" class="tab active" id="ptab-personal" data-ptab="personal">Personal &amp; Family</button>
+      <button type="button" class="tab" id="ptab-documents" data-ptab="documents">Document Vault</button>
+      <button type="button" class="tab" id="ptab-statutory" data-ptab="statutory">Statutory &amp; Bank</button>
+      <button type="button" class="tab" id="ptab-facilities" data-ptab="facilities">Facilities &amp; Assets</button>
+      <button type="button" class="tab" id="ptab-letters" data-ptab="letters">Letters</button>
+    </div>
+
+    <div id="profile-tab-content"></div>
+  </div>
+
+  <div class="modal-overlay" id="family-modal-overlay">
+    <div class="modal-card">
+      <h2 id="family-modal-title">Add Family Member</h2>
+      <div id="family-form-error" class="form-error"></div>
+      <form id="family-form">
+        <div class="field">
+          <label for="family-relation">Relation</label>
+          <input type="text" id="family-relation" required>
+        </div>
+        <div class="field">
+          <label for="family-name">Name</label>
+          <input type="text" id="family-name" required>
+        </div>
+        <div class="field">
+          <label for="family-dob">Date of Birth</label>
+          <input type="date" id="family-dob">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="family-submit-button">Add Member</button>
+          <button type="button" class="btn-secondary" id="family-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="facility-modal-overlay">
+    <div class="modal-card">
+      <h2 id="facility-modal-title">Add Facility/Asset</h2>
+      <div id="facility-form-error" class="form-error"></div>
+      <form id="facility-form">
+        <div class="field">
+          <label for="facility-item">Item</label>
+          <input type="text" id="facility-item" placeholder="e.g. Company Laptop" required>
+        </div>
+        <div class="field">
+          <label for="facility-issued-date">Issued Date</label>
+          <input type="date" id="facility-issued-date">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="facility-submit-button">Add Item</button>
+          <button type="button" class="btn-secondary" id="facility-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="doc-upload-modal-overlay">
+    <div class="modal-card">
+      <h2 id="doc-upload-modal-title">Upload Document</h2>
+      <div id="doc-upload-form-error" class="form-error"></div>
+      <form id="doc-upload-form">
+        <div class="field">
+          <label for="doc-upload-name">Name</label>
+          <input type="text" id="doc-upload-name" required>
+        </div>
+        <div class="field">
+          <label for="doc-upload-type">Document Type</label>
+          <input type="text" id="doc-upload-type" placeholder="e.g. Identity">
+        </div>
+        <div class="field">
+          <label for="doc-upload-file">File</label>
+          <input type="file" id="doc-upload-file" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="doc-upload-submit-button">Upload</button>
+          <button type="button" class="btn-secondary" id="doc-upload-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="doc-edit-modal-overlay">
+    <div class="modal-card">
+      <h2>Edit Document</h2>
+      <div id="doc-edit-form-error" class="form-error"></div>
+      <form id="doc-edit-form">
+        <div class="field">
+          <label for="doc-edit-name">Name</label>
+          <input type="text" id="doc-edit-name" required>
+        </div>
+        <div class="field">
+          <label for="doc-edit-type">Document Type</label>
+          <input type="text" id="doc-edit-type" placeholder="e.g. Identity">
+        </div>
+        <div class="field">
+          <label for="doc-edit-status">Status</label>
+          <select id="doc-edit-status">
+            <option value="Pending verification">Pending verification</option>
+            <option value="Verified">Verified</option>
+            <option value="On file">On file</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="doc-edit-submit-button">Update Document</button>
+          <button type="button" class="btn-secondary" id="doc-edit-cancel-button">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
   <script>
     const token = localStorage.getItem('authToken');
+    const API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
 
     if (!token) {
       window.location.href = 'login.html';
@@ -102,11 +896,48 @@
       loadEmployees();
     }
 
+    const form = document.getElementById('employee-form');
+    const formTitle = document.getElementById('form-title');
+    const formError = document.getElementById('form-error');
+    const submitButton = document.getElementById('submit-button');
+    const cancelEditButton = document.getElementById('cancel-edit-button');
+    const searchInput = document.getElementById('search-input');
+    const tabActive = document.getElementById('tab-active');
+    const tabLeaver = document.getElementById('tab-leaver');
+
+    const listView = document.getElementById('list-view');
+    const profileView = document.getElementById('profile-view');
+
+    let editingId = null;
+    let allEmployees = [];
+    let currentTab = 'active';
+    let searchTerm = '';
+
+    form.addEventListener('submit', handleSubmit);
+    cancelEditButton.addEventListener('click', exitEditMode);
+    searchInput.addEventListener('input', function () {
+      searchTerm = searchInput.value.trim().toLowerCase();
+      renderEmployees();
+    });
+    tabActive.addEventListener('click', function () {
+      setTab('active');
+    });
+    tabLeaver.addEventListener('click', function () {
+      setTab('leaver');
+    });
+
+    function setTab(tab) {
+      currentTab = tab;
+      tabActive.classList.toggle('active', tab === 'active');
+      tabLeaver.classList.toggle('active', tab === 'leaver');
+      renderEmployees();
+    }
+
     async function loadEmployees() {
       const content = document.getElementById('content');
 
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/v1/employees/', {
+        const response = await fetch(API_BASE, {
           method: 'GET',
           headers: {
             'Authorization': 'Bearer ' + token
@@ -123,15 +954,45 @@
           throw new Error('Failed to load employees.');
         }
 
-        const employees = await response.json();
-        renderEmployees(employees);
+        allEmployees = await response.json();
+        renderEmployees();
       } catch (err) {
         window.location.href = 'login.html';
       }
     }
 
-    function renderEmployees(employees) {
+    function isActiveStatus(status) {
+      return String(status || '').toLowerCase() === 'active';
+    }
+
+    function updateTabCounts() {
+      const activeCount = allEmployees.filter(function (e) { return isActiveStatus(e.status); }).length;
+      const leaverCount = allEmployees.length - activeCount;
+      tabActive.textContent = 'Active (' + activeCount + ')';
+      tabLeaver.textContent = 'Leaver (' + leaverCount + ')';
+    }
+
+    function getFilteredEmployees() {
+      let list = allEmployees.filter(function (e) {
+        return currentTab === 'active' ? isActiveStatus(e.status) : !isActiveStatus(e.status);
+      });
+
+      if (searchTerm) {
+        list = list.filter(function (e) {
+          return [e.name, e.department, e.designation, e.branch].some(function (field) {
+            return String(field || '').toLowerCase().indexOf(searchTerm) !== -1;
+          });
+        });
+      }
+
+      return list;
+    }
+
+    function renderEmployees() {
       const content = document.getElementById('content');
+
+      updateTabCounts();
+      const employees = getFilteredEmployees();
 
       if (!employees || employees.length === 0) {
         content.innerHTML = '<div class="message">No employees found.</div>';
@@ -139,24 +1000,230 @@
       }
 
       const rows = employees.map(function (emp) {
-        const statusClass = emp.status === 'active'
+        const statusClass = isActiveStatus(emp.status)
           ? 'status-active'
-          : (emp.status === 'inactive' ? 'status-inactive' : 'status-other');
+          : (String(emp.status || '').toLowerCase() === 'inactive' ? 'status-inactive' : 'status-other');
 
-        return '<tr>' +
+        const bloodGroup = emp.blood_group ? escapeHtml(emp.blood_group) : '&mdash;';
+        const docsCount = emp.docs_count !== undefined && emp.docs_count !== null ? emp.docs_count : 0;
+        const kraHtml = (emp.kra_score !== undefined && emp.kra_score !== null)
+          ? '<span class="badge badge-kra">' + escapeHtml(emp.kra_score) + '/100</span>'
+          : '<span class="badge badge-new">New</span>';
+
+        return '<tr class="clickable-row" data-row-id="' + escapeHtml(emp.id) + '">' +
           '<td>' + escapeHtml(emp.name) + '</td>' +
           '<td>' + escapeHtml(emp.department) + '</td>' +
           '<td>' + escapeHtml(emp.designation) + '</td>' +
           '<td>' + escapeHtml(emp.branch) + '</td>' +
           '<td><span class="status ' + statusClass + '">' + escapeHtml(emp.status) + '</span></td>' +
+          '<td>' + bloodGroup + '</td>' +
+          '<td><span class="badge badge-docs">' + escapeHtml(docsCount) + '</span></td>' +
+          '<td>' + kraHtml + '</td>' +
+          '<td>' +
+          '<button type="button" class="btn-edit" data-id="' + escapeHtml(emp.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete" data-id="' + escapeHtml(emp.id) + '">Delete</button>' +
+          '</td>' +
           '</tr>';
       }).join('');
 
       content.innerHTML =
         '<table>' +
-        '<thead><tr><th>Name</th><th>Department</th><th>Designation</th><th>Branch</th><th>Status</th></tr></thead>' +
+        '<thead><tr>' +
+        '<th>Name</th><th>Department</th><th>Designation</th><th>Branch</th><th>Status</th>' +
+        '<th>Blood Group</th><th>Docs</th><th>KRA</th><th>Actions</th>' +
+        '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
         '</table>';
+
+      content.querySelectorAll('.btn-edit').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          enterEditMode(btn.getAttribute('data-id'));
+        });
+      });
+
+      content.querySelectorAll('.btn-delete').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          handleDelete(btn.getAttribute('data-id'));
+        });
+      });
+
+      content.querySelectorAll('tr.clickable-row').forEach(function (row) {
+        row.addEventListener('click', function () {
+          openProfile(row.getAttribute('data-row-id'));
+        });
+      });
+    }
+
+    function fillEmployeeForm(employee) {
+      document.getElementById('name').value = employee.name || '';
+      document.getElementById('email').value = employee.email || '';
+      document.getElementById('phone').value = employee.phone || '';
+      document.getElementById('department').value = employee.department || '';
+      document.getElementById('designation').value = employee.designation || '';
+      document.getElementById('branch').value = employee.branch || '';
+      document.getElementById('date_of_joining').value = employee.date_of_joining || '';
+      document.getElementById('ctc').value = employee.ctc !== undefined ? employee.ctc : '';
+      document.getElementById('status').value = employee.status || 'active';
+      document.getElementById('blood_group').value = employee.blood_group || '';
+      document.getElementById('kra_score').value = (employee.kra_score !== undefined && employee.kra_score !== null)
+        ? employee.kra_score
+        : '';
+      document.getElementById('dob').value = employee.dob || '';
+      document.getElementById('marital_status').value = employee.marital_status || '';
+      document.getElementById('pan').value = employee.pan || '';
+      document.getElementById('aadhaar').value = employee.aadhaar || '';
+      document.getElementById('uan').value = employee.uan || '';
+      document.getElementById('esic').value = employee.esic || '';
+      document.getElementById('bank_account').value = employee.bank_account || '';
+      document.getElementById('pf_nomination_on_file').checked = !!employee.pf_nomination_on_file;
+      document.getElementById('gratuity_nomination_on_file').checked = !!employee.gratuity_nomination_on_file;
+      document.getElementById('policy_accepted').checked = !!employee.policy_accepted;
+    }
+
+    function enterEditMode(id) {
+      const employee = allEmployees.find(function (e) { return e.id === id; })
+        || (currentProfileEmployee && currentProfileEmployee.id === id ? currentProfileEmployee : null);
+      if (!employee) {
+        return;
+      }
+
+      editingId = id;
+      formTitle.textContent = 'Edit Employee';
+      submitButton.textContent = 'Update Employee';
+      cancelEditButton.style.display = 'inline-block';
+
+      fillEmployeeForm(employee);
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function exitEditMode() {
+      editingId = null;
+      formTitle.textContent = 'Add Employee';
+      submitButton.textContent = 'Add Employee';
+      cancelEditButton.style.display = 'none';
+      form.reset();
+      hideFormError();
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      hideFormError();
+      submitButton.disabled = true;
+
+      const kraValue = document.getElementById('kra_score').value;
+
+      const payload = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        department: document.getElementById('department').value,
+        designation: document.getElementById('designation').value,
+        branch: document.getElementById('branch').value,
+        date_of_joining: document.getElementById('date_of_joining').value,
+        ctc: parseFloat(document.getElementById('ctc').value),
+        status: document.getElementById('status').value,
+        blood_group: document.getElementById('blood_group').value,
+        kra_score: kraValue === '' ? null : parseInt(kraValue, 10),
+        dob: document.getElementById('dob').value || null,
+        marital_status: document.getElementById('marital_status').value,
+        pan: document.getElementById('pan').value,
+        aadhaar: document.getElementById('aadhaar').value,
+        uan: document.getElementById('uan').value,
+        esic: document.getElementById('esic').value,
+        bank_account: document.getElementById('bank_account').value,
+        pf_nomination_on_file: document.getElementById('pf_nomination_on_file').checked,
+        gratuity_nomination_on_file: document.getElementById('gratuity_nomination_on_file').checked,
+        policy_accepted: document.getElementById('policy_accepted').checked
+      };
+
+      const isEditing = editingId !== null;
+      const savedId = editingId;
+      const url = isEditing ? API_BASE + editingId + '/' : API_BASE;
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not save employee.');
+        }
+
+        exitEditMode();
+        await loadEmployees();
+
+        if (savedId && currentProfileEmployee && currentProfileEmployee.id === savedId) {
+          await refreshProfile();
+        }
+      } catch (err) {
+        showFormError(err.message || 'Something went wrong. Please try again.');
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+
+    async function handleDelete(id) {
+      const confirmed = confirm('Are you sure you want to delete this employee?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(API_BASE + id + '/', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok && response.status !== 204) {
+          throw new Error('Could not delete employee.');
+        }
+
+        if (editingId === id) {
+          exitEditMode();
+        }
+
+        if (currentProfileEmployee && currentProfileEmployee.id === id) {
+          closeProfile();
+        }
+
+        loadEmployees();
+      } catch (err) {
+        showFormError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    function showFormError(message) {
+      formError.textContent = message;
+      formError.style.display = 'block';
+    }
+
+    function hideFormError() {
+      formError.textContent = '';
+      formError.style.display = 'none';
     }
 
     function escapeHtml(value) {
@@ -166,6 +1233,1270 @@
       const div = document.createElement('div');
       div.textContent = String(value);
       return div.innerHTML;
+    }
+
+    // ---------- Profile view ----------
+
+    let currentProfileEmployee = null;
+    let currentProfileTab = 'personal';
+
+    const profileBackButton = document.getElementById('profile-back-button');
+    const profilePrintButton = document.getElementById('profile-print-button');
+    const profileEditButton = document.getElementById('profile-edit-button');
+    const profileTabButtons = document.querySelectorAll('[data-ptab]');
+
+    profileBackButton.addEventListener('click', closeProfile);
+    profilePrintButton.addEventListener('click', function () {
+      window.print();
+    });
+    profileEditButton.addEventListener('click', function () {
+      if (currentProfileEmployee) {
+        enterEditMode(currentProfileEmployee.id);
+      }
+    });
+
+    profileTabButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setProfileTab(btn.getAttribute('data-ptab'));
+      });
+    });
+
+    function getInitials(name) {
+      const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 0) {
+        return '?';
+      }
+      if (parts.length === 1) {
+        return parts[0].charAt(0).toUpperCase();
+      }
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+
+    function formatCurrency(value) {
+      const number = Number(value);
+      if (isNaN(number)) {
+        return '&mdash;';
+      }
+      try {
+        return new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          maximumFractionDigits: 0
+        }).format(number);
+      } catch (err) {
+        return String(number);
+      }
+    }
+
+    async function fetchEmployee(id) {
+      const response = await fetch(API_BASE + id + '/', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to load employee.');
+      }
+
+      return response.json();
+    }
+
+    async function openProfile(id) {
+      try {
+        const employee = await fetchEmployee(id);
+        if (!employee) {
+          return;
+        }
+        currentProfileEmployee = employee;
+        currentProfileTab = 'personal';
+        listView.style.display = 'none';
+        profileView.style.display = 'block';
+        renderProfile();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err) {
+        window.location.href = 'login.html';
+      }
+    }
+
+    async function refreshProfile() {
+      if (!currentProfileEmployee) {
+        return;
+      }
+      try {
+        const employee = await fetchEmployee(currentProfileEmployee.id);
+        if (!employee) {
+          return;
+        }
+        currentProfileEmployee = employee;
+        renderProfile();
+      } catch (err) {
+        // If the employee can no longer be fetched, fall back to the list view.
+        closeProfile();
+      }
+    }
+
+    function closeProfile() {
+      currentProfileEmployee = null;
+      profileView.style.display = 'none';
+      listView.style.display = 'block';
+      loadEmployees();
+    }
+
+    function setProfileTab(tab) {
+      currentProfileTab = tab;
+      profileTabButtons.forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-ptab') === tab);
+      });
+      renderProfileTabContent();
+    }
+
+    function renderProfile() {
+      if (!currentProfileEmployee) {
+        return;
+      }
+      const emp = currentProfileEmployee;
+
+      document.getElementById('profile-avatar').textContent = getInitials(emp.name);
+      document.getElementById('profile-name').textContent = emp.name || '';
+      document.getElementById('profile-subtitle').textContent =
+        [emp.designation, emp.department, emp.branch, emp.id].filter(Boolean).join(' · ');
+
+      document.getElementById('kpi-doj').textContent = emp.date_of_joining || '—';
+      document.getElementById('kpi-ctc').innerHTML = formatCurrency(emp.ctc);
+      document.getElementById('kpi-blood-group').textContent = emp.blood_group || '—';
+
+      if (emp.emergency_contact_name) {
+        document.getElementById('kpi-emergency-name').textContent = emp.emergency_contact_name;
+        document.getElementById('kpi-emergency-phone').textContent = emp.emergency_contact_phone || '';
+      } else {
+        document.getElementById('kpi-emergency-name').textContent = '—';
+        document.getElementById('kpi-emergency-phone').textContent = '';
+      }
+
+      profileTabButtons.forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-ptab') === currentProfileTab);
+      });
+
+      renderProfileTabContent();
+    }
+
+    function renderProfileTabContent() {
+      const container = document.getElementById('profile-tab-content');
+      if (!currentProfileEmployee) {
+        return;
+      }
+
+      if (currentProfileTab === 'statutory') {
+        renderStatutoryTab(container);
+        return;
+      }
+
+      if (currentProfileTab === 'facilities') {
+        renderFacilitiesTab(container);
+        return;
+      }
+
+      if (currentProfileTab === 'documents') {
+        renderDocumentsTab(container);
+        return;
+      }
+
+      if (currentProfileTab === 'letters') {
+        renderLettersTab(container);
+        return;
+      }
+
+      if (currentProfileTab !== 'personal') {
+        container.innerHTML = '<div class="message">Coming soon</div>';
+        return;
+      }
+
+      const emp = currentProfileEmployee;
+      const family = emp.family || [];
+
+      const familyRows = family.length === 0
+        ? '<tr><td colspan="4" class="message">No family members added yet.</td></tr>'
+        : family.map(function (member) {
+          return '<tr>' +
+            '<td>' + escapeHtml(member.relation) + '</td>' +
+            '<td>' + escapeHtml(member.name) + '</td>' +
+            '<td>' + (member.dob ? escapeHtml(member.dob) : '&mdash;') + '</td>' +
+            '<td>' +
+            '<button type="button" class="icon-btn icon-edit" data-family-id="' + escapeHtml(member.id) + '" title="Edit">&#9998;</button>' +
+            '<button type="button" class="icon-btn icon-delete" data-family-id="' + escapeHtml(member.id) + '" title="Delete">&#128465;</button>' +
+            '</td>' +
+            '</tr>';
+        }).join('');
+
+      container.innerHTML =
+        '<div class="section-heading-row">' +
+        '<h3 style="margin-bottom: 0;">Personal details</h3>' +
+        '<button type="button" class="btn-secondary" id="edit-personal-button">&#9998; Edit personal details</button>' +
+        '</div>' +
+        '<div class="kv-grid">' +
+        '<div class="kv-item"><div class="kv-label">Date of birth</div><div class="kv-value">' + (emp.dob ? escapeHtml(emp.dob) : '&mdash;') + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">Marital status</div><div class="kv-value">' + (emp.marital_status ? escapeHtml(emp.marital_status) : '&mdash;') + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">Mobile</div><div class="kv-value">' + (emp.phone ? escapeHtml(emp.phone) : '&mdash;') + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">Official email</div><div class="kv-value">' + (emp.email ? escapeHtml(emp.email) : '&mdash;') + '</div></div>' +
+        '</div>' +
+        '<div class="section-heading-row">' +
+        '<h3 style="margin-bottom: 0;">Family members</h3>' +
+        '</div>' +
+        '<table>' +
+        '<thead><tr><th>Relation</th><th>Name</th><th>DOB</th><th>Actions</th></tr></thead>' +
+        '<tbody>' + familyRows + '</tbody>' +
+        '</table>' +
+        '<div class="form-actions">' +
+        '<button type="button" class="btn-secondary" id="add-family-button">+ Add family member</button>' +
+        '</div>';
+
+      document.getElementById('edit-personal-button').addEventListener('click', function () {
+        enterEditMode(emp.id);
+      });
+
+      document.getElementById('add-family-button').addEventListener('click', function () {
+        openFamilyModal('add', null);
+      });
+
+      container.querySelectorAll('.icon-edit').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const memberId = btn.getAttribute('data-family-id');
+          const member = family.find(function (m) { return m.id === memberId; });
+          if (member) {
+            openFamilyModal('edit', member);
+          }
+        });
+      });
+
+      container.querySelectorAll('.icon-delete').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleFamilyDelete(btn.getAttribute('data-family-id'));
+        });
+      });
+    }
+
+    function renderStatutoryTab(container) {
+      const emp = currentProfileEmployee;
+
+      const yesOrDash = function (value) {
+        return value ? '&#10003;' : '&mdash;';
+      };
+
+      const policyHtml = emp.policy_accepted
+        ? '<span style="color: #1e7e34;">&#10003; e-Signed</span>'
+        : '<span style="color: #a06400;">&#9888; Pending</span>';
+
+      container.innerHTML =
+        '<div class="section-heading-row">' +
+        '<h3 style="margin-bottom: 0;">Statutory &amp; bank details</h3>' +
+        '<button type="button" class="btn-secondary" id="edit-statutory-button">&#9998; Edit statutory &amp; bank details</button>' +
+        '</div>' +
+        '<div class="kv-grid">' +
+        '<div class="kv-item"><div class="kv-label">PAN</div><div class="kv-value">' + (emp.pan ? escapeHtml(emp.pan) : '&mdash;') + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">Aadhaar</div><div class="kv-value">' + (emp.aadhaar ? escapeHtml(emp.aadhaar) : '&mdash;') + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">UAN (PF)</div><div class="kv-value">' + (emp.uan ? escapeHtml(emp.uan) : '&mdash;') + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">ESIC IP No.</div><div class="kv-value">' + (emp.esic ? escapeHtml(emp.esic) : '&mdash;') + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">Salary Bank Account</div><div class="kv-value">' + (emp.bank_account ? escapeHtml(emp.bank_account) : '&mdash;') + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">PF Nomination</div><div class="kv-value">' + yesOrDash(emp.pf_nomination_on_file) + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">Gratuity Nomination</div><div class="kv-value">' + yesOrDash(emp.gratuity_nomination_on_file) + '</div></div>' +
+        '<div class="kv-item"><div class="kv-label">Policy Handbook</div><div class="kv-value">' + policyHtml + '</div></div>' +
+        '</div>';
+
+      document.getElementById('edit-statutory-button').addEventListener('click', function () {
+        enterEditMode(emp.id);
+      });
+    }
+
+    function renderFacilitiesTab(container) {
+      const emp = currentProfileEmployee;
+      const facilities = emp.facilities || [];
+
+      const facilityRows = facilities.length === 0
+        ? ''
+        : facilities.map(function (facility) {
+          return '<tr>' +
+            '<td>' + escapeHtml(facility.item) + '</td>' +
+            '<td>' + (facility.issued_date ? escapeHtml(facility.issued_date) : '&mdash;') + '</td>' +
+            '<td><span class="status status-active">Issued</span></td>' +
+            '<td>' +
+            '<button type="button" class="icon-btn icon-edit" data-facility-id="' + escapeHtml(facility.id) + '" title="Edit">&#9998;</button>' +
+            '<button type="button" class="icon-btn icon-delete" data-facility-id="' + escapeHtml(facility.id) + '" title="Delete">&#128465;</button>' +
+            '</td>' +
+            '</tr>';
+        }).join('');
+
+      const tableOrEmpty = facilities.length === 0
+        ? '<div class="message">No facilities or assets issued yet.</div>'
+        : '<table>' +
+          '<thead><tr><th>Item</th><th>Issued Date</th><th>Status</th><th>Actions</th></tr></thead>' +
+          '<tbody>' + facilityRows + '</tbody>' +
+          '</table>';
+
+      container.innerHTML =
+        '<div class="section-heading-row">' +
+        '<h3 style="margin-bottom: 0;">Facilities &amp; assets</h3>' +
+        '</div>' +
+        tableOrEmpty +
+        '<div class="form-actions">' +
+        '<button type="button" class="btn-secondary" id="add-facility-button">+ Add facility/asset</button>' +
+        '</div>';
+
+      document.getElementById('add-facility-button').addEventListener('click', function () {
+        openFacilityModal('add', null);
+      });
+
+      container.querySelectorAll('.icon-edit').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const facilityId = btn.getAttribute('data-facility-id');
+          const facility = facilities.find(function (f) { return f.id === facilityId; });
+          if (facility) {
+            openFacilityModal('edit', facility);
+          }
+        });
+      });
+
+      container.querySelectorAll('.icon-delete').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleFacilityDelete(btn.getAttribute('data-facility-id'));
+        });
+      });
+    }
+
+    const DOCUMENT_CHECKLIST = [
+      { category: 'Personal Identification', items: ['Aadhaar Card', 'PAN Card'] },
+      { category: 'Address Proof', items: ['Utility Bill'] },
+      {
+        category: 'Education',
+        items: ['Graduation Degree Certificate', 'Post-Graduation Certificate (if applicable)']
+      },
+      {
+        category: 'Employment & Experience',
+        items: [
+          'Latest Resume',
+          'Previous Employment Offer Letter',
+          'Relieving Letter',
+          'Experience Certificate',
+          "Last 3 Months' Salary Slips",
+          "Last 6 Months' Bank Statement"
+        ]
+      },
+      {
+        category: 'Financial & Tax',
+        items: ['Cancelled Cheque / Passbook Copy', 'Passport-size Photograph', 'UAN Number (PF Account)']
+      }
+    ];
+
+    function findDocByName(docs, itemName) {
+      return docs.find(function (d) {
+        return String(d.name || '').toLowerCase() === itemName.toLowerCase();
+      });
+    }
+
+    function renderDocStatusChip(docItem) {
+      if (!docItem) {
+        return '<span class="badge badge-not-uploaded">Not uploaded</span>';
+      }
+      const isPending = String(docItem.status || '').toLowerCase() === 'pending verification';
+      const chipClass = isPending ? 'badge-doc-pending' : 'badge-doc-ok';
+      return '<span class="badge ' + chipClass + '">' + escapeHtml(docItem.status) + '</span>';
+    }
+
+    function renderDocActions(docItem, itemName) {
+      if (!docItem) {
+        return '<button type="button" class="btn-secondary doc-upload-btn" data-name="' + escapeHtml(itemName) + '">+ Upload</button>';
+      }
+      return (
+        '<a href="' + escapeHtml(docItem.file_path) + '" target="_blank" rel="noopener noreferrer" class="btn-view">View</a>' +
+        '<button type="button" class="icon-btn icon-edit doc-edit-btn" data-doc-id="' + escapeHtml(docItem.id) + '" title="Edit">&#9998;</button>' +
+        '<button type="button" class="icon-btn icon-delete doc-delete-btn" data-doc-id="' + escapeHtml(docItem.id) + '" title="Delete">&#128465;</button>'
+      );
+    }
+
+    function renderDocTable(rows) {
+      return '<table>' +
+        '<thead><tr><th>Document</th><th>Status</th><th>Actions</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>';
+    }
+
+    function renderDocumentsTab(container) {
+      const emp = currentProfileEmployee;
+      const docs = emp.docs || [];
+
+      const allItemNames = DOCUMENT_CHECKLIST.reduce(function (acc, group) {
+        return acc.concat(group.items);
+      }, []);
+      const onFileCount = allItemNames.filter(function (name) {
+        return !!findDocByName(docs, name);
+      }).length;
+
+      const categoryBlocks = DOCUMENT_CHECKLIST.map(function (group) {
+        const rows = group.items.map(function (itemName) {
+          const docItem = findDocByName(docs, itemName);
+          return '<tr>' +
+            '<td>' + escapeHtml(itemName) + '</td>' +
+            '<td>' + renderDocStatusChip(docItem) + '</td>' +
+            '<td>' + renderDocActions(docItem, itemName) + '</td>' +
+            '</tr>';
+        }).join('');
+
+        return '<h3>' + escapeHtml(group.category) + '</h3>' + renderDocTable(rows);
+      }).join('');
+
+      const matchedNamesLower = allItemNames.map(function (n) { return n.toLowerCase(); });
+      const extraDocs = docs.filter(function (d) {
+        return matchedNamesLower.indexOf(String(d.name || '').toLowerCase()) === -1;
+      });
+
+      const extraSection = extraDocs.length === 0
+        ? ''
+        : '<h3>Other documents</h3>' + renderDocTable(extraDocs.map(function (docItem) {
+          return '<tr>' +
+            '<td>' + escapeHtml(docItem.name) + '</td>' +
+            '<td>' + renderDocStatusChip(docItem) + '</td>' +
+            '<td>' + renderDocActions(docItem, docItem.name) + '</td>' +
+            '</tr>';
+        }).join(''));
+
+      container.innerHTML =
+        '<div class="section-heading-row">' +
+        '<h3 style="margin-bottom: 0;">Document Vault</h3>' +
+        '<div class="doc-summary">' + onFileCount + '/' + allItemNames.length + ' on file</div>' +
+        '</div>' +
+        categoryBlocks +
+        extraSection +
+        '<div class="form-actions">' +
+        '<button type="button" class="btn-secondary" id="upload-another-doc-button">+ Upload another document</button>' +
+        '</div>';
+
+      container.querySelectorAll('.doc-upload-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openDocUploadModal(btn.getAttribute('data-name'));
+        });
+      });
+
+      document.getElementById('upload-another-doc-button').addEventListener('click', function () {
+        openDocUploadModal('');
+      });
+
+      container.querySelectorAll('.doc-edit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const docId = btn.getAttribute('data-doc-id');
+          const docItem = docs.find(function (d) { return d.id === docId; });
+          if (docItem) {
+            openDocEditModal(docItem);
+          }
+        });
+      });
+
+      container.querySelectorAll('.doc-delete-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleDocDelete(btn.getAttribute('data-doc-id'));
+        });
+      });
+    }
+
+    const LETTER_TYPES = [
+      'Offer Letter',
+      'Appointment Letter',
+      'Confirmation Letter',
+      'Increment Letter',
+      'Relieving-cum-Experience Letter'
+    ];
+
+    const LETTER_TYPE_CODES = {
+      'Offer Letter': 'OFFER',
+      'Appointment Letter': 'APPT',
+      'Confirmation Letter': 'CONF',
+      'Increment Letter': 'INCR',
+      'Relieving-cum-Experience Letter': 'REL'
+    };
+
+    const LETTER_TEMPLATES = {
+      'Offer Letter': function (f) {
+        return [
+          'Dear ' + f.name + ',',
+          'We are pleased to offer you the position of ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location, effective ' + f.doj + '. Your annual CTC will be ' + f.ctcFormatted + ', as detailed in the salary annexure below.',
+          'This offer is subject to a probation period of ' + f.probation + ' from your date of joining, during which your performance and conduct will be reviewed.',
+          'We look forward to welcoming you to the team. Please sign and return a copy of this letter to confirm your acceptance.'
+        ];
+      },
+      'Appointment Letter': function (f) {
+        return [
+          'Dear ' + f.name + ',',
+          'Further to your offer of employment, we are pleased to confirm your appointment as ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location, with effect from ' + f.doj + '.',
+          'Your annual CTC has been fixed at ' + f.ctcFormatted + ', as per the salary annexure enclosed with this letter. Your appointment is subject to a probation period of ' + f.probation + '.',
+          'We trust you will find your role challenging and rewarding, and we look forward to a long and successful association.'
+        ];
+      },
+      'Confirmation Letter': function (f) {
+        return [
+          'Dear ' + f.name + ',',
+          'We are pleased to inform you that, based on a satisfactory review of your performance and conduct during your probation period, your employment as ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location stands confirmed with effect from today.',
+          'Your annual CTC continues at ' + f.ctcFormatted + ', as per the enclosed salary annexure. All other terms of your employment remain unchanged.',
+          'We congratulate you on your confirmation and look forward to your continued contribution to the organization.'
+        ];
+      },
+      'Increment Letter': function (f) {
+        return [
+          'Dear ' + f.name + ',',
+          'We are pleased to inform you that, in recognition of your performance and contribution as ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location, your annual CTC has been revised to ' + f.ctcFormatted + ', effective from today.',
+          'The revised salary annexure is enclosed below for your reference.',
+          'We appreciate your continued dedication and look forward to your ongoing success with the organization.'
+        ];
+      },
+      'Relieving-cum-Experience Letter': function (f) {
+        return [
+          'Dear ' + f.name + ',',
+          'This is to certify that you were employed with us as ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location from ' + f.doj + ' until your last working day.',
+          'During your tenure, your annual CTC was ' + f.ctcFormatted + '. We found your conduct and performance to be satisfactory during your association with us.',
+          'We wish you the very best in your future endeavors.'
+        ];
+      }
+    };
+
+    function computeSalaryBreakup(ctc) {
+      const annualCtc = Number(ctc) || 0;
+      const monthlyGross = annualCtc / 12;
+      const basic = 0.5 * monthlyGross;
+      const hra = 0.4 * basic;
+      const employerPf = Math.min(0.12 * basic, 1800);
+      const netMonthly = monthlyGross - employerPf;
+      return { monthlyGross, basic, hra, employerPf, netMonthly };
+    }
+
+    function formatMoney(value) {
+      try {
+        return new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          maximumFractionDigits: 0
+        }).format(value);
+      } catch (err) {
+        return String(Math.round(value));
+      }
+    }
+
+    function buildLetterReferenceNumber(letterType) {
+      const code = LETTER_TYPE_CODES[letterType] || 'GEN';
+      const year = new Date().getFullYear();
+      const random = Math.floor(100 + Math.random() * 900);
+      return 'SFPL/HR/' + code + '/' + year + '/' + random;
+    }
+
+    function buildLetterHtml(fields) {
+      const paragraphs = LETTER_TEMPLATES[fields.letterType](fields);
+      const breakup = computeSalaryBreakup(fields.ctc);
+      const todayStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+
+      const salaryRow = function (label, monthly) {
+        return '<tr><td>' + label + '</td><td>' + formatMoney(monthly) + '</td><td>' + formatMoney(monthly * 12) + '</td></tr>';
+      };
+
+      return (
+        '<div class="letterhead"><h2>Sellon Finserv Pvt. Ltd.</h2></div>' +
+        '<div class="letter-meta-row"><span>Ref: ' + fields.refNumber + '</span><span>Date: ' + todayStr + '</span></div>' +
+        '<h3 class="letter-title">' + escapeHtml(fields.letterType) + '</h3>' +
+        '<div class="letter-body">' +
+        paragraphs.map(function (p) { return '<p>' + escapeHtml(p) + '</p>'; }).join('') +
+        '</div>' +
+        '<h3>Salary Annexure</h3>' +
+        '<table>' +
+        '<thead><tr><th>Component</th><th>Monthly</th><th>Annual</th></tr></thead>' +
+        '<tbody>' +
+        salaryRow('Basic', breakup.basic) +
+        salaryRow('HRA', breakup.hra) +
+        salaryRow('Employer PF Contribution', breakup.employerPf) +
+        salaryRow('Monthly Gross', breakup.monthlyGross) +
+        salaryRow('Net Monthly (take-home estimate)', breakup.netMonthly) +
+        '</tbody>' +
+        '</table>'
+      );
+    }
+
+    let currentLetterHtml = '';
+    let currentLetterMeta = null;
+
+    function renderLettersTab(container) {
+      const emp = currentProfileEmployee;
+      const savedLetters = (emp.docs || []).filter(function (d) {
+        return d.doc_type === 'Letter';
+      });
+
+      const savedListHtml = savedLetters.length === 0
+        ? '<div class="message">No letters generated yet.</div>'
+        : '<ul class="saved-letters-list">' + savedLetters.map(function (letter) {
+          const savedDate = letter.uploaded_at ? new Date(letter.uploaded_at).toLocaleDateString('en-IN') : '';
+          return '<li>' +
+            '<span>' + escapeHtml(letter.name) + (savedDate ? ' &mdash; ' + escapeHtml(savedDate) : '') + '</span>' +
+            '<span>' +
+            (letter.file_path ? '<a href="' + escapeHtml(letter.file_path) + '" target="_blank" rel="noopener noreferrer" class="btn-view">View</a>' : '') +
+            '<button type="button" class="icon-btn icon-delete letter-delete-btn" data-doc-id="' + escapeHtml(letter.id) + '" title="Delete">&#128465;</button>' +
+            '</span>' +
+            '</li>';
+        }).join('') + '</ul>';
+
+      container.innerHTML =
+        '<div id="saved-letters-section">' +
+        '<h3>Previously generated letters</h3>' +
+        savedListHtml +
+        '</div>' +
+        '<div class="letters-layout">' +
+        '<div id="letter-generate-panel">' +
+        '<h3>Generate a letter</h3>' +
+        '<div id="letter-form-error" class="form-error"></div>' +
+        '<div class="form-grid">' +
+        '<div class="field">' +
+        '<label for="letter-type">Letter Type</label>' +
+        '<select id="letter-type">' +
+        LETTER_TYPES.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>'; }).join('') +
+        '</select>' +
+        '</div>' +
+        '<div class="field"><label for="letter-name">Name</label><input type="text" id="letter-name" value="' + escapeHtml(emp.name || '') + '"></div>' +
+        '<div class="field"><label for="letter-designation">Designation</label><input type="text" id="letter-designation" value="' + escapeHtml(emp.designation || '') + '"></div>' +
+        '<div class="field"><label for="letter-department">Department</label><input type="text" id="letter-department" value="' + escapeHtml(emp.department || '') + '"></div>' +
+        '<div class="field"><label for="letter-branch">Branch</label><input type="text" id="letter-branch" value="' + escapeHtml(emp.branch || '') + '"></div>' +
+        '<div class="field"><label for="letter-doj">Date of Joining</label><input type="date" id="letter-doj" value="' + escapeHtml(emp.date_of_joining || '') + '"></div>' +
+        '<div class="field"><label for="letter-ctc">Annual CTC</label><input type="number" id="letter-ctc" step="any" value="' + escapeHtml(emp.ctc !== undefined ? emp.ctc : '') + '"></div>' +
+        '<div class="field">' +
+        '<label for="letter-probation">Probation Period</label>' +
+        '<select id="letter-probation">' +
+        '<option value="6 months">6 months</option>' +
+        '<option value="3 months">3 months</option>' +
+        '<option value="None">None</option>' +
+        '</select>' +
+        '</div>' +
+        '</div>' +
+        '<div class="form-actions">' +
+        '<button type="button" class="btn-primary" id="generate-letter-button">Generate</button>' +
+        '</div>' +
+        '</div>' +
+        '<div id="letter-preview-section" style="display: none;">' +
+        '<div class="letter-preview-card" id="letter-preview-container"></div>' +
+        '<div class="form-actions">' +
+        '<button type="button" class="btn-secondary" id="print-letter-button">&#128424; Print</button>' +
+        '<button type="button" class="btn-secondary" id="download-letter-button">&#11015; Download</button>' +
+        '<button type="button" class="btn-primary" id="save-letter-button">&#128190; Save to Employee Vault</button>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+
+      container.querySelectorAll('.letter-delete-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleDocDelete(btn.getAttribute('data-doc-id'));
+        });
+      });
+
+      document.getElementById('generate-letter-button').addEventListener('click', handleGenerateLetter);
+    }
+
+    function getLetterFormFields() {
+      const letterType = document.getElementById('letter-type').value;
+      const ctc = parseFloat(document.getElementById('letter-ctc').value) || 0;
+      const doj = document.getElementById('letter-doj').value;
+      const dojFormatted = doj
+        ? new Date(doj + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+        : '';
+
+      return {
+        letterType: letterType,
+        name: document.getElementById('letter-name').value,
+        designation: document.getElementById('letter-designation').value,
+        department: document.getElementById('letter-department').value,
+        branch: document.getElementById('letter-branch').value,
+        doj: dojFormatted,
+        ctc: ctc,
+        ctcFormatted: formatMoney(ctc),
+        probation: document.getElementById('letter-probation').value,
+        refNumber: buildLetterReferenceNumber(letterType)
+      };
+    }
+
+    function handleGenerateLetter() {
+      const letterFormError = document.getElementById('letter-form-error');
+      letterFormError.style.display = 'none';
+
+      const fields = getLetterFormFields();
+      if (!fields.name || !fields.designation || !fields.doj) {
+        letterFormError.textContent = 'Please fill in name, designation, and date of joining before generating.';
+        letterFormError.style.display = 'block';
+        return;
+      }
+
+      currentLetterHtml = buildLetterHtml(fields);
+      currentLetterMeta = { letterType: fields.letterType, dateStr: new Date().toISOString().slice(0, 10) };
+
+      document.getElementById('letter-preview-container').innerHTML = currentLetterHtml;
+      document.getElementById('letter-preview-section').style.display = 'block';
+
+      document.getElementById('print-letter-button').addEventListener('click', handlePrintLetter);
+      document.getElementById('download-letter-button').addEventListener('click', handleDownloadLetter);
+      document.getElementById('save-letter-button').addEventListener('click', handleSaveLetterToVault);
+    }
+
+    function buildStandaloneLetterDocument() {
+      return (
+        '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' +
+        escapeHtml(currentLetterMeta.letterType) +
+        '</title><style>body{font-family:Arial,Helvetica,sans-serif;padding:32px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:14px;} .letterhead{text-align:center;} .letter-title{text-align:center;text-decoration:underline;}</style></head><body>' +
+        currentLetterHtml +
+        '</body></html>'
+      );
+    }
+
+    function handlePrintLetter() {
+      document.body.classList.add('printing-letter');
+      const cleanup = function () {
+        document.body.classList.remove('printing-letter');
+        window.removeEventListener('afterprint', cleanup);
+      };
+      window.addEventListener('afterprint', cleanup);
+      window.print();
+    }
+
+    function handleDownloadLetter() {
+      if (!currentLetterHtml || !currentLetterMeta) {
+        return;
+      }
+      const blob = new Blob([buildStandaloneLetterDocument()], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = currentLetterMeta.letterType.replace(/\s+/g, '_') + '_' + currentLetterMeta.dateStr + '.html';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    async function handleSaveLetterToVault() {
+      if (!currentLetterHtml || !currentLetterMeta || !currentProfileEmployee) {
+        return;
+      }
+
+      const saveButton = document.getElementById('save-letter-button');
+      const letterFormError = document.getElementById('letter-form-error');
+      letterFormError.style.display = 'none';
+      saveButton.disabled = true;
+
+      const blob = new Blob([buildStandaloneLetterDocument()], { type: 'text/html' });
+      const fileName = currentLetterMeta.letterType.replace(/\s+/g, '_') + '_' + currentLetterMeta.dateStr + '.html';
+      const file = new File([blob], fileName, { type: 'text/html' });
+
+      const formData = new FormData();
+      formData.append('name', currentLetterMeta.letterType + ' - ' + currentLetterMeta.dateStr);
+      formData.append('doc_type', 'Letter');
+      formData.append('status', 'On file');
+      formData.append('file', file);
+
+      try {
+        const response = await fetch(
+          API_BASE + currentProfileEmployee.id + '/documents/',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token
+            },
+            body: formData
+          }
+        );
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not save letter.');
+        }
+
+        const updatedEmployee = await response.json();
+        currentProfileEmployee = updatedEmployee;
+        renderProfile();
+      } catch (err) {
+        letterFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        letterFormError.style.display = 'block';
+      } finally {
+        saveButton.disabled = false;
+      }
+    }
+
+    // ---------- Family member modal ----------
+
+    const familyModalOverlay = document.getElementById('family-modal-overlay');
+    const familyModalTitle = document.getElementById('family-modal-title');
+    const familyForm = document.getElementById('family-form');
+    const familyFormError = document.getElementById('family-form-error');
+    const familySubmitButton = document.getElementById('family-submit-button');
+    const familyCancelButton = document.getElementById('family-cancel-button');
+
+    let editingFamilyId = null;
+
+    familyForm.addEventListener('submit', handleFamilySubmit);
+    familyCancelButton.addEventListener('click', closeFamilyModal);
+    familyModalOverlay.addEventListener('click', function (event) {
+      if (event.target === familyModalOverlay) {
+        closeFamilyModal();
+      }
+    });
+
+    function openFamilyModal(mode, member) {
+      editingFamilyId = mode === 'edit' && member ? member.id : null;
+      familyModalTitle.textContent = mode === 'edit' ? 'Edit Family Member' : 'Add Family Member';
+      familySubmitButton.textContent = mode === 'edit' ? 'Update Member' : 'Add Member';
+
+      document.getElementById('family-relation').value = member ? (member.relation || '') : '';
+      document.getElementById('family-name').value = member ? (member.name || '') : '';
+      document.getElementById('family-dob').value = member ? (member.dob || '') : '';
+
+      familyFormError.style.display = 'none';
+      familyFormError.textContent = '';
+      familyModalOverlay.classList.add('open');
+    }
+
+    function closeFamilyModal() {
+      familyModalOverlay.classList.remove('open');
+      familyForm.reset();
+      editingFamilyId = null;
+    }
+
+    async function handleFamilySubmit(event) {
+      event.preventDefault();
+      if (!currentProfileEmployee) {
+        return;
+      }
+
+      familySubmitButton.disabled = true;
+      familyFormError.style.display = 'none';
+
+      const payload = {
+        relation: document.getElementById('family-relation').value,
+        name: document.getElementById('family-name').value,
+        dob: document.getElementById('family-dob').value || null
+      };
+
+      const isEditing = editingFamilyId !== null;
+      const url = isEditing
+        ? API_BASE + currentProfileEmployee.id + '/family/' + editingFamilyId + '/'
+        : API_BASE + currentProfileEmployee.id + '/family/';
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not save family member.');
+        }
+
+        const updatedEmployee = await response.json();
+        currentProfileEmployee = updatedEmployee;
+        closeFamilyModal();
+        renderProfile();
+      } catch (err) {
+        familyFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        familyFormError.style.display = 'block';
+      } finally {
+        familySubmitButton.disabled = false;
+      }
+    }
+
+    async function handleFamilyDelete(familyId) {
+      if (!currentProfileEmployee) {
+        return;
+      }
+
+      const confirmed = confirm('Are you sure you want to remove this family member?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          API_BASE + currentProfileEmployee.id + '/family/' + familyId + '/',
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': 'Bearer ' + token
+            }
+          }
+        );
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not remove family member.');
+        }
+
+        const updatedEmployee = await response.json();
+        currentProfileEmployee = updatedEmployee;
+        renderProfile();
+      } catch (err) {
+        showFormError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    // ---------- Facility/asset modal ----------
+
+    const facilityModalOverlay = document.getElementById('facility-modal-overlay');
+    const facilityModalTitle = document.getElementById('facility-modal-title');
+    const facilityForm = document.getElementById('facility-form');
+    const facilityFormError = document.getElementById('facility-form-error');
+    const facilitySubmitButton = document.getElementById('facility-submit-button');
+    const facilityCancelButton = document.getElementById('facility-cancel-button');
+
+    let editingFacilityId = null;
+
+    facilityForm.addEventListener('submit', handleFacilitySubmit);
+    facilityCancelButton.addEventListener('click', closeFacilityModal);
+    facilityModalOverlay.addEventListener('click', function (event) {
+      if (event.target === facilityModalOverlay) {
+        closeFacilityModal();
+      }
+    });
+
+    function openFacilityModal(mode, facility) {
+      editingFacilityId = mode === 'edit' && facility ? facility.id : null;
+      facilityModalTitle.textContent = mode === 'edit' ? 'Edit Facility/Asset' : 'Add Facility/Asset';
+      facilitySubmitButton.textContent = mode === 'edit' ? 'Update Item' : 'Add Item';
+
+      document.getElementById('facility-item').value = facility ? (facility.item || '') : '';
+      document.getElementById('facility-issued-date').value = facility ? (facility.issued_date || '') : '';
+
+      facilityFormError.style.display = 'none';
+      facilityFormError.textContent = '';
+      facilityModalOverlay.classList.add('open');
+    }
+
+    function closeFacilityModal() {
+      facilityModalOverlay.classList.remove('open');
+      facilityForm.reset();
+      editingFacilityId = null;
+    }
+
+    async function handleFacilitySubmit(event) {
+      event.preventDefault();
+      if (!currentProfileEmployee) {
+        return;
+      }
+
+      facilitySubmitButton.disabled = true;
+      facilityFormError.style.display = 'none';
+
+      const payload = {
+        item: document.getElementById('facility-item').value,
+        issued_date: document.getElementById('facility-issued-date').value || null
+      };
+
+      const isEditing = editingFacilityId !== null;
+      const url = isEditing
+        ? API_BASE + currentProfileEmployee.id + '/facilities/' + editingFacilityId + '/'
+        : API_BASE + currentProfileEmployee.id + '/facilities/';
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not save facility/asset.');
+        }
+
+        const updatedEmployee = await response.json();
+        currentProfileEmployee = updatedEmployee;
+        closeFacilityModal();
+        renderProfile();
+      } catch (err) {
+        facilityFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        facilityFormError.style.display = 'block';
+      } finally {
+        facilitySubmitButton.disabled = false;
+      }
+    }
+
+    async function handleFacilityDelete(facilityId) {
+      if (!currentProfileEmployee) {
+        return;
+      }
+
+      const confirmed = confirm('Are you sure you want to remove this facility/asset?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          API_BASE + currentProfileEmployee.id + '/facilities/' + facilityId + '/',
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': 'Bearer ' + token
+            }
+          }
+        );
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not remove facility/asset.');
+        }
+
+        const updatedEmployee = await response.json();
+        currentProfileEmployee = updatedEmployee;
+        renderProfile();
+      } catch (err) {
+        showFormError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    // ---------- Document upload modal ----------
+
+    const docUploadModalOverlay = document.getElementById('doc-upload-modal-overlay');
+    const docUploadForm = document.getElementById('doc-upload-form');
+    const docUploadFormError = document.getElementById('doc-upload-form-error');
+    const docUploadSubmitButton = document.getElementById('doc-upload-submit-button');
+    const docUploadCancelButton = document.getElementById('doc-upload-cancel-button');
+
+    docUploadForm.addEventListener('submit', handleDocUploadSubmit);
+    docUploadCancelButton.addEventListener('click', closeDocUploadModal);
+    docUploadModalOverlay.addEventListener('click', function (event) {
+      if (event.target === docUploadModalOverlay) {
+        closeDocUploadModal();
+      }
+    });
+
+    function openDocUploadModal(presetName) {
+      document.getElementById('doc-upload-name').value = presetName || '';
+      document.getElementById('doc-upload-type').value = '';
+      document.getElementById('doc-upload-file').value = '';
+      docUploadFormError.style.display = 'none';
+      docUploadFormError.textContent = '';
+      docUploadModalOverlay.classList.add('open');
+    }
+
+    function closeDocUploadModal() {
+      docUploadModalOverlay.classList.remove('open');
+      docUploadForm.reset();
+    }
+
+    async function handleDocUploadSubmit(event) {
+      event.preventDefault();
+      if (!currentProfileEmployee) {
+        return;
+      }
+
+      docUploadSubmitButton.disabled = true;
+      docUploadFormError.style.display = 'none';
+
+      const fileInput = document.getElementById('doc-upload-file');
+      const formData = new FormData();
+      formData.append('name', document.getElementById('doc-upload-name').value);
+      formData.append('doc_type', document.getElementById('doc-upload-type').value);
+      if (fileInput.files[0]) {
+        formData.append('file', fileInput.files[0]);
+      }
+
+      try {
+        const response = await fetch(
+          API_BASE + currentProfileEmployee.id + '/documents/',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token
+            },
+            body: formData
+          }
+        );
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not upload document.');
+        }
+
+        const updatedEmployee = await response.json();
+        currentProfileEmployee = updatedEmployee;
+        closeDocUploadModal();
+        renderProfile();
+      } catch (err) {
+        docUploadFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        docUploadFormError.style.display = 'block';
+      } finally {
+        docUploadSubmitButton.disabled = false;
+      }
+    }
+
+    // ---------- Document edit modal ----------
+
+    const docEditModalOverlay = document.getElementById('doc-edit-modal-overlay');
+    const docEditForm = document.getElementById('doc-edit-form');
+    const docEditFormError = document.getElementById('doc-edit-form-error');
+    const docEditSubmitButton = document.getElementById('doc-edit-submit-button');
+    const docEditCancelButton = document.getElementById('doc-edit-cancel-button');
+
+    let editingDocId = null;
+
+    docEditForm.addEventListener('submit', handleDocEditSubmit);
+    docEditCancelButton.addEventListener('click', closeDocEditModal);
+    docEditModalOverlay.addEventListener('click', function (event) {
+      if (event.target === docEditModalOverlay) {
+        closeDocEditModal();
+      }
+    });
+
+    function openDocEditModal(docItem) {
+      editingDocId = docItem.id;
+      document.getElementById('doc-edit-name').value = docItem.name || '';
+      document.getElementById('doc-edit-type').value = docItem.doc_type || '';
+      document.getElementById('doc-edit-status').value = docItem.status || 'On file';
+      docEditFormError.style.display = 'none';
+      docEditFormError.textContent = '';
+      docEditModalOverlay.classList.add('open');
+    }
+
+    function closeDocEditModal() {
+      docEditModalOverlay.classList.remove('open');
+      docEditForm.reset();
+      editingDocId = null;
+    }
+
+    async function handleDocEditSubmit(event) {
+      event.preventDefault();
+      if (!currentProfileEmployee || !editingDocId) {
+        return;
+      }
+
+      docEditSubmitButton.disabled = true;
+      docEditFormError.style.display = 'none';
+
+      const payload = {
+        name: document.getElementById('doc-edit-name').value,
+        doc_type: document.getElementById('doc-edit-type').value,
+        status: document.getElementById('doc-edit-status').value
+      };
+
+      try {
+        const response = await fetch(
+          API_BASE + currentProfileEmployee.id + '/documents/' + editingDocId + '/',
+          {
+            method: 'PATCH',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          }
+        );
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not update document.');
+        }
+
+        const updatedEmployee = await response.json();
+        currentProfileEmployee = updatedEmployee;
+        closeDocEditModal();
+        renderProfile();
+      } catch (err) {
+        docEditFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        docEditFormError.style.display = 'block';
+      } finally {
+        docEditSubmitButton.disabled = false;
+      }
+    }
+
+    async function handleDocDelete(docId) {
+      if (!currentProfileEmployee) {
+        return;
+      }
+
+      const confirmed = confirm('Are you sure you want to delete this document?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          API_BASE + currentProfileEmployee.id + '/documents/' + docId + '/',
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': 'Bearer ' + token
+            }
+          }
+        );
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not delete document.');
+        }
+
+        const updatedEmployee = await response.json();
+        currentProfileEmployee = updatedEmployee;
+        renderProfile();
+      } catch (err) {
+        showFormError(err.message || 'Something went wrong. Please try again.');
+      }
     }
   </script>
 

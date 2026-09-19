@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Employee ID Management</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f4f5f7;
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 32px 16px;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .top-nav {
+    max-width: 1000px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .top-nav a {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: #eef1f4;
+    color: #444;
+    font-size: 14px;
+    text-decoration: none;
+  }
+
+  .top-nav a:hover {
+    background: #e2e6ea;
+  }
+
+  .top-nav a.active {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    color: #1a1a1a;
+  }
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 17px;
+    color: #1a1a1a;
+  }
+
+  .page-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+
+  .form-error {
+    display: none;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: #fdecea;
+    color: #b71c1c;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .field label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #444;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .field input:focus,
+  .field select:focus {
+    outline: none;
+    border-color: #4a90e2;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .form-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    background: #3a7bc8;
+  }
+
+  .btn-secondary {
+    background: #e5e7eb;
+    color: #333;
+  }
+
+  .btn-secondary:hover {
+    background: #d5d8dc;
+  }
+
+  .btn-edit {
+    background: #eef1f4;
+    color: #1a1a1a;
+    padding: 5px 10px;
+    font-size: 13px;
+    margin-right: 6px;
+  }
+
+  .btn-edit:hover {
+    background: #dfe3e8;
+  }
+
+  .btn-delete {
+    background: #fdecea;
+    color: #b71c1c;
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+
+  .btn-delete:hover {
+    background: #f8d3d0;
+  }
+
+  .btn-row {
+    padding: 5px 10px;
+    font-size: 13px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 640px) {
+    .kpi-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .kpi-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+  }
+
+  th {
+    background: #f9fafb;
+    color: #555;
+    font-weight: 600;
+  }
+
+  tr:hover td {
+    background: #fafafa;
+  }
+
+  .status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    text-transform: capitalize;
+  }
+
+  .status-active {
+    background: #e6f4ea;
+    color: #1e7e34;
+  }
+
+  .status-vacant {
+    background: #fff4e0;
+    color: #a06400;
+  }
+
+  .badge-vacant-holder {
+    background: #eef1f4;
+    color: #888;
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .message {
+    padding: 24px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .history-list {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+
+  .history-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f1f3;
+    font-size: 14px;
+  }
+
+  .history-list li .history-name {
+    font-weight: 600;
+  }
+
+  .history-list li .history-dates {
+    color: #666;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <a href="employees.html">Employees</a>
+    <a href="positions.html" class="active">Employee IDs</a>
+    <a href="recruitment.html">Recruitment</a>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h1>Employee ID Management</h1>
+      <button type="button" class="btn-primary" id="add-position-button">+ Add Employee ID</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Employee IDs</div>
+        <div class="kpi-value" id="kpi-total">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Active</div>
+        <div class="kpi-value" id="kpi-active">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Vacant</div>
+        <div class="kpi-value" id="kpi-vacant">0</div>
+      </div>
+    </div>
+
+    <div id="page-error" class="form-error"></div>
+    <div id="content">
+      <div class="message">Loading employee IDs...</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="position-modal-overlay">
+    <div class="modal-card">
+      <h2 id="position-modal-title">Add Employee ID</h2>
+      <div id="position-form-error" class="form-error"></div>
+      <form id="position-form">
+        <div class="field">
+          <label for="position-designation">Designation</label>
+          <input type="text" id="position-designation" required>
+        </div>
+        <div class="field">
+          <label for="position-department">Department</label>
+          <input type="text" id="position-department" required>
+        </div>
+        <div class="field">
+          <label for="position-branch">Branch</label>
+          <input type="text" id="position-branch" required>
+        </div>
+        <div class="field">
+          <label for="position-status">Status</label>
+          <select id="position-status">
+            <option value="Vacant">Vacant</option>
+            <option value="Active">Active</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="position-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="position-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="assign-modal-overlay">
+    <div class="modal-card">
+      <h2>Assign Employee</h2>
+      <div id="assign-form-error" class="form-error"></div>
+      <form id="assign-form">
+        <div class="field">
+          <label for="assign-employee-select">Employee</label>
+          <select id="assign-employee-select" required></select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="assign-submit-button">Assign</button>
+          <button type="button" class="btn-secondary" id="assign-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="history-modal-overlay">
+    <div class="modal-card">
+      <h2 id="history-modal-title">Position History</h2>
+      <div id="history-content"></div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" id="history-close-button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const POSITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/positions/';
+    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadPositions();
+    }
+
+    let allPositions = [];
+
+    const pageError = document.getElementById('page-error');
+
+    function showPageError(message) {
+      pageError.textContent = message;
+      pageError.style.display = 'block';
+    }
+
+    function hidePageError() {
+      pageError.textContent = '';
+      pageError.style.display = 'none';
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    async function loadPositions() {
+      const content = document.getElementById('content');
+      hidePageError();
+
+      try {
+        const response = await fetch(POSITIONS_API_BASE, {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load employee IDs.');
+        }
+
+        allPositions = await response.json();
+        renderPositions();
+      } catch (err) {
+        content.innerHTML = '';
+        showPageError(err.message || 'Something went wrong while loading employee IDs.');
+      }
+    }
+
+    function renderPositions() {
+      const content = document.getElementById('content');
+
+      const activeCount = allPositions.filter(function (p) { return p.status === 'Active'; }).length;
+      const vacantCount = allPositions.length - activeCount;
+      document.getElementById('kpi-total').textContent = allPositions.length;
+      document.getElementById('kpi-active').textContent = activeCount;
+      document.getElementById('kpi-vacant').textContent = vacantCount;
+
+      if (allPositions.length === 0) {
+        content.innerHTML = '<div class="message">No employee IDs created yet.</div>';
+        return;
+      }
+
+      const rows = allPositions.map(function (pos) {
+        const isActive = pos.status === 'Active';
+        const statusChip = isActive
+          ? '<span class="status status-active">Active</span>'
+          : '<span class="status status-vacant">Vacant</span>';
+        const holderCell = isActive && pos.current_holder_name
+          ? escapeHtml(pos.current_holder_name)
+          : '<span class="badge-vacant-holder">&mdash; Vacant &mdash;</span>';
+
+        const assignOrUnassignBtn = isActive
+          ? '<button type="button" class="btn-secondary btn-row unassign-btn" data-id="' + escapeHtml(pos.id) + '">Unassign</button>'
+          : '<button type="button" class="btn-secondary btn-row assign-btn" data-id="' + escapeHtml(pos.id) + '">Assign</button>';
+
+        return '<tr>' +
+          '<td>' + escapeHtml(pos.id) + '</td>' +
+          '<td>' + escapeHtml(pos.designation) + '</td>' +
+          '<td>' + escapeHtml(pos.department) + '</td>' +
+          '<td>' + escapeHtml(pos.branch) + '</td>' +
+          '<td>' + statusChip + '</td>' +
+          '<td>' + holderCell + '</td>' +
+          '<td>' +
+          '<button type="button" class="btn-secondary btn-row history-btn" data-id="' + escapeHtml(pos.id) + '">History</button>' +
+          assignOrUnassignBtn +
+          '<button type="button" class="btn-edit btn-row edit-position-btn" data-id="' + escapeHtml(pos.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-position-btn" data-id="' + escapeHtml(pos.id) + '">Delete</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
+
+      content.innerHTML =
+        '<table>' +
+        '<thead><tr><th>Employee ID</th><th>Designation</th><th>Department</th><th>Branch</th><th>Status</th><th>Current Holder</th><th>Actions</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>';
+
+      content.querySelectorAll('.history-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openHistoryModal(btn.getAttribute('data-id'));
+        });
+      });
+
+      content.querySelectorAll('.assign-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openAssignModal(btn.getAttribute('data-id'));
+        });
+      });
+
+      content.querySelectorAll('.unassign-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleUnassign(btn.getAttribute('data-id'));
+        });
+      });
+
+      content.querySelectorAll('.edit-position-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const pos = allPositions.find(function (p) { return p.id === btn.getAttribute('data-id'); });
+          if (pos) {
+            openPositionModal('edit', pos);
+          }
+        });
+      });
+
+      content.querySelectorAll('.delete-position-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleDeletePosition(btn.getAttribute('data-id'));
+        });
+      });
+    }
+
+    // ---------- Add / Edit Position modal ----------
+
+    const positionModalOverlay = document.getElementById('position-modal-overlay');
+    const positionModalTitle = document.getElementById('position-modal-title');
+    const positionForm = document.getElementById('position-form');
+    const positionFormError = document.getElementById('position-form-error');
+    const positionSubmitButton = document.getElementById('position-submit-button');
+    const positionCancelButton = document.getElementById('position-cancel-button');
+
+    let editingPositionId = null;
+
+    document.getElementById('add-position-button').addEventListener('click', function () {
+      openPositionModal('add', null);
+    });
+    positionForm.addEventListener('submit', handlePositionSubmit);
+    positionCancelButton.addEventListener('click', closePositionModal);
+    positionModalOverlay.addEventListener('click', function (event) {
+      if (event.target === positionModalOverlay) {
+        closePositionModal();
+      }
+    });
+
+    function openPositionModal(mode, pos) {
+      editingPositionId = mode === 'edit' && pos ? pos.id : null;
+      positionModalTitle.textContent = mode === 'edit' ? 'Edit Employee ID' : 'Add Employee ID';
+      positionSubmitButton.textContent = mode === 'edit' ? 'Update' : 'Add';
+
+      document.getElementById('position-designation').value = pos ? (pos.designation || '') : '';
+      document.getElementById('position-department').value = pos ? (pos.department || '') : '';
+      document.getElementById('position-branch').value = pos ? (pos.branch || '') : '';
+      document.getElementById('position-status').value = pos ? (pos.status || 'Vacant') : 'Vacant';
+
+      positionFormError.style.display = 'none';
+      positionFormError.textContent = '';
+      positionModalOverlay.classList.add('open');
+    }
+
+    function closePositionModal() {
+      positionModalOverlay.classList.remove('open');
+      positionForm.reset();
+      editingPositionId = null;
+    }
+
+    async function handlePositionSubmit(event) {
+      event.preventDefault();
+      positionSubmitButton.disabled = true;
+      positionFormError.style.display = 'none';
+
+      const payload = {
+        designation: document.getElementById('position-designation').value,
+        department: document.getElementById('position-department').value,
+        branch: document.getElementById('position-branch').value,
+        status: document.getElementById('position-status').value
+      };
+
+      const isEditing = editingPositionId !== null;
+      const url = isEditing ? POSITIONS_API_BASE + editingPositionId + '/' : POSITIONS_API_BASE;
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not save employee ID.');
+        }
+
+        closePositionModal();
+        loadPositions();
+      } catch (err) {
+        positionFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        positionFormError.style.display = 'block';
+      } finally {
+        positionSubmitButton.disabled = false;
+      }
+    }
+
+    async function handleDeletePosition(posId) {
+      const confirmed = confirm('Are you sure you want to permanently delete this employee ID?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(POSITIONS_API_BASE + posId + '/', {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok && response.status !== 204) {
+          throw new Error('Could not delete employee ID.');
+        }
+
+        loadPositions();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    // ---------- Assign modal ----------
+
+    const assignModalOverlay = document.getElementById('assign-modal-overlay');
+    const assignForm = document.getElementById('assign-form');
+    const assignFormError = document.getElementById('assign-form-error');
+    const assignSubmitButton = document.getElementById('assign-submit-button');
+    const assignCancelButton = document.getElementById('assign-cancel-button');
+    const assignEmployeeSelect = document.getElementById('assign-employee-select');
+
+    let assigningPositionId = null;
+
+    assignForm.addEventListener('submit', handleAssignSubmit);
+    assignCancelButton.addEventListener('click', closeAssignModal);
+    assignModalOverlay.addEventListener('click', function (event) {
+      if (event.target === assignModalOverlay) {
+        closeAssignModal();
+      }
+    });
+
+    async function openAssignModal(posId) {
+      assigningPositionId = posId;
+      assignFormError.style.display = 'none';
+      assignFormError.textContent = '';
+      assignEmployeeSelect.innerHTML = '<option value="">Loading employees...</option>';
+      assignModalOverlay.classList.add('open');
+
+      try {
+        const response = await fetch(EMPLOYEES_API_BASE, {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load employees.');
+        }
+
+        const employees = await response.json();
+        const unassigned = employees.filter(function (e) { return !e.position_id; });
+
+        if (unassigned.length === 0) {
+          assignEmployeeSelect.innerHTML = '<option value="">No unassigned employees available</option>';
+          return;
+        }
+
+        assignEmployeeSelect.innerHTML = unassigned.map(function (e) {
+          return '<option value="' + escapeHtml(e.id) + '">' + escapeHtml(e.name) + ' (' + escapeHtml(e.designation) + ')</option>';
+        }).join('');
+      } catch (err) {
+        assignFormError.textContent = err.message || 'Could not load employees.';
+        assignFormError.style.display = 'block';
+      }
+    }
+
+    function closeAssignModal() {
+      assignModalOverlay.classList.remove('open');
+      assignForm.reset();
+      assigningPositionId = null;
+    }
+
+    async function handleAssignSubmit(event) {
+      event.preventDefault();
+      if (!assigningPositionId) {
+        return;
+      }
+
+      const employeeId = assignEmployeeSelect.value;
+      if (!employeeId) {
+        assignFormError.textContent = 'Please select an employee.';
+        assignFormError.style.display = 'block';
+        return;
+      }
+
+      assignSubmitButton.disabled = true;
+      assignFormError.style.display = 'none';
+
+      try {
+        const response = await fetch(POSITIONS_API_BASE + assigningPositionId + '/assign/', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ employee_id: employeeId })
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not assign employee.');
+        }
+
+        closeAssignModal();
+        loadPositions();
+      } catch (err) {
+        assignFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        assignFormError.style.display = 'block';
+      } finally {
+        assignSubmitButton.disabled = false;
+      }
+    }
+
+    async function handleUnassign(posId) {
+      const confirmed = confirm('Are you sure you want to unassign the current holder from this employee ID?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(POSITIONS_API_BASE + posId + '/unassign/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not unassign employee.');
+        }
+
+        loadPositions();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    // ---------- History modal ----------
+
+    const historyModalOverlay = document.getElementById('history-modal-overlay');
+    const historyModalTitle = document.getElementById('history-modal-title');
+    const historyContent = document.getElementById('history-content');
+    const historyCloseButton = document.getElementById('history-close-button');
+
+    historyCloseButton.addEventListener('click', closeHistoryModal);
+    historyModalOverlay.addEventListener('click', function (event) {
+      if (event.target === historyModalOverlay) {
+        closeHistoryModal();
+      }
+    });
+
+    async function openHistoryModal(posId) {
+      historyModalTitle.textContent = 'History — ' + posId;
+      historyContent.innerHTML = '<div class="message">Loading history...</div>';
+      historyModalOverlay.classList.add('open');
+
+      try {
+        const response = await fetch(POSITIONS_API_BASE + posId + '/history/', {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load history.');
+        }
+
+        const history = await response.json();
+
+        if (!history || history.length === 0) {
+          historyContent.innerHTML = '<div class="message">No history yet for this employee ID.</div>';
+          return;
+        }
+
+        historyContent.innerHTML = '<ul class="history-list">' + history.map(function (entry) {
+          const endLabel = entry.end_date ? escapeHtml(entry.end_date) : 'present';
+          return '<li>' +
+            '<div class="history-name">' + escapeHtml(entry.employee_name) + '</div>' +
+            '<div class="history-dates">' + escapeHtml(entry.start_date) + ' &ndash; ' + endLabel + '</div>' +
+            '</li>';
+        }).join('') + '</ul>';
+      } catch (err) {
+        historyContent.innerHTML = '<div class="message">Could not load history.</div>';
+      }
+    }
+
+    function closeHistoryModal() {
+      historyModalOverlay.classList.remove('open');
+    }
+  </script>
+
+</body>
+</html>
