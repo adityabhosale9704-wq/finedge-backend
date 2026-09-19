@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f4f5f7;
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 32px 16px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .top-nav {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .top-nav a {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: #eef1f4;
+    color: #444;
+    font-size: 14px;
+    text-decoration: none;
+  }
+
+  .top-nav a:hover {
+    background: #e2e6ea;
+  }
+
+  .top-nav a.active {
+    background: #4a90e2;
+    color: #ffffff;
+  }
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    color: #1a1a1a;
+  }
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 17px;
+    color: #1a1a1a;
+  }
+
+  .greeting-date {
+    font-size: 14px;
+    color: #666;
+  }
+
+  .form-error {
+    display: none;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: #fdecea;
+    color: #b71c1c;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 760px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .kpi-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .kpi-sub {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .scoreboard-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: 560px) {
+    .scoreboard-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .status-tile {
+    border-radius: 8px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .status-tile .tile-value {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .status-tile .tile-label {
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  .tile-green {
+    background: #e6f4ea;
+    color: #1e7e34;
+  }
+
+  .tile-amber {
+    background: #fff4e0;
+    color: #a06400;
+  }
+
+  .tile-red {
+    background: #fdecea;
+    color: #b71c1c;
+  }
+
+  .tile-navy {
+    background: #e8eefb;
+    color: #2a5db0;
+  }
+
+  .attention-list,
+  .celebration-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .attention-list li,
+  .celebration-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f1f3;
+    font-size: 14px;
+  }
+
+  .attention-list li:last-child,
+  .celebration-list li:last-child {
+    border-bottom: none;
+  }
+
+  .attention-text {
+    color: #333;
+  }
+
+  .attention-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-right: 8px;
+  }
+
+  .tag-task {
+    background: #fdecea;
+    color: #b71c1c;
+  }
+
+  .tag-requisition {
+    background: #fff4e0;
+    color: #a06400;
+  }
+
+  .tag-candidate {
+    background: #e8eefb;
+    color: #2a5db0;
+  }
+
+  .celebration-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    background: #f3e8fd;
+    color: #6a3fa0;
+    margin-right: 8px;
+  }
+
+  .btn-view {
+    background: #eef1f4;
+    color: #1a1a1a;
+    padding: 5px 10px;
+    font-size: 12px;
+    text-decoration: none;
+    border-radius: 4px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .btn-view:hover {
+    background: #dfe3e8;
+  }
+
+  .message {
+    padding: 24px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <a href="dashboard.html" class="active">Dashboard</a>
+    <a href="employees.html">Employees</a>
+    <a href="positions.html">Employee IDs</a>
+    <a href="recruitment.html">Recruitment</a>
+    <a href="tasks.html">Tasks</a>
+  </div>
+
+  <div class="container">
+    <h1 id="greeting-heading">Hello</h1>
+    <div class="greeting-date" id="greeting-date"></div>
+  </div>
+
+  <div class="container">
+    <div id="page-error" class="form-error"></div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Active Employees</div>
+        <div class="kpi-value" id="kpi-active-employees">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Open Requisitions</div>
+        <div class="kpi-value" id="kpi-open-requisitions">0</div>
+        <div class="kpi-sub" id="kpi-open-requisitions-sub">0 openings</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Candidates In Pipeline</div>
+        <div class="kpi-value" id="kpi-in-pipeline">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Overdue Tasks</div>
+        <div class="kpi-value" id="kpi-overdue-tasks">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="container">
+      <h2>This Week's Scoreboard</h2>
+      <div class="scoreboard-grid">
+        <div class="status-tile tile-green">
+          <div class="tile-value" id="score-early">0</div>
+          <div class="tile-label">Early</div>
+        </div>
+        <div class="status-tile tile-green">
+          <div class="tile-value" id="score-ontime">0</div>
+          <div class="tile-label">On Time</div>
+        </div>
+        <div class="status-tile tile-amber">
+          <div class="tile-value" id="score-delayed">0</div>
+          <div class="tile-label">Delayed</div>
+        </div>
+        <div class="status-tile tile-red">
+          <div class="tile-value" id="score-overdue">0</div>
+          <div class="tile-label">Overdue</div>
+        </div>
+        <div class="status-tile tile-navy">
+          <div class="tile-value" id="score-open">0</div>
+          <div class="tile-label">Open</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <h2>Needs Attention</h2>
+      <div id="attention-content">
+        <div class="message">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Upcoming Celebrations</h2>
+    <div id="celebrations-content">
+      <div class="message">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+    const REQUISITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/requisitions/';
+    const CANDIDATES_API_BASE = 'http://127.0.0.1:8000/api/v1/candidates/';
+    const TASKS_API_BASE = 'http://127.0.0.1:8000/api/v1/tasks/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      renderGreeting();
+      loadAll();
+    }
+
+    const pageError = document.getElementById('page-error');
+
+    function showPageError(message) {
+      pageError.textContent = message;
+      pageError.style.display = 'block';
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    function renderGreeting() {
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Good Morning' : (hour < 17 ? 'Good Afternoon' : 'Good Evening');
+      document.getElementById('greeting-heading').textContent = greeting;
+      document.getElementById('greeting-date').textContent = new Date().toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    async function loadAll() {
+      try {
+        const [empRes, reqRes, candRes, taskRes] = await Promise.all([
+          fetch(EMPLOYEES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch(REQUISITIONS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch(CANDIDATES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch(TASKS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } })
+        ]);
+
+        if ([empRes, reqRes, candRes, taskRes].some(handleUnauthorized)) {
+          return;
+        }
+
+        if (!empRes.ok || !reqRes.ok || !candRes.ok || !taskRes.ok) {
+          throw new Error('Failed to load dashboard data.');
+        }
+
+        const employees = await empRes.json();
+        const requisitions = await reqRes.json();
+        const candidates = await candRes.json();
+        const tasks = await taskRes.json();
+
+        renderKpis(employees, requisitions, candidates, tasks);
+        renderScoreboard(tasks);
+        renderAttention(requisitions, candidates, tasks);
+        renderCelebrations(employees);
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong while loading the dashboard.');
+        document.getElementById('attention-content').innerHTML = '';
+        document.getElementById('celebrations-content').innerHTML = '';
+      }
+    }
+
+    function renderKpis(employees, requisitions, candidates, tasks) {
+      const activeEmployees = employees.filter(function (e) {
+        return String(e.status || '').toLowerCase() === 'active';
+      }).length;
+      document.getElementById('kpi-active-employees').textContent = activeEmployees;
+
+      const openRequisitions = requisitions.filter(function (r) { return r.stage !== 'Closed'; });
+      const totalOpenings = openRequisitions.reduce(function (sum, r) { return sum + (r.openings || 0); }, 0);
+      document.getElementById('kpi-open-requisitions').textContent = openRequisitions.length;
+      document.getElementById('kpi-open-requisitions-sub').textContent = totalOpenings + ' openings';
+
+      const inPipeline = candidates.filter(function (c) {
+        return ['Joined', 'Rejected', 'Withdrawn'].indexOf(c.stage) === -1;
+      }).length;
+      document.getElementById('kpi-in-pipeline').textContent = inPipeline;
+
+      const overdueTasks = tasks.filter(function (t) { return t.status === 'Overdue'; }).length;
+      document.getElementById('kpi-overdue-tasks').textContent = overdueTasks;
+    }
+
+    function renderScoreboard(tasks) {
+      const countByStatus = function (statusName) {
+        return tasks.filter(function (t) { return t.status === statusName; }).length;
+      };
+      document.getElementById('score-early').textContent = countByStatus('Early');
+      document.getElementById('score-ontime').textContent = countByStatus('On Time');
+      document.getElementById('score-delayed').textContent = countByStatus('Delayed');
+      document.getElementById('score-overdue').textContent = countByStatus('Overdue');
+      document.getElementById('score-open').textContent = countByStatus('Open');
+    }
+
+    function daysBetween(dateA, dateB) {
+      const msPerDay = 1000 * 60 * 60 * 24;
+      return Math.round((dateA - dateB) / msPerDay);
+    }
+
+    function renderAttention(requisitions, candidates, tasks) {
+      const content = document.getElementById('attention-content');
+      const today = new Date();
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+      const items = [];
+
+      tasks.filter(function (t) { return t.status === 'Overdue'; }).forEach(function (t) {
+        const due = new Date(t.due_date + 'T00:00:00');
+        const daysOverdue = daysBetween(todayMidnight, due) * -1;
+        items.push({
+          tag: 'tag-task',
+          tagLabel: 'Task',
+          text: escapeHtml(t.title) + ' &mdash; ' + escapeHtml(t.assigned_to_name) + ' (' + daysOverdue + 'd overdue)',
+          link: 'tasks.html'
+        });
+      });
+
+      requisitions.filter(function (r) {
+        if (r.approved_by || r.stage === 'Closed') {
+          return false;
+        }
+        const raised = new Date(r.raised_date + 'T00:00:00');
+        const daysElapsed = daysBetween(todayMidnight, raised) * -1;
+        const tatDays = r.tat_days || 30;
+        return (daysElapsed / tatDays) >= 0.8;
+      }).forEach(function (r) {
+        items.push({
+          tag: 'tag-requisition',
+          tagLabel: 'Requisition',
+          text: escapeHtml(r.role) + ' &mdash; ' + escapeHtml(r.branch) + ' (unapproved, aging)',
+          link: 'recruitment.html'
+        });
+      });
+
+      candidates.filter(function (c) { return c.stage === 'Documents Pending'; }).forEach(function (c) {
+        items.push({
+          tag: 'tag-candidate',
+          tagLabel: 'Candidate',
+          text: escapeHtml(c.name) + ' &mdash; Documents Pending',
+          link: 'recruitment.html'
+        });
+      });
+
+      const capped = items.slice(0, 8);
+
+      if (capped.length === 0) {
+        content.innerHTML = '<div class="message">All caught up &#127881;</div>';
+        return;
+      }
+
+      content.innerHTML = '<ul class="attention-list">' + capped.map(function (item) {
+        return '<li>' +
+          '<span class="attention-text"><span class="attention-tag ' + item.tag + '">' + item.tagLabel + '</span>' + item.text + '</span>' +
+          '<a href="' + item.link + '" class="btn-view">View</a>' +
+          '</li>';
+      }).join('') + '</ul>';
+    }
+
+    function nextOccurrence(dateStr, todayMidnight) {
+      if (!dateStr) {
+        return null;
+      }
+      const original = new Date(dateStr + 'T00:00:00');
+      if (isNaN(original.getTime())) {
+        return null;
+      }
+
+      let next = new Date(todayMidnight.getFullYear(), original.getMonth(), original.getDate());
+      if (next < todayMidnight) {
+        next = new Date(todayMidnight.getFullYear() + 1, original.getMonth(), original.getDate());
+      }
+      return next;
+    }
+
+    function formatDaysAway(diffDays) {
+      if (diffDays === 0) {
+        return 'Today';
+      }
+      if (diffDays === 1) {
+        return 'Tomorrow';
+      }
+      return 'in ' + diffDays + ' days';
+    }
+
+    function renderCelebrations(employees) {
+      const content = document.getElementById('celebrations-content');
+      const today = new Date();
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+      const items = [];
+
+      employees.forEach(function (emp) {
+        const anniversary = nextOccurrence(emp.date_of_joining, todayMidnight);
+        if (anniversary) {
+          const diffDays = daysBetween(anniversary, todayMidnight) * -1;
+          if (diffDays >= 0 && diffDays <= 14) {
+            items.push({
+              name: emp.name,
+              type: 'Work Anniversary',
+              date: anniversary,
+              diffDays: diffDays
+            });
+          }
+        }
+
+        const birthday = nextOccurrence(emp.dob, todayMidnight);
+        if (birthday) {
+          const diffDays = daysBetween(birthday, todayMidnight) * -1;
+          if (diffDays >= 0 && diffDays <= 14) {
+            items.push({
+              name: emp.name,
+              type: 'Birthday',
+              date: birthday,
+              diffDays: diffDays
+            });
+          }
+        }
+      });
+
+      items.sort(function (a, b) { return a.diffDays - b.diffDays; });
+
+      if (items.length === 0) {
+        content.innerHTML = '<div class="message">No upcoming celebrations in the next 2 weeks</div>';
+        return;
+      }
+
+      content.innerHTML = '<ul class="celebration-list">' + items.map(function (item) {
+        const dateLabel = item.date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+        return '<li>' +
+          '<span><span class="celebration-badge">' + item.type + '</span>' + escapeHtml(item.name) + '</span>' +
+          '<span>' + dateLabel + ' (' + formatDaysAway(item.diffDays) + ')</span>' +
+          '</li>';
+      }).join('') + '</ul>';
+    }
+  </script>
+
+</body>
+</html>
