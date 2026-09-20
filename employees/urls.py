@@ -1,6 +1,7 @@
 from django.urls import path
 
 from employees.views import (
+    EmployeeCompleteOnboardingView,
     EmployeeDetailView,
     EmployeeDocumentDetailView,
     EmployeeDocumentListCreateView,
@@ -9,10 +10,18 @@ from employees.views import (
     EmployeeFamilyDetailView,
     EmployeeFamilyListCreateView,
     EmployeeListCreateView,
+    EmployeeOnboardingListView,
+    EmployeeOnboardingStepDoneView,
+    EmployeeOnboardingStepUndoView,
 )
 
 urlpatterns = [
     path("", EmployeeListCreateView.as_view(), name="employee-list-create"),
+    path(
+        "onboarding/",
+        EmployeeOnboardingListView.as_view(),
+        name="employee-onboarding-list",
+    ),
     path("<str:pk>/", EmployeeDetailView.as_view(), name="employee-detail"),
     path(
         "<str:pk>/family/",
@@ -43,5 +52,20 @@ urlpatterns = [
         "<str:pk>/documents/<str:doc_id>/",
         EmployeeDocumentDetailView.as_view(),
         name="employee-document-detail",
+    ),
+    path(
+        "<str:pk>/onboarding-steps/<str:step_id>/done/",
+        EmployeeOnboardingStepDoneView.as_view(),
+        name="employee-onboarding-step-done",
+    ),
+    path(
+        "<str:pk>/onboarding-steps/<str:step_id>/undo/",
+        EmployeeOnboardingStepUndoView.as_view(),
+        name="employee-onboarding-step-undo",
+    ),
+    path(
+        "<str:pk>/complete-onboarding/",
+        EmployeeCompleteOnboardingView.as_view(),
+        name="employee-complete-onboarding",
     ),
 ]

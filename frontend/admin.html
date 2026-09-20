@@ -3,20 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <title>Admin Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
 </head>
 <body>
 
   <div class="top-nav">
-    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
-    <div class="nav-links" id="nav-links">
-      <a href="dashboard.html">Dashboard</a>
-      <a href="employees.html">Employees</a>
-      <a href="positions.html">Employee IDs</a>
-      <a href="recruitment.html">Recruitment</a>
-      <a href="tasks.html">Tasks</a>
-      <a href="admin.html" class="active">Admin Studio</a>
-      <a href="workindia.html">WorkIndia Import</a>
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link active"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
     </div>
   </div>
 
@@ -43,6 +60,47 @@
     <div id="branch-page-error" class="form-error"></div>
     <div id="branches-content">
       <div class="loading-state"><div class="spinner"></div><div>Loading branches...</div></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Workflows &amp; TATs</h2>
+    <div class="tabs" id="workflow-tabs" style="margin-bottom: 16px;">
+      <button type="button" class="tab active" data-type="Recruitment">Recruitment</button>
+      <button type="button" class="tab" data-type="Onboarding">Onboarding</button>
+      <button type="button" class="tab" data-type="Exit">Exit</button>
+    </div>
+    <div id="workflow-page-error" class="form-error"></div>
+    <div id="workflow-steps-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading steps...</div></div>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" id="add-step-button">+ Add Step</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="step-form-modal-overlay">
+    <div class="modal-card">
+      <h2 id="step-form-modal-title">Add Step</h2>
+      <div id="step-form-error" class="form-error"></div>
+      <form id="step-form">
+        <div class="field">
+          <label for="step-name">Step Name</label>
+          <input type="text" id="step-name" required>
+        </div>
+        <div class="field">
+          <label for="step-who">Who (responsible party)</label>
+          <input type="text" id="step-who" placeholder="e.g. HR, IT, Hiring Manager">
+        </div>
+        <div class="field">
+          <label for="step-tat-days">TAT (days)</label>
+          <input type="number" id="step-tat-days" min="0" value="1">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="step-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="step-cancel-button">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -76,9 +134,45 @@
           <label for="branch-city">City</label>
           <input type="text" id="branch-city" required>
         </div>
+        <div class="field">
+          <label for="branch-se-number">Shops &amp; Establishments No.</label>
+          <input type="text" id="branch-se-number" placeholder="e.g. SE-12345 (optional)">
+        </div>
         <div class="form-actions">
           <button type="submit" class="btn-primary" id="branch-submit-button">Add</button>
           <button type="button" class="btn-secondary" id="branch-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="roles-modal-overlay">
+    <div class="modal-card" style="max-width: 560px;">
+      <h2 id="roles-modal-title">Roles</h2>
+      <div id="roles-list-content"></div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" id="add-role-button">+ Add Role</button>
+        <button type="button" class="btn-secondary" id="roles-close-button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="role-form-modal-overlay">
+    <div class="modal-card">
+      <h2 id="role-form-modal-title">Add Role</h2>
+      <div id="role-form-error" class="form-error"></div>
+      <form id="role-form">
+        <div class="field">
+          <label for="role-title">Title</label>
+          <input type="text" id="role-title" required>
+        </div>
+        <div class="field">
+          <label for="role-job-description">Job Description</label>
+          <textarea id="role-job-description" rows="4" placeholder="Key responsibilities..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="role-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="role-cancel-button">Cancel</button>
         </div>
       </form>
     </div>
@@ -88,21 +182,17 @@
     const token = localStorage.getItem('authToken');
     const DEPARTMENTS_API_BASE = 'http://127.0.0.1:8000/api/v1/departments/';
     const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
+    const ROLES_API_BASE = 'http://127.0.0.1:8000/api/v1/roles/';
+    const WORKFLOW_TEMPLATES_API_BASE = 'http://127.0.0.1:8000/api/v1/workflow-templates/';
 
     if (!token) {
       window.location.href = 'login.html';
     } else {
       loadDepartments();
       loadBranches();
+      loadWorkflowSteps();
     }
 
-    const navToggle = document.getElementById('nav-toggle');
-    const navLinks = document.getElementById('nav-links');
-    if (navToggle && navLinks) {
-      navToggle.addEventListener('click', function () {
-        navLinks.classList.toggle('open');
-      });
-    }
 
     let allDepartments = [];
     let allBranches = [];
@@ -147,12 +237,31 @@
         }
 
         allDepartments = await response.json();
+        await loadRoleCounts();
         renderDepartments();
       } catch (err) {
         content.innerHTML = '<div class="error-state"><div>' +
           escapeHtml(err.message || 'Could not load departments.') +
           '</div><button type="button" class="btn-secondary" id="retry-departments-button">Retry</button></div>';
         document.getElementById('retry-departments-button').addEventListener('click', loadDepartments);
+      }
+    }
+
+    let roleCounts = {};
+
+    async function loadRoleCounts() {
+      roleCounts = {};
+      try {
+        const results = await Promise.all(allDepartments.map(function (dept) {
+          return fetch(DEPARTMENTS_API_BASE + dept.id + '/roles/', {
+            headers: { 'Authorization': 'Bearer ' + token }
+          }).then(function (res) { return res.ok ? res.json() : []; }).catch(function () { return []; });
+        }));
+        allDepartments.forEach(function (dept, index) {
+          roleCounts[dept.id] = (results[index] || []).length;
+        });
+      } catch (err) {
+        // Role counts are a nice-to-have; leave the button label generic if this fails.
       }
     }
 
@@ -165,9 +274,11 @@
       }
 
       const rows = allDepartments.map(function (dept) {
+        const count = roleCounts[dept.id] !== undefined ? roleCounts[dept.id] : 0;
         return '<tr>' +
           '<td>' + escapeHtml(dept.name) + '</td>' +
           '<td>' +
+          '<button type="button" class="btn-secondary btn-row roles-btn" data-id="' + escapeHtml(dept.id) + '">Roles (' + count + ')</button>' +
           '<button type="button" class="btn-edit btn-row edit-dept-btn" data-id="' + escapeHtml(dept.id) + '">Edit</button>' +
           '<button type="button" class="btn-delete btn-row delete-dept-btn" data-id="' + escapeHtml(dept.id) + '">Delete</button>' +
           '</td>' +
@@ -176,6 +287,15 @@
 
       content.innerHTML =
         '<table><thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+      content.querySelectorAll('.roles-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const dept = allDepartments.find(function (d) { return d.id === btn.getAttribute('data-id'); });
+          if (dept) {
+            openRolesModal(dept);
+          }
+        });
+      });
 
       content.querySelectorAll('.edit-dept-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -389,6 +509,7 @@
       branchSubmitButton.textContent = mode === 'edit' ? 'Update' : 'Add';
       document.getElementById('branch-name').value = branch ? (branch.name || '') : '';
       document.getElementById('branch-city').value = branch ? (branch.city || '') : '';
+      document.getElementById('branch-se-number').value = branch ? (branch.s_and_e_number || '') : '';
       branchFormError.style.display = 'none';
       branchModalOverlay.classList.add('open');
     }
@@ -406,7 +527,8 @@
 
       const payload = {
         name: document.getElementById('branch-name').value,
-        city: document.getElementById('branch-city').value
+        city: document.getElementById('branch-city').value,
+        s_and_e_number: document.getElementById('branch-se-number').value
       };
       const isEditing = editingBranchId !== null;
       const url = isEditing ? BRANCHES_API_BASE + editingBranchId + '/' : BRANCHES_API_BASE;
@@ -465,6 +587,440 @@
       } catch (err) {
         branchPageError.textContent = err.message || 'Something went wrong. Please try again.';
         branchPageError.style.display = 'block';
+      }
+    }
+
+    // ---------- Roles ----------
+
+    const rolesModalOverlay = document.getElementById('roles-modal-overlay');
+    const rolesModalTitle = document.getElementById('roles-modal-title');
+    const rolesListContent = document.getElementById('roles-list-content');
+    const rolesCloseButton = document.getElementById('roles-close-button');
+    const addRoleButton = document.getElementById('add-role-button');
+
+    let currentRolesDepartment = null;
+    let currentDepartmentRoles = [];
+
+    rolesCloseButton.addEventListener('click', closeRolesModal);
+    rolesModalOverlay.addEventListener('click', function (event) {
+      if (event.target === rolesModalOverlay) {
+        closeRolesModal();
+      }
+    });
+    addRoleButton.addEventListener('click', function () {
+      openRoleFormModal('add', null);
+    });
+
+    async function openRolesModal(dept) {
+      currentRolesDepartment = dept;
+      rolesModalTitle.textContent = 'Roles — ' + dept.name;
+      rolesListContent.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Loading roles...</div></div>';
+      rolesModalOverlay.classList.add('open');
+      await loadDepartmentRoles();
+    }
+
+    function closeRolesModal() {
+      rolesModalOverlay.classList.remove('open');
+      currentRolesDepartment = null;
+      currentDepartmentRoles = [];
+      loadDepartments();
+    }
+
+    async function loadDepartmentRoles() {
+      if (!currentRolesDepartment) {
+        return;
+      }
+      try {
+        const response = await fetch(DEPARTMENTS_API_BASE + currentRolesDepartment.id + '/roles/', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load roles.');
+        }
+
+        currentDepartmentRoles = await response.json();
+        renderRolesList();
+      } catch (err) {
+        rolesListContent.innerHTML = '<div class="error-state"><div>' +
+          escapeHtml(err.message || 'Could not load roles.') +
+          '</div><button type="button" class="btn-secondary" id="retry-roles-button">Retry</button></div>';
+        document.getElementById('retry-roles-button').addEventListener('click', loadDepartmentRoles);
+      }
+    }
+
+    function renderRolesList() {
+      if (currentDepartmentRoles.length === 0) {
+        rolesListContent.innerHTML = '<div class="message">No roles added yet for this department.</div>';
+        return;
+      }
+
+      rolesListContent.innerHTML = currentDepartmentRoles.map(function (role) {
+        return '<div class="step-row">' +
+          '<div class="step-info">' +
+          '<div class="step-name">' + escapeHtml(role.title) + '</div>' +
+          '<div class="step-meta">' + (role.job_description ? escapeHtml(role.job_description) : 'No description') + '</div>' +
+          '</div>' +
+          '<div>' +
+          '<button type="button" class="btn-edit btn-row edit-role-btn" data-id="' + escapeHtml(role.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-role-btn" data-id="' + escapeHtml(role.id) + '">Delete</button>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+
+      rolesListContent.querySelectorAll('.edit-role-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const role = currentDepartmentRoles.find(function (r) { return r.id === btn.getAttribute('data-id'); });
+          if (role) {
+            openRoleFormModal('edit', role);
+          }
+        });
+      });
+
+      rolesListContent.querySelectorAll('.delete-role-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleDeleteRole(btn.getAttribute('data-id'));
+        });
+      });
+    }
+
+    const roleFormModalOverlay = document.getElementById('role-form-modal-overlay');
+    const roleFormModalTitle = document.getElementById('role-form-modal-title');
+    const roleForm = document.getElementById('role-form');
+    const roleFormError = document.getElementById('role-form-error');
+    const roleSubmitButton = document.getElementById('role-submit-button');
+    const roleCancelButton = document.getElementById('role-cancel-button');
+
+    let editingRoleId = null;
+
+    roleForm.addEventListener('submit', handleRoleSubmit);
+    roleCancelButton.addEventListener('click', closeRoleFormModal);
+    roleFormModalOverlay.addEventListener('click', function (event) {
+      if (event.target === roleFormModalOverlay) {
+        closeRoleFormModal();
+      }
+    });
+
+    function openRoleFormModal(mode, role) {
+      editingRoleId = mode === 'edit' && role ? role.id : null;
+      roleFormModalTitle.textContent = mode === 'edit' ? 'Edit Role' : 'Add Role';
+      roleSubmitButton.textContent = mode === 'edit' ? 'Update' : 'Add';
+      document.getElementById('role-title').value = role ? (role.title || '') : '';
+      document.getElementById('role-job-description').value = role ? (role.job_description || '') : '';
+      roleFormError.style.display = 'none';
+      roleFormModalOverlay.classList.add('open');
+    }
+
+    function closeRoleFormModal() {
+      roleFormModalOverlay.classList.remove('open');
+      roleForm.reset();
+      editingRoleId = null;
+    }
+
+    async function handleRoleSubmit(event) {
+      event.preventDefault();
+      if (!currentRolesDepartment) {
+        return;
+      }
+      roleSubmitButton.disabled = true;
+      roleFormError.style.display = 'none';
+
+      const payload = {
+        title: document.getElementById('role-title').value,
+        job_description: document.getElementById('role-job-description').value
+      };
+
+      const isEditing = editingRoleId !== null;
+      const url = isEditing
+        ? ROLES_API_BASE + editingRoleId + '/'
+        : DEPARTMENTS_API_BASE + currentRolesDepartment.id + '/roles/';
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not save role.');
+        }
+
+        closeRoleFormModal();
+        loadDepartmentRoles();
+      } catch (err) {
+        roleFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        roleFormError.style.display = 'block';
+      } finally {
+        roleSubmitButton.disabled = false;
+      }
+    }
+
+    async function handleDeleteRole(roleId) {
+      const confirmed = confirm('Are you sure you want to delete this role?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(ROLES_API_BASE + roleId + '/', {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok && response.status !== 204) {
+          throw new Error('Could not delete role.');
+        }
+
+        loadDepartmentRoles();
+      } catch (err) {
+        roleFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        roleFormError.style.display = 'block';
+      }
+    }
+
+    // ---------- Workflows & TATs ----------
+
+    let currentWorkflowType = 'Recruitment';
+    let currentWorkflowSteps = [];
+
+    const workflowPageError = document.getElementById('workflow-page-error');
+
+    document.querySelectorAll('#workflow-tabs .tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        currentWorkflowType = tab.getAttribute('data-type');
+        document.querySelectorAll('#workflow-tabs .tab').forEach(function (t) {
+          t.classList.toggle('active', t === tab);
+        });
+        loadWorkflowSteps();
+      });
+    });
+
+    document.getElementById('add-step-button').addEventListener('click', function () {
+      openStepFormModal('add', null);
+    });
+
+    async function loadWorkflowSteps() {
+      const content = document.getElementById('workflow-steps-content');
+      workflowPageError.style.display = 'none';
+      content.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Loading steps...</div></div>';
+
+      try {
+        const response = await fetch(WORKFLOW_TEMPLATES_API_BASE + currentWorkflowType + '/steps/', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load workflow steps.');
+        }
+
+        currentWorkflowSteps = await response.json();
+        renderWorkflowSteps();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' +
+          escapeHtml(err.message || 'Could not load workflow steps.') +
+          '</div><button type="button" class="btn-secondary" id="retry-workflow-button">Retry</button></div>';
+        document.getElementById('retry-workflow-button').addEventListener('click', loadWorkflowSteps);
+      }
+    }
+
+    function renderWorkflowSteps() {
+      const content = document.getElementById('workflow-steps-content');
+
+      if (currentWorkflowSteps.length === 0) {
+        content.innerHTML = '<div class="message">No steps defined for this workflow yet.</div>';
+        return;
+      }
+
+      content.innerHTML = currentWorkflowSteps.map(function (step, index) {
+        return '<div class="step-row">' +
+          '<div class="step-info">' +
+          '<div class="step-name">' + (index + 1) + '. ' + escapeHtml(step.step_name) + '</div>' +
+          '<div class="step-meta">' + (step.who ? escapeHtml(step.who) : 'Unassigned') + ' &middot; TAT ' + escapeHtml(step.tat_days) + 'd</div>' +
+          '</div>' +
+          '<div>' +
+          '<button type="button" class="icon-btn move-step-btn" data-id="' + escapeHtml(step.id) + '" data-dir="up" title="Move up"' + (index === 0 ? ' disabled' : '') + '>&#8593;</button>' +
+          '<button type="button" class="icon-btn move-step-btn" data-id="' + escapeHtml(step.id) + '" data-dir="down" title="Move down"' + (index === currentWorkflowSteps.length - 1 ? ' disabled' : '') + '>&#8595;</button>' +
+          '<button type="button" class="btn-edit btn-row edit-step-btn" data-id="' + escapeHtml(step.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-step-btn" data-id="' + escapeHtml(step.id) + '">Delete</button>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+
+      content.querySelectorAll('.move-step-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleMoveStep(btn.getAttribute('data-id'), btn.getAttribute('data-dir'));
+        });
+      });
+
+      content.querySelectorAll('.edit-step-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const step = currentWorkflowSteps.find(function (s) { return s.id === btn.getAttribute('data-id'); });
+          if (step) {
+            openStepFormModal('edit', step);
+          }
+        });
+      });
+
+      content.querySelectorAll('.delete-step-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleDeleteStep(btn.getAttribute('data-id'));
+        });
+      });
+    }
+
+    async function handleMoveStep(stepId, direction) {
+      try {
+        const response = await fetch(WORKFLOW_TEMPLATES_API_BASE + currentWorkflowType + '/steps/' + stepId + '/', {
+          method: 'PATCH',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ move: direction })
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not reorder step.');
+        }
+
+        currentWorkflowSteps = await response.json();
+        renderWorkflowSteps();
+      } catch (err) {
+        workflowPageError.textContent = err.message || 'Something went wrong. Please try again.';
+        workflowPageError.style.display = 'block';
+      }
+    }
+
+    async function handleDeleteStep(stepId) {
+      const confirmed = confirm('Are you sure you want to delete this step?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(WORKFLOW_TEMPLATES_API_BASE + currentWorkflowType + '/steps/' + stepId + '/', {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not delete step.');
+        }
+
+        currentWorkflowSteps = await response.json();
+        renderWorkflowSteps();
+      } catch (err) {
+        workflowPageError.textContent = err.message || 'Something went wrong. Please try again.';
+        workflowPageError.style.display = 'block';
+      }
+    }
+
+    const stepFormModalOverlay = document.getElementById('step-form-modal-overlay');
+    const stepFormModalTitle = document.getElementById('step-form-modal-title');
+    const stepForm = document.getElementById('step-form');
+    const stepFormError = document.getElementById('step-form-error');
+    const stepSubmitButton = document.getElementById('step-submit-button');
+    const stepCancelButton = document.getElementById('step-cancel-button');
+
+    let editingStepId = null;
+
+    stepForm.addEventListener('submit', handleStepSubmit);
+    stepCancelButton.addEventListener('click', closeStepFormModal);
+    stepFormModalOverlay.addEventListener('click', function (event) {
+      if (event.target === stepFormModalOverlay) {
+        closeStepFormModal();
+      }
+    });
+
+    function openStepFormModal(mode, step) {
+      editingStepId = mode === 'edit' && step ? step.id : null;
+      stepFormModalTitle.textContent = mode === 'edit' ? 'Edit Step' : 'Add Step';
+      stepSubmitButton.textContent = mode === 'edit' ? 'Update' : 'Add';
+      document.getElementById('step-name').value = step ? (step.step_name || '') : '';
+      document.getElementById('step-who').value = step ? (step.who || '') : '';
+      document.getElementById('step-tat-days').value = step ? (step.tat_days !== undefined ? step.tat_days : 1) : 1;
+      stepFormError.style.display = 'none';
+      stepFormModalOverlay.classList.add('open');
+    }
+
+    function closeStepFormModal() {
+      stepFormModalOverlay.classList.remove('open');
+      stepForm.reset();
+      editingStepId = null;
+    }
+
+    async function handleStepSubmit(event) {
+      event.preventDefault();
+      stepSubmitButton.disabled = true;
+      stepFormError.style.display = 'none';
+
+      const payload = {
+        step_name: document.getElementById('step-name').value,
+        who: document.getElementById('step-who').value,
+        tat_days: parseInt(document.getElementById('step-tat-days').value, 10) || 0
+      };
+
+      const isEditing = editingStepId !== null;
+      const url = WORKFLOW_TEMPLATES_API_BASE + currentWorkflowType + '/steps/' + (isEditing ? editingStepId + '/' : '');
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not save step.');
+        }
+
+        currentWorkflowSteps = await response.json();
+        closeStepFormModal();
+        renderWorkflowSteps();
+      } catch (err) {
+        stepFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        stepFormError.style.display = 'block';
+      } finally {
+        stepSubmitButton.disabled = false;
       }
     }
   </script>

@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <title>Recruitment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
 <style>
   .header-actions {
     display: flex;
@@ -39,6 +44,14 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 8px;
+    gap: 8px;
+  }
+
+  .candidate-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
   }
 
   .candidate-name {
@@ -72,15 +85,27 @@
 <body>
 
   <div class="top-nav">
-    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
-    <div class="nav-links" id="nav-links">
-      <a href="dashboard.html">Dashboard</a>
-      <a href="employees.html">Employees</a>
-      <a href="positions.html">Employee IDs</a>
-      <a href="recruitment.html" class="active">Recruitment</a>
-      <a href="tasks.html">Tasks</a>
-      <a href="admin.html">Admin Studio</a>
-      <a href="workindia.html">WorkIndia Import</a>
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link active"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
     </div>
   </div>
 
@@ -97,25 +122,30 @@
   <div class="container">
     <div class="kpi-grid">
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-gold"><i class="fa-solid fa-briefcase"></i></div>
         <div class="kpi-label">Open Requisitions</div>
         <div class="kpi-value" id="kpi-open-requisitions">0 / 0</div>
         <div class="kpi-sub">requisitions / openings</div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-navy"><i class="fa-solid fa-user-clock"></i></div>
         <div class="kpi-label">In Pipeline</div>
         <div class="kpi-value" id="kpi-in-pipeline">0</div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-amber"><i class="fa-solid fa-file-lines"></i></div>
         <div class="kpi-label">Documents Pending</div>
         <div class="kpi-value" id="kpi-docs-pending">0</div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-green"><i class="fa-solid fa-user-check"></i></div>
         <div class="kpi-label">Joined</div>
         <div class="kpi-value" id="kpi-joined">0</div>
       </div>
     </div>
 
     <div id="page-error" class="form-error"></div>
+    <div id="page-success" class="success-message"></div>
   </div>
 
   <div class="container">
@@ -239,11 +269,52 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="reference-checks-modal-overlay">
+    <div class="modal-card">
+      <h2 id="reference-checks-modal-title">Reference Checks</h2>
+      <div id="reference-checks-list"></div>
+      <hr style="margin: 16px 0; border-color: var(--line-2);">
+      <div id="reference-check-form-error" class="form-error"></div>
+      <form id="reference-check-form">
+        <input type="hidden" id="ref-check-editing-id">
+        <div class="field">
+          <label for="ref-referee-name">Referee Name</label>
+          <input type="text" id="ref-referee-name" required>
+        </div>
+        <div class="field">
+          <label for="ref-relationship">Relationship to Candidate</label>
+          <input type="text" id="ref-relationship" placeholder="e.g. Ex-manager, Colleague">
+        </div>
+        <div class="field">
+          <label for="ref-phone">Phone</label>
+          <input type="text" id="ref-phone">
+        </div>
+        <div class="field">
+          <label for="ref-status">Status</label>
+          <select id="ref-status">
+            <option value="Pending">Pending</option>
+            <option value="Positive">Positive</option>
+            <option value="Discrepancy">Discrepancy</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ref-note">Note</label>
+          <textarea id="ref-note" rows="2"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="reference-check-submit-button">Add Reference Check</button>
+          <button type="button" class="btn-secondary" id="reference-check-cancel-button">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     const token = localStorage.getItem('authToken');
     const REQUISITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/requisitions/';
     const CANDIDATES_API_BASE = 'http://127.0.0.1:8000/api/v1/candidates/';
     const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
+    const REFERENCE_CHECKS_API_BASE = 'http://127.0.0.1:8000/api/v1/reference-checks/';
 
     if (!token) {
       window.location.href = 'login.html';
@@ -252,13 +323,6 @@
       loadBranchOptions();
     }
 
-    const navToggle = document.getElementById('nav-toggle');
-    const navLinks = document.getElementById('nav-links');
-    if (navToggle && navLinks) {
-      navToggle.addEventListener('click', function () {
-        navLinks.classList.toggle('open');
-      });
-    }
 
     async function loadBranchOptions() {
       try {
@@ -279,6 +343,7 @@
 
     let allRequisitions = [];
     let allCandidates = [];
+    let allReferenceChecks = [];
 
     const pageError = document.getElementById('page-error');
 
@@ -301,6 +366,28 @@
       return div.innerHTML;
     }
 
+    const AVATAR_PALETTE = ['#1b2a4a', '#a67f2c', '#2a5db0', '#1e7e34', '#8a3ab2', '#b7472a', '#0f766e'];
+
+    function getInitials(name) {
+      const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 0) {
+        return '?';
+      }
+      if (parts.length === 1) {
+        return parts[0].charAt(0).toUpperCase();
+      }
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+
+    function getAvatarColor(name) {
+      const str = String(name || '?');
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash * 31 + str.charCodeAt(i)) % AVATAR_PALETTE.length;
+      }
+      return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+    }
+
     function handleUnauthorized(response) {
       if (response.status === 401) {
         localStorage.removeItem('authToken');
@@ -313,21 +400,23 @@
     async function loadAll() {
       hidePageError();
       try {
-        const [reqResponse, candResponse] = await Promise.all([
+        const [reqResponse, candResponse, refResponse] = await Promise.all([
           fetch(REQUISITIONS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
-          fetch(CANDIDATES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } })
+          fetch(CANDIDATES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch(REFERENCE_CHECKS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } })
         ]);
 
-        if (handleUnauthorized(reqResponse) || handleUnauthorized(candResponse)) {
+        if (handleUnauthorized(reqResponse) || handleUnauthorized(candResponse) || handleUnauthorized(refResponse)) {
           return;
         }
 
-        if (!reqResponse.ok || !candResponse.ok) {
+        if (!reqResponse.ok || !candResponse.ok || !refResponse.ok) {
           throw new Error('Failed to load recruitment data.');
         }
 
         allRequisitions = await reqResponse.json();
         allCandidates = await candResponse.json();
+        allReferenceChecks = await refResponse.json();
         renderAll();
       } catch (err) {
         const retryHtml = '<div class="error-state"><div>' +
@@ -445,7 +534,8 @@
       return 'chip-navy';
     }
 
-    const CANDIDATE_STAGES = ['Applied', 'Screening', 'Interview', 'Offer', 'Documents Pending', 'Joined', 'Rejected', 'Withdrawn'];
+    const CLOSED_CANDIDATE_STAGES = ['Joined', 'Rejected', 'Withdrawn'];
+    const expandedCandidateIds = new Set();
 
     function renderCandidatesList() {
       const content = document.getElementById('candidates-content');
@@ -460,20 +550,65 @@
           ? escapeHtml(cand.requisition_role) + ' &mdash; ' + escapeHtml(cand.requisition_branch)
           : '&mdash; No requisition &mdash;';
 
-        const stageOptions = CANDIDATE_STAGES.map(function (s) {
-          return '<option value="' + s + '"' + (s === cand.stage ? ' selected' : '') + '>' + s + '</option>';
+        const steps = cand.steps || [];
+        const doneCount = cand.steps_done_count || 0;
+        const totalCount = cand.steps_total_count || steps.length;
+        const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+        const isExpanded = expandedCandidateIds.has(cand.id);
+        const isClosed = CLOSED_CANDIDATE_STAGES.indexOf(cand.stage) !== -1;
+
+        const stepsHtml = steps.map(function (step) {
+          const toggleBtn = step.done
+            ? '<button type="button" class="btn-undo btn-row cand-step-toggle" data-cand-id="' + escapeHtml(cand.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="undo">Undo</button>'
+            : '<button type="button" class="btn-done btn-row cand-step-toggle" data-cand-id="' + escapeHtml(cand.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="done">Done</button>';
+          return '<div class="step-row">' +
+            '<div class="step-info">' +
+            '<div class="step-name' + (step.done ? ' step-done' : '') + '">' + escapeHtml(step.step_name) + '</div>' +
+            '<div class="step-meta">' + (step.who ? escapeHtml(step.who) : 'Unassigned') + ' &middot; TAT ' + escapeHtml(step.tat_days) + 'd' + (step.done_date ? ' &middot; done ' + escapeHtml(step.done_date) : '') + '</div>' +
+            '</div>' +
+            toggleBtn +
+            '</div>';
         }).join('');
 
-        return '<div class="candidate-card">' +
+        const checklistBlock = isExpanded
+          ? '<div class="candidate-checklist" style="margin-top: 10px;">' +
+            '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '%</div>' +
+            (steps.length === 0 ? '<div class="message" style="padding: 12px 0;">No SOP steps configured.</div>' : stepsHtml) +
+            '</div>'
+          : '<div class="progress-track" style="margin-top: 10px;"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '% &mdash; click card to expand</div>';
+
+        const manualActions = isClosed
+          ? ''
+          : '<button type="button" class="btn-secondary btn-row cand-reject-btn" data-id="' + escapeHtml(cand.id) + '">Reject</button>' +
+            '<button type="button" class="btn-secondary btn-row cand-withdraw-btn" data-id="' + escapeHtml(cand.id) + '">Withdraw</button>';
+
+        const createEmployeeBtn = cand.stage === 'Documents Pending'
+          ? '<button type="button" class="btn-primary btn-row create-employee-btn" data-id="' + escapeHtml(cand.id) + '">Create Employee</button>'
+          : '';
+
+        const positiveRefCount = allReferenceChecks.filter(function (r) {
+          return r.candidate_id === cand.id && r.status === 'Positive';
+        }).length;
+
+        return '<div class="candidate-card candidate-card-clickable" data-id="' + escapeHtml(cand.id) + '">' +
           '<div class="candidate-header">' +
+          '<span class="candidate-identity">' +
+          '<span class="avatar avatar-small" style="background:' + getAvatarColor(cand.name) + '">' + escapeHtml(getInitials(cand.name)) + '</span>' +
           '<span class="candidate-name">' + escapeHtml(cand.name) + '</span>' +
+          '</span>' +
           '<span class="chip ' + stageChipClass(cand.stage) + '">' + escapeHtml(cand.stage) + '</span>' +
           '</div>' +
           '<div class="candidate-meta">' + requisitionLabel + '</div>' +
           '<div class="candidate-meta">Source: ' + (cand.source ? escapeHtml(cand.source) : '&mdash;') + '</div>' +
           '<div class="candidate-meta">Experience: ' + (cand.experience ? escapeHtml(cand.experience) : '&mdash;') + '</div>' +
-          '<select class="candidate-stage-select stage-select" data-id="' + escapeHtml(cand.id) + '">' + stageOptions + '</select>' +
-          '<div class="candidate-actions">' +
+          '<div class="candidate-meta">References: ' + positiveRefCount + ' positive</div>' +
+          checklistBlock +
+          '<div class="candidate-actions" style="margin-top: 10px; flex-wrap: wrap;">' +
+          createEmployeeBtn +
+          manualActions +
+          '<button type="button" class="btn-secondary btn-row ref-checks-btn" data-id="' + escapeHtml(cand.id) + '">References</button>' +
           '<button type="button" class="btn-edit btn-row edit-cand-btn" data-id="' + escapeHtml(cand.id) + '">Edit</button>' +
           '<button type="button" class="btn-delete btn-row delete-cand-btn" data-id="' + escapeHtml(cand.id) + '">Delete</button>' +
           '</div>' +
@@ -482,9 +617,52 @@
 
       content.innerHTML = '<div class="candidate-grid">' + cards + '</div>';
 
-      content.querySelectorAll('.stage-select').forEach(function (select) {
-        select.addEventListener('change', function () {
-          handleCandidateStageChange(select.getAttribute('data-id'), select.value);
+      content.querySelectorAll('.candidate-card-clickable').forEach(function (card) {
+        card.addEventListener('click', function (event) {
+          if (event.target.closest('button')) {
+            return;
+          }
+          const id = card.getAttribute('data-id');
+          if (expandedCandidateIds.has(id)) {
+            expandedCandidateIds.delete(id);
+          } else {
+            expandedCandidateIds.add(id);
+          }
+          renderCandidatesList();
+        });
+      });
+
+      content.querySelectorAll('.ref-checks-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openReferenceChecksModal(btn.getAttribute('data-id'));
+        });
+      });
+
+      content.querySelectorAll('.cand-step-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleCandidateStepToggle(
+            btn.getAttribute('data-cand-id'),
+            btn.getAttribute('data-step-id'),
+            btn.getAttribute('data-action')
+          );
+        });
+      });
+
+      content.querySelectorAll('.cand-reject-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleCandidateManualStage(btn.getAttribute('data-id'), 'Rejected');
+        });
+      });
+
+      content.querySelectorAll('.cand-withdraw-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleCandidateManualStage(btn.getAttribute('data-id'), 'Withdrawn');
+        });
+      });
+
+      content.querySelectorAll('.create-employee-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleCreateEmployeeFromCandidate(btn.getAttribute('data-id'));
         });
       });
 
@@ -779,7 +957,40 @@
       }
     }
 
-    async function handleCandidateStageChange(candId, newStage) {
+    async function handleCandidateStepToggle(candId, stepId, action) {
+      hidePageError();
+      try {
+        const response = await fetch(
+          CANDIDATES_API_BASE + candId + '/steps/' + stepId + '/' + action + '/',
+          {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+          }
+        );
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not update step.');
+        }
+
+        expandedCandidateIds.add(candId);
+        loadAll();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    async function handleCandidateManualStage(candId, newStage) {
+      const label = newStage.toLowerCase();
+      const confirmed = confirm('Mark this candidate as ' + label + '?');
+      if (!confirmed) {
+        return;
+      }
+
       hidePageError();
       try {
         const response = await fetch(CANDIDATES_API_BASE + candId + '/', {
@@ -803,6 +1014,48 @@
       } catch (err) {
         showPageError(err.message || 'Something went wrong. Please try again.');
       }
+    }
+
+    async function handleCreateEmployeeFromCandidate(candId) {
+      const confirmed = confirm('Create an employee record from this candidate? This cannot be undone.');
+      if (!confirmed) {
+        return;
+      }
+
+      hidePageError();
+      try {
+        const response = await fetch(CANDIDATES_API_BASE + candId + '/create-employee/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not create employee from this candidate.');
+        }
+
+        const data = await response.json();
+        pageSuccessMessage(
+          'Employee created successfully. <a href="employees.html" target="_blank" rel="noopener noreferrer">View in Employees</a> (search for the new record).' +
+          (data.employee_id ? ' Employee ID: ' + escapeHtml(data.employee_id) : '')
+        );
+        loadAll();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    function pageSuccessMessage(html) {
+      const successEl = document.getElementById('page-success');
+      if (!successEl) {
+        return;
+      }
+      successEl.innerHTML = html;
+      successEl.style.display = 'block';
     }
 
     async function handleDeleteCandidate(candId) {
@@ -829,6 +1082,122 @@
       } catch (err) {
         showPageError(err.message || 'Something went wrong. Please try again.');
       }
+    }
+
+    // ---------- Reference Checks ----------
+
+    let referenceChecksCandidateId = null;
+    const referenceChecksModalOverlay = document.getElementById('reference-checks-modal-overlay');
+    const referenceCheckForm = document.getElementById('reference-check-form');
+
+    function openReferenceChecksModal(candId) {
+      referenceChecksCandidateId = candId;
+      const candidate = allCandidates.find(function (c) { return c.id === candId; });
+      document.getElementById('reference-checks-modal-title').textContent =
+        'Reference Checks' + (candidate ? ' — ' + candidate.name : '');
+      resetReferenceCheckForm();
+      renderReferenceChecksModalList();
+      referenceChecksModalOverlay.classList.add('open');
+    }
+
+    function resetReferenceCheckForm() {
+      referenceCheckForm.reset();
+      document.getElementById('ref-check-editing-id').value = '';
+      document.getElementById('reference-check-submit-button').textContent = 'Add Reference Check';
+      document.getElementById('reference-check-form-error').style.display = 'none';
+    }
+
+    function renderReferenceChecksModalList() {
+      const listEl = document.getElementById('reference-checks-list');
+      const checks = allReferenceChecks.filter(function (r) { return r.candidate_id === referenceChecksCandidateId; });
+
+      if (checks.length === 0) {
+        listEl.innerHTML = '<div class="message">No reference checks added yet.</div>';
+        return;
+      }
+
+      listEl.innerHTML = checks.map(function (r) {
+        return '<div class="step-row">' +
+          '<div class="step-info">' +
+          '<div class="step-name">' + escapeHtml(r.referee_name) + (r.relationship_to_candidate ? ' (' + escapeHtml(r.relationship_to_candidate) + ')' : '') + '</div>' +
+          '<div class="step-meta">' + (r.phone ? escapeHtml(r.phone) + ' &middot; ' : '') + '<span class="chip">' + escapeHtml(r.status) + '</span>' + (r.note ? ' &middot; ' + escapeHtml(r.note) : '') + '</div>' +
+          '</div>' +
+          '<button type="button" class="btn-edit btn-row edit-ref-check-btn" data-id="' + escapeHtml(r.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-ref-check-btn" data-id="' + escapeHtml(r.id) + '">Delete</button>' +
+          '</div>';
+      }).join('');
+
+      listEl.querySelectorAll('.edit-ref-check-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const check = allReferenceChecks.find(function (r) { return r.id === btn.getAttribute('data-id'); });
+          if (!check) return;
+          document.getElementById('ref-check-editing-id').value = check.id;
+          document.getElementById('ref-referee-name').value = check.referee_name || '';
+          document.getElementById('ref-relationship').value = check.relationship_to_candidate || '';
+          document.getElementById('ref-phone').value = check.phone || '';
+          document.getElementById('ref-status').value = check.status || 'Pending';
+          document.getElementById('ref-note').value = check.note || '';
+          document.getElementById('reference-check-submit-button').textContent = 'Update Reference Check';
+        });
+      });
+
+      listEl.querySelectorAll('.delete-ref-check-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleDeleteReferenceCheck(btn.getAttribute('data-id')); });
+      });
+    }
+
+    document.getElementById('reference-check-cancel-button').addEventListener('click', function () {
+      referenceChecksModalOverlay.classList.remove('open');
+    });
+    referenceChecksModalOverlay.addEventListener('click', function (e) {
+      if (e.target === referenceChecksModalOverlay) referenceChecksModalOverlay.classList.remove('open');
+    });
+
+    referenceCheckForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const editingId = document.getElementById('ref-check-editing-id').value;
+      const payload = {
+        referee_name: document.getElementById('ref-referee-name').value,
+        relationship_to_candidate: document.getElementById('ref-relationship').value,
+        phone: document.getElementById('ref-phone').value,
+        status: document.getElementById('ref-status').value,
+        note: document.getElementById('ref-note').value
+      };
+      if (!editingId) {
+        payload.candidate_id = referenceChecksCandidateId;
+      }
+      const url = editingId ? REFERENCE_CHECKS_API_BASE + editingId + '/' : REFERENCE_CHECKS_API_BASE;
+      try {
+        const response = await fetch(url, {
+          method: editingId ? 'PATCH' : 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not save reference check.');
+
+        const refResponse = await fetch(REFERENCE_CHECKS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        allReferenceChecks = await refResponse.json();
+        resetReferenceCheckForm();
+        renderReferenceChecksModalList();
+        renderCandidatesList();
+      } catch (err) {
+        const errorEl = document.getElementById('reference-check-form-error');
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    });
+
+    async function handleDeleteReferenceCheck(id) {
+      if (!confirm('Delete this reference check?')) return;
+      const response = await fetch(REFERENCE_CHECKS_API_BASE + id + '/', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (handleUnauthorized(response)) return;
+      allReferenceChecks = allReferenceChecks.filter(function (r) { return r.id !== id; });
+      renderReferenceChecksModalList();
+      renderCandidatesList();
     }
   </script>
 

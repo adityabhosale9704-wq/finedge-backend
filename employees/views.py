@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import date
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -56,6 +57,7 @@ def serialize_employee(doc, request=None):
     doc.setdefault("policy_accepted", False)
     doc.setdefault("facilities", [])
     doc.setdefault("position_id", None)
+    doc.setdefault("onboarding_steps", [])
 
     docs_list = doc.get("docs", [])
     doc["docs"] = [
@@ -424,5 +426,91 @@ class EmployeeDocumentDetailView(APIView):
             {"_id": employee["_id"]}, {"$pull": {"docs": {"id": doc_id}}}
         )
 
+        updated = get_employees_collection().find_one({"_id": employee["_id"]})
+        return Response(serialize_employee(updated, request))
+
+
+class EmployeeOnboardingListView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        employees = get_employees_collection().find({"status": "Onboarding"})
+        return Response([serialize_employee(e, request) for e in employees])
+
+
+def _toggle_onboarding_step(pk, step_id, done):
+    employee = get_employee_by_pk(pk)
+    if not employee:
+        return None, Response(
+            {"detail": "Employee not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    steps = employee.get("onboarding_steps", [])
+    step = next((s for s in steps if s.get("id") == step_id), None)
+    if not step:
+        return None, Response(
+            {"detail": "Onboarding step not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    step["done"] = done
+    step["done_date"] = date.today().isoformat() if done else None
+
+    get_employees_collection().update_one(
+        {"_id": employee["_id"]}, {"$set": {"onboarding_steps": steps}}
+    )
+    updated = get_employees_collection().find_one({"_id": employee["_id"]})
+    return updated, None
+
+
+class EmployeeOnboardingStepDoneView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk, step_id):
+        updated, error = _toggle_onboarding_step(pk, step_id, True)
+        if error:
+            return error
+        return Response(serialize_employee(updated, request))
+
+
+class EmployeeOnboardingStepUndoView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk, step_id):
+        updated, error = _toggle_onboarding_step(pk, step_id, False)
+        if error:
+            return error
+        return Response(serialize_employee(updated, request))
+
+
+class EmployeeCompleteOnboardingView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        employee = get_employee_by_pk(pk)
+        if not employee:
+            return Response(
+                {"detail": "Employee not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        steps = employee.get("onboarding_steps", [])
+        if not steps or not all(s.get("done") for s in steps):
+            return Response(
+                {"detail": "All onboarding steps must be completed first."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not employee.get("policy_accepted"):
+            return Response(
+                {"detail": "The policy handbook must be accepted first."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        get_employees_collection().update_one(
+            {"_id": employee["_id"]}, {"$set": {"status": "Active"}}
+        )
         updated = get_employees_collection().find_one({"_id": employee["_id"]})
         return Response(serialize_employee(updated, request))

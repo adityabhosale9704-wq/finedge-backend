@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+  .onboarding-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+
+  .onboarding-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .onboarding-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .onboarding-name {
+    font-weight: 600;
+    color: var(--txt);
+  }
+
+  .onboarding-meta {
+    font-size: 13px;
+    color: var(--mut);
+  }
+
+  .onboarding-body {
+    margin-top: 14px;
+  }
+
+  .policy-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link active"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>Onboarding</h1>
+  </div>
+
+  <div class="container">
+    <div id="page-error" class="form-error"></div>
+    <div id="onboarding-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading onboarding employees...</div></div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+    const ONBOARDING_LIST_API = EMPLOYEES_API_BASE + 'onboarding/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadOnboarding();
+    }
+
+    let allOnboarding = [];
+    const expandedIds = new Set();
+
+    const pageError = document.getElementById('page-error');
+
+    function showPageError(message) {
+      pageError.textContent = message;
+      pageError.style.display = 'block';
+    }
+
+    function hidePageError() {
+      pageError.textContent = '';
+      pageError.style.display = 'none';
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    const AVATAR_PALETTE = ['#a5314a', '#c97a3d', '#2a5db0', '#1e7e34', '#8a3ab2', '#b7472a', '#0f766e'];
+
+    function getInitials(name) {
+      const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 0) {
+        return '?';
+      }
+      if (parts.length === 1) {
+        return parts[0].charAt(0).toUpperCase();
+      }
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+
+    function getAvatarColor(name) {
+      const str = String(name || '?');
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash * 31 + str.charCodeAt(i)) % AVATAR_PALETTE.length;
+      }
+      return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+    }
+
+    async function loadOnboarding() {
+      const content = document.getElementById('onboarding-content');
+      hidePageError();
+
+      try {
+        const response = await fetch(ONBOARDING_LIST_API, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load onboarding employees.');
+        }
+
+        allOnboarding = await response.json();
+        renderOnboarding();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' +
+          escapeHtml(err.message || 'Could not load onboarding employees.') +
+          '</div><button type="button" class="btn-secondary" id="retry-onboarding-button">Retry</button></div>';
+        document.getElementById('retry-onboarding-button').addEventListener('click', loadOnboarding);
+      }
+    }
+
+    function renderOnboarding() {
+      const content = document.getElementById('onboarding-content');
+
+      if (allOnboarding.length === 0) {
+        content.innerHTML = '<div class="message">No employees currently onboarding.</div>';
+        return;
+      }
+
+      content.innerHTML = allOnboarding.map(function (emp) {
+        const steps = emp.onboarding_steps || [];
+        const doneCount = steps.filter(function (s) { return s.done; }).length;
+        const totalCount = steps.length;
+        const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+        const isExpanded = expandedIds.has(emp.id);
+        const allStepsDone = totalCount > 0 && doneCount === totalCount;
+        const canComplete = allStepsDone && !!emp.policy_accepted;
+
+        let bodyHtml = '';
+        if (isExpanded) {
+          const stepsHtml = steps.length === 0
+            ? '<div class="message" style="padding: 12px 0;">No onboarding steps configured.</div>'
+            : steps.map(function (step) {
+              const toggleBtn = step.done
+                ? '<button type="button" class="btn-undo btn-row onboard-step-toggle" data-emp-id="' + escapeHtml(emp.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="undo">Undo</button>'
+                : '<button type="button" class="btn-done btn-row onboard-step-toggle" data-emp-id="' + escapeHtml(emp.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="done">Done</button>';
+              return '<div class="step-row">' +
+                '<div class="step-info">' +
+                '<div class="step-name' + (step.done ? ' step-done' : '') + '">' + escapeHtml(step.step_name) + '</div>' +
+                '<div class="step-meta">' + (step.who ? escapeHtml(step.who) : 'Unassigned') + ' &middot; TAT ' + escapeHtml(step.tat_days) + 'd' + (step.done_date ? ' &middot; done ' + escapeHtml(step.done_date) : '') + '</div>' +
+                '</div>' +
+                toggleBtn +
+                '</div>';
+            }).join('');
+
+          bodyHtml = '<div class="onboarding-body">' +
+            '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '%</div>' +
+            stepsHtml +
+            '<div class="policy-row">' +
+            '<input type="checkbox" id="policy-' + escapeHtml(emp.id) + '" class="policy-checkbox" data-emp-id="' + escapeHtml(emp.id) + '"' + (emp.policy_accepted ? ' checked' : '') + '>' +
+            '<label for="policy-' + escapeHtml(emp.id) + '" style="margin: 0;">Policy handbook accepted</label>' +
+            '</div>' +
+            '<button type="button" class="btn-primary complete-onboarding-btn" data-emp-id="' + escapeHtml(emp.id) + '"' + (canComplete ? '' : ' disabled') + '>Complete Onboarding &mdash; Activate Employee</button>' +
+            '</div>';
+        } else {
+          bodyHtml = '<div class="progress-track" style="margin-top: 10px;"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '% &mdash; click to expand</div>';
+        }
+
+        return '<div class="onboarding-card">' +
+          '<div class="onboarding-header onboarding-toggle" data-emp-id="' + escapeHtml(emp.id) + '">' +
+          '<span class="onboarding-identity">' +
+          '<span class="avatar avatar-small" style="background:' + getAvatarColor(emp.name) + '">' + escapeHtml(getInitials(emp.name)) + '</span>' +
+          '<span>' +
+          '<div class="onboarding-name">' + escapeHtml(emp.name) + '</div>' +
+          '<div class="onboarding-meta">' + escapeHtml(emp.designation) + (emp.department ? ' &middot; ' + escapeHtml(emp.department) : '') + (emp.branch ? ' &middot; ' + escapeHtml(emp.branch) : '') + '</div>' +
+          '</span>' +
+          '</span>' +
+          '<span class="chip chip-amber">Onboarding</span>' +
+          '</div>' +
+          bodyHtml +
+          '</div>';
+      }).join('');
+
+      content.querySelectorAll('.onboarding-toggle').forEach(function (header) {
+        header.addEventListener('click', function () {
+          const id = header.getAttribute('data-emp-id');
+          if (expandedIds.has(id)) {
+            expandedIds.delete(id);
+          } else {
+            expandedIds.add(id);
+          }
+          renderOnboarding();
+        });
+      });
+
+      content.querySelectorAll('.onboard-step-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          handleStepToggle(btn.getAttribute('data-emp-id'), btn.getAttribute('data-step-id'), btn.getAttribute('data-action'));
+        });
+      });
+
+      content.querySelectorAll('.policy-checkbox').forEach(function (checkbox) {
+        checkbox.addEventListener('click', function (event) {
+          event.stopPropagation();
+        });
+        checkbox.addEventListener('change', function () {
+          handlePolicyToggle(checkbox.getAttribute('data-emp-id'), checkbox.checked);
+        });
+      });
+
+      content.querySelectorAll('.complete-onboarding-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          handleCompleteOnboarding(btn.getAttribute('data-emp-id'));
+        });
+      });
+    }
+
+    async function handleStepToggle(empId, stepId, action) {
+      hidePageError();
+      try {
+        const response = await fetch(
+          EMPLOYEES_API_BASE + empId + '/onboarding-steps/' + stepId + '/' + action + '/',
+          {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+          }
+        );
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not update step.');
+        }
+
+        expandedIds.add(empId);
+        loadOnboarding();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    async function handlePolicyToggle(empId, checked) {
+      hidePageError();
+      try {
+        const response = await fetch(EMPLOYEES_API_BASE + empId + '/', {
+          method: 'PATCH',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ policy_accepted: checked })
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not update policy acceptance.');
+        }
+
+        expandedIds.add(empId);
+        loadOnboarding();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    async function handleCompleteOnboarding(empId) {
+      const confirmed = confirm('Complete onboarding and activate this employee?');
+      if (!confirmed) {
+        return;
+      }
+
+      hidePageError();
+      try {
+        const response = await fetch(EMPLOYEES_API_BASE + empId + '/complete-onboarding/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not complete onboarding.');
+        }
+
+        expandedIds.delete(empId);
+        loadOnboarding();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+  </script>
+
+</body>
+</html>

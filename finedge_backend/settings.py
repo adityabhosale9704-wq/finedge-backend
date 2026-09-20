@@ -49,6 +49,15 @@ INSTALLED_APPS = [
     'tasks',
     'admin_studio',
     'workindia',
+    'workflows',
+    'compensation',
+    'increments',
+    'separations',
+    'engagement',
+    'compliance',
+    'done_board',
+    'interview_questions',
+    'reference_checks',
 ]
 
 MIDDLEWARE = [

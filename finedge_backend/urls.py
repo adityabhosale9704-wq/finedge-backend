@@ -28,6 +28,15 @@ urlpatterns = [
     path('api/v1/tasks/', include('tasks.urls')),
     path('api/v1/', include('admin_studio.urls')),
     path('api/v1/', include('workindia.urls')),
+    path('api/v1/', include('workflows.urls')),
+    path('api/v1/', include('compensation.urls')),
+    path('api/v1/', include('increments.urls')),
+    path('api/v1/', include('separations.urls')),
+    path('api/v1/', include('engagement.urls')),
+    path('api/v1/', include('compliance.urls')),
+    path('api/v1/', include('done_board.urls')),
+    path('api/v1/', include('interview_questions.urls')),
+    path('api/v1/', include('reference_checks.urls')),
 ]
 
 if settings.DEBUG:

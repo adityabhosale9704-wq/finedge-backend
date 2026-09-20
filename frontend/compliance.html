@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Compliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+  .status-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status-chip.green { background: var(--green-bg); color: var(--green); }
+  .status-chip.amber { background: var(--amber-bg); color: var(--amber); }
+  .status-chip.red { background: var(--red-bg); color: var(--red); }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link active"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h1 style="margin-bottom: 0;">Compliance</h1>
+      <button type="button" class="btn-primary" id="add-item-button">+ Add Compliance Item</button>
+    </div>
+    <div id="form-error" class="form-error"></div>
+    <div id="items-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Shops &amp; Establishments Registration by Branch</h2>
+    <div id="branches-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading branches...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="item-modal-overlay">
+    <div class="modal-card">
+      <h2 id="item-modal-title">Add Compliance Item</h2>
+      <div id="item-modal-form-error" class="form-error"></div>
+      <form id="item-form">
+        <div class="field"><label for="item-act-name">Act Name</label><input type="text" id="item-act-name" required></div>
+        <div class="field"><label for="item-frequency">Frequency</label><input type="text" id="item-frequency" placeholder="e.g. Monthly, Yearly"></div>
+        <div class="field"><label for="item-owner">Owner</label><input type="text" id="item-owner"></div>
+        <div class="field"><label for="item-due-date">Next Due Date</label><input type="date" id="item-due-date" required></div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="item-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="item-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const COMPLIANCE_API_BASE = 'http://127.0.0.1:8000/api/v1/compliance/';
+    const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadComplianceItems();
+      loadBranches();
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    let allItems = [];
+
+    async function loadComplianceItems() {
+      const content = document.getElementById('items-content');
+      try {
+        const response = await fetch(COMPLIANCE_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load compliance items.');
+        allItems = await response.json();
+        renderItems();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-items-button">Retry</button></div>';
+        document.getElementById('retry-items-button').addEventListener('click', loadComplianceItems);
+      }
+    }
+
+    function renderItems() {
+      const content = document.getElementById('items-content');
+      if (allItems.length === 0) {
+        content.innerHTML = '<div class="message">No compliance items added yet.</div>';
+        return;
+      }
+      const rows = allItems.map(function (item) {
+        return '<tr><td>' + escapeHtml(item.act_name) + '</td><td>' + (item.frequency ? escapeHtml(item.frequency) : '&mdash;') + '</td>' +
+          '<td>' + (item.owner ? escapeHtml(item.owner) : '&mdash;') + '</td>' +
+          '<td>' + escapeHtml(item.next_due_date) + '</td>' +
+          '<td><span class="status-chip ' + item.status + '">' + item.status.toUpperCase() + '</span></td>' +
+          '<td><button type="button" class="btn-edit btn-row edit-item-btn" data-id="' + escapeHtml(item.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-item-btn" data-id="' + escapeHtml(item.id) + '">Delete</button></td></tr>';
+      }).join('');
+      content.innerHTML = '<table><thead><tr><th>Act Name</th><th>Frequency</th><th>Owner</th><th>Next Due Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+      content.querySelectorAll('.edit-item-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const item = allItems.find(function (x) { return x.id === btn.getAttribute('data-id'); });
+          if (item) openItemModal('edit', item);
+        });
+      });
+      content.querySelectorAll('.delete-item-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleDeleteItem(btn.getAttribute('data-id')); });
+      });
+    }
+
+    async function handleDeleteItem(id) {
+      if (!confirm('Delete this compliance item?')) return;
+      const response = await fetch(COMPLIANCE_API_BASE + id + '/', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+      if (handleUnauthorized(response)) return;
+      loadComplianceItems();
+    }
+
+    const itemModalOverlay = document.getElementById('item-modal-overlay');
+    const itemForm = document.getElementById('item-form');
+    let editingItemId = null;
+
+    document.getElementById('add-item-button').addEventListener('click', function () { openItemModal('add', null); });
+    document.getElementById('item-cancel-button').addEventListener('click', closeItemModal);
+    itemModalOverlay.addEventListener('click', function (e) { if (e.target === itemModalOverlay) closeItemModal(); });
+    itemForm.addEventListener('submit', handleItemSubmit);
+
+    function openItemModal(mode, item) {
+      editingItemId = mode === 'edit' && item ? item.id : null;
+      document.getElementById('item-modal-title').textContent = mode === 'edit' ? 'Edit Compliance Item' : 'Add Compliance Item';
+      document.getElementById('item-submit-button').textContent = mode === 'edit' ? 'Update' : 'Add';
+      document.getElementById('item-act-name').value = item ? (item.act_name || '') : '';
+      document.getElementById('item-frequency').value = item ? (item.frequency || '') : '';
+      document.getElementById('item-owner').value = item ? (item.owner || '') : '';
+      document.getElementById('item-due-date').value = item ? (item.next_due_date || '') : '';
+      document.getElementById('item-modal-form-error').style.display = 'none';
+      itemModalOverlay.classList.add('open');
+    }
+    function closeItemModal() {
+      itemModalOverlay.classList.remove('open');
+      itemForm.reset();
+      editingItemId = null;
+    }
+    async function handleItemSubmit(event) {
+      event.preventDefault();
+      const payload = {
+        act_name: document.getElementById('item-act-name').value,
+        frequency: document.getElementById('item-frequency').value,
+        owner: document.getElementById('item-owner').value,
+        next_due_date: document.getElementById('item-due-date').value
+      };
+      const isEditing = editingItemId !== null;
+      const url = isEditing ? COMPLIANCE_API_BASE + editingItemId + '/' : COMPLIANCE_API_BASE;
+      try {
+        const response = await fetch(url, {
+          method: isEditing ? 'PATCH' : 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not save compliance item.');
+        closeItemModal();
+        loadComplianceItems();
+      } catch (err) {
+        const errorEl = document.getElementById('item-modal-form-error');
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    }
+
+    // ---------- Branches S&E summary ----------
+
+    async function loadBranches() {
+      const content = document.getElementById('branches-content');
+      try {
+        const response = await fetch(BRANCHES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load branches.');
+        const branches = await response.json();
+        renderBranches(branches);
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div></div>';
+      }
+    }
+
+    function renderBranches(branches) {
+      const content = document.getElementById('branches-content');
+      if (branches.length === 0) {
+        content.innerHTML = '<div class="message">No branches found.</div>';
+        return;
+      }
+      const rows = branches.map(function (b) {
+        const registered = !!b.s_and_e_number;
+        return '<tr><td>' + escapeHtml(b.name) + '</td>' +
+          '<td>' + (registered ? escapeHtml(b.s_and_e_number) : '&mdash;') + '</td>' +
+          '<td><span class="status-chip ' + (registered ? 'green' : 'red') + '">' + (registered ? 'REGISTERED' : 'MISSING') + '</span></td></tr>';
+      }).join('');
+      content.innerHTML = '<table><thead><tr><th>Branch</th><th>S&amp;E Number</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interview Questions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+  .question-group-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin: 18px 0 8px;
+    color: var(--navy);
+  }
+  .question-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line-2);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link active"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h1 style="margin-bottom: 0;">Interview Questions Bank</h1>
+      <button type="button" class="btn-primary" id="add-question-button">+ Add Question(s)</button>
+    </div>
+    <div class="form-actions" style="margin: 12px 0;">
+      <input type="text" id="filter-department" placeholder="Filter by department">
+      <select id="filter-type">
+        <option value="">All Types</option>
+        <option value="Technical">Technical</option>
+        <option value="Behavioural">Behavioural</option>
+        <option value="Situational">Situational</option>
+        <option value="Role-specific">Role-specific</option>
+        <option value="Culture fit">Culture fit</option>
+      </select>
+      <button type="button" class="btn-secondary" id="apply-filter-button">Apply Filter</button>
+      <button type="button" class="btn-secondary" id="clear-filter-button">Clear</button>
+    </div>
+    <div id="page-error" class="form-error"></div>
+    <div id="questions-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="question-modal-overlay">
+    <div class="modal-card">
+      <h2>Add Question(s)</h2>
+      <div id="question-modal-form-error" class="form-error"></div>
+      <form id="question-form">
+        <div class="field"><label for="question-department">Department</label><input type="text" id="question-department" placeholder="e.g. Engineering"></div>
+        <div class="field">
+          <label for="question-type">Type</label>
+          <select id="question-type" required>
+            <option value="Technical">Technical</option>
+            <option value="Behavioural">Behavioural</option>
+            <option value="Situational">Situational</option>
+            <option value="Role-specific">Role-specific</option>
+            <option value="Culture fit">Culture fit</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="question-texts">Question(s)</label>
+          <textarea id="question-texts" rows="6" placeholder="One question per line" required></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="question-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="question-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const QUESTIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/interview-questions/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadQuestions();
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    function showPageError(message) {
+      const el = document.getElementById('page-error');
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+    function hidePageError() {
+      const el = document.getElementById('page-error');
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+
+    async function loadQuestions() {
+      hidePageError();
+      const content = document.getElementById('questions-content');
+      const department = document.getElementById('filter-department').value.trim();
+      const type = document.getElementById('filter-type').value;
+      const params = new URLSearchParams();
+      if (department) params.set('department', department);
+      if (type) params.set('type', type);
+      const url = QUESTIONS_API_BASE + (params.toString() ? '?' + params.toString() : '');
+
+      try {
+        const response = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load questions.');
+        const questions = await response.json();
+        renderQuestions(questions);
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-questions-button">Retry</button></div>';
+        document.getElementById('retry-questions-button').addEventListener('click', loadQuestions);
+      }
+    }
+
+    function renderQuestions(questions) {
+      const content = document.getElementById('questions-content');
+      if (questions.length === 0) {
+        content.innerHTML = '<div class="message">No questions found.</div>';
+        return;
+      }
+      const groups = {};
+      questions.forEach(function (q) {
+        const key = q.type || 'Other';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(q);
+      });
+
+      content.innerHTML = Object.keys(groups).sort().map(function (type) {
+        const rows = groups[type].map(function (q) {
+          return '<div class="question-row"><span>' + escapeHtml(q.question_text) +
+            (q.department ? ' <span style="color: var(--mut); font-size: 12px;">(' + escapeHtml(q.department) + ')</span>' : '') + '</span>' +
+            '<button type="button" class="btn-delete btn-row delete-question-btn" data-id="' + escapeHtml(q.id) + '">Delete</button></div>';
+        }).join('');
+        return '<div class="question-group-title">' + escapeHtml(type) + '</div>' + rows;
+      }).join('');
+
+      content.querySelectorAll('.delete-question-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleDeleteQuestion(btn.getAttribute('data-id')); });
+      });
+    }
+
+    async function handleDeleteQuestion(id) {
+      if (!confirm('Delete this question?')) return;
+      const response = await fetch(QUESTIONS_API_BASE + id + '/', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+      if (handleUnauthorized(response)) return;
+      loadQuestions();
+    }
+
+    document.getElementById('apply-filter-button').addEventListener('click', loadQuestions);
+    document.getElementById('clear-filter-button').addEventListener('click', function () {
+      document.getElementById('filter-department').value = '';
+      document.getElementById('filter-type').value = '';
+      loadQuestions();
+    });
+
+    const questionModalOverlay = document.getElementById('question-modal-overlay');
+    const questionForm = document.getElementById('question-form');
+    document.getElementById('add-question-button').addEventListener('click', function () {
+      questionForm.reset();
+      document.getElementById('question-modal-form-error').style.display = 'none';
+      questionModalOverlay.classList.add('open');
+    });
+    document.getElementById('question-cancel-button').addEventListener('click', function () {
+      questionModalOverlay.classList.remove('open');
+    });
+    questionModalOverlay.addEventListener('click', function (e) { if (e.target === questionModalOverlay) questionModalOverlay.classList.remove('open'); });
+
+    questionForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const rawText = document.getElementById('question-texts').value;
+      const question_texts = rawText.split('\n').map(function (line) { return line.trim(); }).filter(Boolean);
+      if (question_texts.length === 0) {
+        return;
+      }
+      const payload = {
+        department: document.getElementById('question-department').value,
+        type: document.getElementById('question-type').value,
+        question_texts: question_texts
+      };
+      try {
+        const response = await fetch(QUESTIONS_API_BASE, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not add question(s).');
+        questionModalOverlay.classList.remove('open');
+        loadQuestions();
+      } catch (err) {
+        const errorEl = document.getElementById('question-modal-form-error');
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    });
+  </script>
+
+</body>
+</html>

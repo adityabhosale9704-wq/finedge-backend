@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Salary Structure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link active"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>Salary Structure</h1>
+  </div>
+
+  <div class="container">
+    <h2>Structure Rules</h2>
+    <div id="structure-form-error" class="form-error"></div>
+    <div id="structure-success" class="success-message"></div>
+    <div id="structure-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading structure...</div></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h2 style="margin-bottom: 0;">Revision Queue</h2>
+      <button type="button" class="btn-primary" id="add-revision-button">+ Propose Revision</button>
+    </div>
+    <div id="revision-page-error" class="form-error"></div>
+    <div id="revisions-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading revisions...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="revision-modal-overlay">
+    <div class="modal-card">
+      <h2>Propose Salary Revision</h2>
+      <div id="revision-form-error" class="form-error"></div>
+      <form id="revision-form">
+        <div class="field">
+          <label for="revision-employee">Employee</label>
+          <select id="revision-employee" required></select>
+        </div>
+        <div class="field">
+          <label for="revision-current-ctc">Current CTC</label>
+          <input type="number" id="revision-current-ctc" step="any" required>
+        </div>
+        <div class="field">
+          <label for="revision-proposed-ctc">Proposed CTC</label>
+          <input type="number" id="revision-proposed-ctc" step="any" required>
+        </div>
+        <div class="field">
+          <label for="revision-effective-date">Effective Date</label>
+          <input type="date" id="revision-effective-date" required>
+        </div>
+        <div class="field">
+          <label for="revision-reason">Reason</label>
+          <input type="text" id="revision-reason" placeholder="e.g. Annual increment">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="revision-submit-button">Propose</button>
+          <button type="button" class="btn-secondary" id="revision-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const STRUCTURE_API_BASE = 'http://127.0.0.1:8000/api/v1/salary-structure/';
+    const REVISIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/salary-revisions/';
+    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadStructure();
+      loadRevisions();
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    const STRUCTURE_FIELDS = [
+      { key: 'basic_pct', label: 'Basic (% of Gross)' },
+      { key: 'hra_pct_metro', label: 'HRA % (Metro, of Basic)' },
+      { key: 'hra_pct_nonmetro', label: 'HRA % (Non-metro, of Basic)' },
+      { key: 'pf_cap_monthly', label: 'PF Cap (Monthly ₹)' },
+      { key: 'gratuity_pct', label: 'Gratuity (% of Basic)' },
+      { key: 'esi_limit_monthly', label: 'ESI Eligibility Limit (Monthly ₹)' },
+      { key: 'professional_tax_monthly', label: 'Professional Tax (Monthly ₹)' }
+    ];
+
+    async function loadStructure() {
+      const content = document.getElementById('structure-content');
+      try {
+        const response = await fetch(STRUCTURE_API_BASE, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load salary structure.');
+        }
+
+        const structure = await response.json();
+        renderStructureForm(structure);
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' +
+          escapeHtml(err.message || 'Could not load salary structure.') +
+          '</div><button type="button" class="btn-secondary" id="retry-structure-button">Retry</button></div>';
+        document.getElementById('retry-structure-button').addEventListener('click', loadStructure);
+      }
+    }
+
+    function renderStructureForm(structure) {
+      const content = document.getElementById('structure-content');
+      content.innerHTML = '<form id="structure-form"><div class="form-grid">' +
+        STRUCTURE_FIELDS.map(function (field) {
+          return '<div class="field">' +
+            '<label for="field-' + field.key + '">' + field.label + '</label>' +
+            '<input type="number" step="any" id="field-' + field.key + '" value="' + escapeHtml(structure[field.key]) + '">' +
+            '</div>';
+        }).join('') +
+        '</div><div class="form-actions"><button type="submit" class="btn-primary" id="structure-save-button">Save Changes</button></div></form>';
+
+      document.getElementById('structure-form').addEventListener('submit', handleStructureSubmit);
+    }
+
+    async function handleStructureSubmit(event) {
+      event.preventDefault();
+      const saveButton = document.getElementById('structure-save-button');
+      const errorEl = document.getElementById('structure-form-error');
+      const successEl = document.getElementById('structure-success');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+      saveButton.disabled = true;
+
+      const payload = {};
+      STRUCTURE_FIELDS.forEach(function (field) {
+        const value = parseFloat(document.getElementById('field-' + field.key).value);
+        if (!isNaN(value)) {
+          payload[field.key] = value;
+        }
+      });
+
+      try {
+        const response = await fetch(STRUCTURE_API_BASE, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not save salary structure.');
+        }
+
+        const updated = await response.json();
+        renderStructureForm(updated);
+        successEl.textContent = 'Salary structure updated successfully.';
+        successEl.style.display = 'block';
+      } catch (err) {
+        errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+        errorEl.style.display = 'block';
+      } finally {
+        saveButton.disabled = false;
+      }
+    }
+
+    // ---------- Revision queue ----------
+
+    let allRevisions = [];
+    const revisionPageError = document.getElementById('revision-page-error');
+
+    async function loadRevisions() {
+      const content = document.getElementById('revisions-content');
+      revisionPageError.style.display = 'none';
+
+      try {
+        const response = await fetch(REVISIONS_API_BASE, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load salary revisions.');
+        }
+
+        allRevisions = await response.json();
+        renderRevisions();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' +
+          escapeHtml(err.message || 'Could not load salary revisions.') +
+          '</div><button type="button" class="btn-secondary" id="retry-revisions-button">Retry</button></div>';
+        document.getElementById('retry-revisions-button').addEventListener('click', loadRevisions);
+      }
+    }
+
+    function revisionStatusChip(status) {
+      if (status === 'Approved') {
+        return '<span class="chip chip-green">Approved</span>';
+      }
+      if (status === 'Rejected') {
+        return '<span class="chip chip-red">Rejected</span>';
+      }
+      return '<span class="chip chip-amber">Pending</span>';
+    }
+
+    function renderRevisions() {
+      const content = document.getElementById('revisions-content');
+
+      if (allRevisions.length === 0) {
+        content.innerHTML = '<div class="message">No salary revisions proposed yet.</div>';
+        return;
+      }
+
+      const rows = allRevisions.map(function (rev) {
+        const actions = rev.status === 'Pending'
+          ? '<button type="button" class="btn-approve btn-row approve-rev-btn" data-id="' + escapeHtml(rev.id) + '">Approve</button>' +
+            '<button type="button" class="btn-delete btn-row reject-rev-btn" data-id="' + escapeHtml(rev.id) + '">Reject</button>'
+          : (rev.status === 'Approved'
+            ? '<a href="employees.html" class="btn-view">Open Letter Studio</a>'
+            : '');
+
+        return '<tr>' +
+          '<td>' + escapeHtml(rev.id) + '</td>' +
+          '<td>' + escapeHtml(rev.employee_name || rev.employee_id) + '</td>' +
+          '<td>' + escapeHtml(rev.current_ctc) + '</td>' +
+          '<td>' + escapeHtml(rev.proposed_ctc) + '</td>' +
+          '<td>' + escapeHtml(rev.effective_date) + '</td>' +
+          '<td>' + (rev.reason ? escapeHtml(rev.reason) : '&mdash;') + '</td>' +
+          '<td>' + revisionStatusChip(rev.status) + '</td>' +
+          '<td>' + actions + '</td>' +
+          '</tr>';
+      }).join('');
+
+      content.innerHTML =
+        '<table><thead><tr><th>ID</th><th>Employee</th><th>Current CTC</th><th>Proposed CTC</th><th>Effective</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+      content.querySelectorAll('.approve-rev-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleRevisionAction(btn.getAttribute('data-id'), 'approve');
+        });
+      });
+
+      content.querySelectorAll('.reject-rev-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleRevisionAction(btn.getAttribute('data-id'), 'reject');
+        });
+      });
+    }
+
+    async function handleRevisionAction(revId, action) {
+      const confirmed = confirm('Are you sure you want to ' + action + ' this revision?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await fetch(REVISIONS_API_BASE + revId + '/' + action + '/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not update revision.');
+        }
+
+        loadRevisions();
+      } catch (err) {
+        revisionPageError.textContent = err.message || 'Something went wrong. Please try again.';
+        revisionPageError.style.display = 'block';
+      }
+    }
+
+    // ---------- Propose revision modal ----------
+
+    const revisionModalOverlay = document.getElementById('revision-modal-overlay');
+    const revisionForm = document.getElementById('revision-form');
+    const revisionFormError = document.getElementById('revision-form-error');
+    const revisionSubmitButton = document.getElementById('revision-submit-button');
+    const revisionCancelButton = document.getElementById('revision-cancel-button');
+    const revisionEmployeeSelect = document.getElementById('revision-employee');
+
+    document.getElementById('add-revision-button').addEventListener('click', openRevisionModal);
+    revisionForm.addEventListener('submit', handleRevisionSubmit);
+    revisionCancelButton.addEventListener('click', closeRevisionModal);
+    revisionModalOverlay.addEventListener('click', function (event) {
+      if (event.target === revisionModalOverlay) {
+        closeRevisionModal();
+      }
+    });
+
+    async function openRevisionModal() {
+      revisionFormError.style.display = 'none';
+      revisionEmployeeSelect.innerHTML = '<option value="">Loading employees...</option>';
+      revisionModalOverlay.classList.add('open');
+
+      try {
+        const response = await fetch(EMPLOYEES_API_BASE, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load employees.');
+        }
+
+        const employees = await response.json();
+        if (employees.length === 0) {
+          revisionEmployeeSelect.innerHTML = '<option value="">No employees available</option>';
+          return;
+        }
+
+        revisionEmployeeSelect.innerHTML = employees.map(function (emp) {
+          return '<option value="' + escapeHtml(emp.id) + '" data-ctc="' + escapeHtml(emp.ctc) + '">' + escapeHtml(emp.name) + '</option>';
+        }).join('');
+
+        revisionEmployeeSelect.dispatchEvent(new Event('change'));
+      } catch (err) {
+        revisionFormError.textContent = err.message || 'Could not load employees.';
+        revisionFormError.style.display = 'block';
+      }
+    }
+
+    revisionEmployeeSelect.addEventListener('change', function () {
+      const selected = revisionEmployeeSelect.options[revisionEmployeeSelect.selectedIndex];
+      if (selected && selected.getAttribute('data-ctc')) {
+        document.getElementById('revision-current-ctc').value = selected.getAttribute('data-ctc');
+      }
+    });
+
+    function closeRevisionModal() {
+      revisionModalOverlay.classList.remove('open');
+      revisionForm.reset();
+    }
+
+    async function handleRevisionSubmit(event) {
+      event.preventDefault();
+      revisionSubmitButton.disabled = true;
+      revisionFormError.style.display = 'none';
+
+      const payload = {
+        employee_id: revisionEmployeeSelect.value,
+        current_ctc: parseFloat(document.getElementById('revision-current-ctc').value),
+        proposed_ctc: parseFloat(document.getElementById('revision-proposed-ctc').value),
+        effective_date: document.getElementById('revision-effective-date').value,
+        reason: document.getElementById('revision-reason').value
+      };
+
+      try {
+        const response = await fetch(REVISIONS_API_BASE, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not propose revision.');
+        }
+
+        closeRevisionModal();
+        loadRevisions();
+      } catch (err) {
+        revisionFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        revisionFormError.style.display = 'block';
+      } finally {
+        revisionSubmitButton.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>

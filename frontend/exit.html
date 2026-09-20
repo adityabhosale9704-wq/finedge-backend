@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Exit &amp; Separation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+  .sep-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+
+  .sep-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .sep-name {
+    font-weight: 600;
+    color: var(--txt);
+  }
+
+  .sep-meta {
+    font-size: 13px;
+    color: var(--mut);
+  }
+
+  .sep-body {
+    margin-top: 14px;
+  }
+
+  .sep-field-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 10px 0;
+    flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link active"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h1>Exit &amp; Separation</h1>
+      <button type="button" class="btn-primary" id="add-separation-button">+ New Separation</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>In Progress</h2>
+    <div id="page-error" class="form-error"></div>
+    <div id="separations-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading separations...</div></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Completed</h2>
+    <div id="completed-content">
+      <div class="message">No completed separations yet.</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="separation-modal-overlay">
+    <div class="modal-card">
+      <h2>New Separation</h2>
+      <div id="separation-form-error" class="form-error"></div>
+      <form id="separation-form">
+        <div class="field">
+          <label for="sep-employee">Employee</label>
+          <select id="sep-employee" required></select>
+        </div>
+        <div class="field">
+          <label for="sep-resignation-date">Resignation Date</label>
+          <input type="date" id="sep-resignation-date" required>
+        </div>
+        <div class="field">
+          <label for="sep-last-working-day">Last Working Day</label>
+          <input type="date" id="sep-last-working-day" required>
+        </div>
+        <div class="field">
+          <label for="sep-notice-period">Notice Period (days)</label>
+          <input type="number" id="sep-notice-period" min="0" value="30">
+        </div>
+        <div class="field">
+          <label for="sep-reason">Reason</label>
+          <input type="text" id="sep-reason" placeholder="e.g. Personal, Better opportunity">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="separation-submit-button">Create</button>
+          <button type="button" class="btn-secondary" id="separation-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const SEPARATIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/separations/';
+    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadSeparations();
+    }
+
+    let allSeparations = [];
+    const expandedIds = new Set();
+
+    const pageError = document.getElementById('page-error');
+
+    function showPageError(message) {
+      pageError.textContent = message;
+      pageError.style.display = 'block';
+    }
+
+    function hidePageError() {
+      pageError.textContent = '';
+      pageError.style.display = 'none';
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    async function loadSeparations() {
+      hidePageError();
+      const inProgressEl = document.getElementById('separations-content');
+
+      try {
+        const response = await fetch(SEPARATIONS_API_BASE, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load separations.');
+        }
+
+        allSeparations = await response.json();
+        renderSeparations();
+      } catch (err) {
+        inProgressEl.innerHTML = '<div class="error-state"><div>' +
+          escapeHtml(err.message || 'Could not load separations.') +
+          '</div><button type="button" class="btn-secondary" id="retry-sep-button">Retry</button></div>';
+        document.getElementById('retry-sep-button').addEventListener('click', loadSeparations);
+      }
+    }
+
+    function renderStepsBlock(sep) {
+      const steps = sep.steps || [];
+      const doneCount = sep.steps_done_count || 0;
+      const totalCount = sep.steps_total_count || steps.length;
+      const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+      const stepsHtml = steps.map(function (step) {
+        const toggleBtn = step.done
+          ? '<button type="button" class="btn-undo btn-row sep-step-toggle" data-sep-id="' + escapeHtml(sep.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="undo">Undo</button>'
+          : '<button type="button" class="btn-done btn-row sep-step-toggle" data-sep-id="' + escapeHtml(sep.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="done">Done</button>';
+        return '<div class="step-row">' +
+          '<div class="step-info">' +
+          '<div class="step-name' + (step.done ? ' step-done' : '') + '">' + escapeHtml(step.step_name) + '</div>' +
+          '<div class="step-meta">' + (step.who ? escapeHtml(step.who) : 'Unassigned') + ' &middot; TAT ' + escapeHtml(step.tat_days) + 'd' + (step.done_date ? ' &middot; done ' + escapeHtml(step.done_date) : '') + '</div>' +
+          '</div>' +
+          (sep.is_complete ? '' : toggleBtn) +
+          '</div>';
+      }).join('');
+
+      return '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '%</div>' +
+        stepsHtml;
+    }
+
+    function renderSeparations() {
+      const inProgress = allSeparations.filter(function (s) { return !s.is_complete; });
+      const completed = allSeparations.filter(function (s) { return s.is_complete; });
+
+      renderSeparationList('separations-content', inProgress, 'No separations in progress.');
+      renderSeparationList('completed-content', completed, 'No completed separations yet.');
+    }
+
+    function renderSeparationList(containerId, list, emptyMessage) {
+      const content = document.getElementById(containerId);
+
+      if (list.length === 0) {
+        content.innerHTML = '<div class="message">' + emptyMessage + '</div>';
+        return;
+      }
+
+      content.innerHTML = list.map(function (sep) {
+        const isExpanded = expandedIds.has(sep.id);
+        const relievingChipClass = sep.relieving_letter_status === 'Issued' ? 'chip-green' : 'chip-amber';
+
+        let bodyHtml = '';
+        if (isExpanded) {
+          bodyHtml = '<div class="sep-body">' +
+            renderStepsBlock(sep) +
+            '<div class="sep-field-row">' +
+            '<label style="margin: 0;">Relieving Letter:</label>' +
+            '<select class="relieving-status-select" data-sep-id="' + escapeHtml(sep.id) + '" style="max-width: 160px;">' +
+            '<option value="Pending"' + (sep.relieving_letter_status === 'Pending' ? ' selected' : '') + '>Pending</option>' +
+            '<option value="Issued"' + (sep.relieving_letter_status === 'Issued' ? ' selected' : '') + '>Issued</option>' +
+            '</select>' +
+            '</div>' +
+            '<div class="field">' +
+            '<label>Full &amp; Final Settlement Note</label>' +
+            '<textarea class="fnf-note-input" data-sep-id="' + escapeHtml(sep.id) + '" rows="3">' + escapeHtml(sep.full_final_settlement_note) + '</textarea>' +
+            '<button type="button" class="btn-secondary save-fnf-btn" data-sep-id="' + escapeHtml(sep.id) + '" style="margin-top: 6px;">Save Note</button>' +
+            '</div>' +
+            '</div>';
+        } else {
+          const doneCount = sep.steps_done_count || 0;
+          const totalCount = sep.steps_total_count || 0;
+          bodyHtml = '<div class="progress-label" style="margin-top: 8px;">' + doneCount + '/' + totalCount + ' steps &mdash; click to expand</div>';
+        }
+
+        return '<div class="sep-card">' +
+          '<div class="sep-header sep-toggle" data-sep-id="' + escapeHtml(sep.id) + '">' +
+          '<span>' +
+          '<div class="sep-name">' + escapeHtml(sep.employee_name || sep.employee_id) + '</div>' +
+          '<div class="sep-meta">' + escapeHtml(sep.id) + ' &middot; Last day: ' + escapeHtml(sep.last_working_day) + (sep.reason ? ' &middot; ' + escapeHtml(sep.reason) : '') + '</div>' +
+          '</span>' +
+          '<span class="chip ' + relievingChipClass + '">' + escapeHtml(sep.relieving_letter_status) + '</span>' +
+          '</div>' +
+          bodyHtml +
+          '</div>';
+      }).join('');
+
+      content.querySelectorAll('.sep-toggle').forEach(function (header) {
+        header.addEventListener('click', function () {
+          const id = header.getAttribute('data-sep-id');
+          if (expandedIds.has(id)) {
+            expandedIds.delete(id);
+          } else {
+            expandedIds.add(id);
+          }
+          renderSeparations();
+        });
+      });
+
+      content.querySelectorAll('.sep-step-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          handleStepToggle(btn.getAttribute('data-sep-id'), btn.getAttribute('data-step-id'), btn.getAttribute('data-action'));
+        });
+      });
+
+      content.querySelectorAll('.relieving-status-select').forEach(function (select) {
+        select.addEventListener('click', function (event) { event.stopPropagation(); });
+        select.addEventListener('change', function () {
+          handleUpdateSeparation(select.getAttribute('data-sep-id'), { relieving_letter_status: select.value });
+        });
+      });
+
+      content.querySelectorAll('.fnf-note-input').forEach(function (textarea) {
+        textarea.addEventListener('click', function (event) { event.stopPropagation(); });
+      });
+
+      content.querySelectorAll('.save-fnf-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          const sepId = btn.getAttribute('data-sep-id');
+          const textarea = content.querySelector('.fnf-note-input[data-sep-id="' + sepId + '"]');
+          handleUpdateSeparation(sepId, { full_final_settlement_note: textarea.value });
+        });
+      });
+    }
+
+    async function handleStepToggle(sepId, stepId, action) {
+      hidePageError();
+      try {
+        const response = await fetch(
+          SEPARATIONS_API_BASE + sepId + '/steps/' + stepId + '/' + action + '/',
+          {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+          }
+        );
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not update step.');
+        }
+
+        expandedIds.add(sepId);
+        loadSeparations();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    async function handleUpdateSeparation(sepId, payload) {
+      hidePageError();
+      try {
+        const response = await fetch(SEPARATIONS_API_BASE + sepId + '/', {
+          method: 'PATCH',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Could not save changes.');
+        }
+
+        expandedIds.add(sepId);
+        loadSeparations();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    // ---------- New separation modal ----------
+
+    const separationModalOverlay = document.getElementById('separation-modal-overlay');
+    const separationForm = document.getElementById('separation-form');
+    const separationFormError = document.getElementById('separation-form-error');
+    const separationSubmitButton = document.getElementById('separation-submit-button');
+    const separationCancelButton = document.getElementById('separation-cancel-button');
+    const sepEmployeeSelect = document.getElementById('sep-employee');
+
+    document.getElementById('add-separation-button').addEventListener('click', openSeparationModal);
+    separationForm.addEventListener('submit', handleSeparationSubmit);
+    separationCancelButton.addEventListener('click', closeSeparationModal);
+    separationModalOverlay.addEventListener('click', function (event) {
+      if (event.target === separationModalOverlay) {
+        closeSeparationModal();
+      }
+    });
+
+    async function openSeparationModal() {
+      separationFormError.style.display = 'none';
+      sepEmployeeSelect.innerHTML = '<option value="">Loading employees...</option>';
+      separationModalOverlay.classList.add('open');
+
+      try {
+        const response = await fetch(EMPLOYEES_API_BASE, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load employees.');
+        }
+
+        const employees = await response.json();
+        const active = employees.filter(function (e) {
+          return String(e.status || '').toLowerCase() === 'active';
+        });
+
+        if (active.length === 0) {
+          sepEmployeeSelect.innerHTML = '<option value="">No active employees available</option>';
+          return;
+        }
+
+        sepEmployeeSelect.innerHTML = active.map(function (emp) {
+          return '<option value="' + escapeHtml(emp.id) + '">' + escapeHtml(emp.name) + '</option>';
+        }).join('');
+      } catch (err) {
+        separationFormError.textContent = err.message || 'Could not load employees.';
+        separationFormError.style.display = 'block';
+      }
+    }
+
+    function closeSeparationModal() {
+      separationModalOverlay.classList.remove('open');
+      separationForm.reset();
+    }
+
+    async function handleSeparationSubmit(event) {
+      event.preventDefault();
+      separationSubmitButton.disabled = true;
+      separationFormError.style.display = 'none';
+
+      const payload = {
+        employee_id: sepEmployeeSelect.value,
+        resignation_date: document.getElementById('sep-resignation-date').value,
+        last_working_day: document.getElementById('sep-last-working-day').value,
+        notice_period_days: parseInt(document.getElementById('sep-notice-period').value, 10) || 0,
+        reason: document.getElementById('sep-reason').value
+      };
+
+      try {
+        const response = await fetch(SEPARATIONS_API_BASE, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not create separation.');
+        }
+
+        closeSeparationModal();
+        loadSeparations();
+      } catch (err) {
+        separationFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        separationFormError.style.display = 'block';
+      } finally {
+        separationSubmitButton.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>

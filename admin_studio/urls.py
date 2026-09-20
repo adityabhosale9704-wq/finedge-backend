@@ -5,6 +5,8 @@ from admin_studio.views import (
     BranchListCreateView,
     DepartmentDetailView,
     DepartmentListCreateView,
+    RoleDetailView,
+    RoleListCreateView,
 )
 
 urlpatterns = [
@@ -18,6 +20,12 @@ urlpatterns = [
         DepartmentDetailView.as_view(),
         name="department-detail",
     ),
+    path(
+        "departments/<str:department_id>/roles/",
+        RoleListCreateView.as_view(),
+        name="role-list-create",
+    ),
+    path("roles/<str:pk>/", RoleDetailView.as_view(), name="role-detail"),
     path("branches/", BranchListCreateView.as_view(), name="branch-list-create"),
     path("branches/<str:pk>/", BranchDetailView.as_view(), name="branch-detail"),
 ]

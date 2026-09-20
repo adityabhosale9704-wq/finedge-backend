@@ -12,8 +12,9 @@ from rest_framework.views import APIView
 from accounts.authentication import JWTAuthentication
 from recruitment.mongo import get_candidates_collection
 from recruitment.views import generate_next_sequential_id, get_requisition_by_id
+from workflows.views import snapshot_steps_for_instance
 from workindia.mongo import get_workindia_collection
-from workindia.serializers import WorkIndiaPromoteSerializer
+from workindia.serializers import WorkIndiaLogCallSerializer, WorkIndiaPromoteSerializer
 
 FIELD_KEYS = [
     "full_name",
@@ -133,6 +134,11 @@ class WorkIndiaImportView(APIView):
             doc["id"] = f"WI-{max_num + index + 1:04d}"
             doc["imported_at"] = now
             doc["promoted"] = False
+            doc["stage"] = "Uploaded"
+            doc["excluded"] = False
+            doc["call_status"] = ""
+            doc["call_notes"] = ""
+            doc["interview_datetime"] = None
 
         if parsed_rows:
             collection.insert_many(parsed_rows)
@@ -152,6 +158,14 @@ class WorkIndiaListView(APIView):
         promoted_param = request.query_params.get("promoted")
         if promoted_param is not None:
             query["promoted"] = promoted_param.lower() == "true"
+
+        stage_param = request.query_params.get("stage")
+        if stage_param:
+            query["stage"] = stage_param
+
+        include_excluded = request.query_params.get("include_excluded", "false").lower() == "true"
+        if not include_excluded:
+            query["excluded"] = {"$ne": True}
 
         search_term = request.query_params.get("q")
         if search_term:
@@ -202,6 +216,7 @@ class WorkIndiaPromoteView(APIView):
             "source": "WorkIndia",
             "experience": workindia_candidate.get("relevant_experience", ""),
             "stage": "Applied",
+            "steps": snapshot_steps_for_instance("Recruitment"),
             "created_at": timezone.now().isoformat(),
         }
         get_candidates_collection().insert_one(candidate_doc)
@@ -210,5 +225,67 @@ class WorkIndiaPromoteView(APIView):
             {"id": wi_id}, {"$set": {"promoted": True}}
         )
 
+        updated = get_workindia_by_id(wi_id)
+        return Response(serialize_workindia(updated))
+
+
+class WorkIndiaSelectView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, wi_id):
+        workindia_candidate = get_workindia_by_id(wi_id)
+        if not workindia_candidate:
+            return Response(
+                {"detail": "WorkIndia candidate not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        get_workindia_collection().update_one(
+            {"id": wi_id}, {"$set": {"stage": "Selected"}}
+        )
+        updated = get_workindia_by_id(wi_id)
+        return Response(serialize_workindia(updated))
+
+
+class WorkIndiaLogCallView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, wi_id):
+        workindia_candidate = get_workindia_by_id(wi_id)
+        if not workindia_candidate:
+            return Response(
+                {"detail": "WorkIndia candidate not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = WorkIndiaLogCallSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = dict(serializer.validated_data)
+        if data.get("interview_datetime") is not None:
+            data["interview_datetime"] = data["interview_datetime"].isoformat()
+        data["stage"] = "Called"
+
+        get_workindia_collection().update_one({"id": wi_id}, {"$set": data})
+        updated = get_workindia_by_id(wi_id)
+        return Response(serialize_workindia(updated))
+
+
+class WorkIndiaRemoveView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, wi_id):
+        workindia_candidate = get_workindia_by_id(wi_id)
+        if not workindia_candidate:
+            return Response(
+                {"detail": "WorkIndia candidate not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        get_workindia_collection().update_one(
+            {"id": wi_id}, {"$set": {"excluded": True}}
+        )
         updated = get_workindia_by_id(wi_id)
         return Response(serialize_workindia(updated))

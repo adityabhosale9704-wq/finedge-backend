@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.authentication import JWTAuthentication
+from employees.mongo import get_employees_collection
+from positions.views import assign_employee_to_position, find_or_create_vacant_position
 from recruitment.mongo import get_candidates_collection, get_requisitions_collection
 from recruitment.serializers import (
     CandidateCreateSerializer,
@@ -15,6 +17,7 @@ from recruitment.serializers import (
     RequisitionCreateSerializer,
     RequisitionUpdateSerializer,
 )
+from workflows.views import snapshot_steps_for_instance
 
 
 def generate_next_sequential_id(collection, prefix):
@@ -63,6 +66,9 @@ def serialize_candidate(doc):
             requisition_role = requisition.get("role")
             requisition_branch = requisition.get("branch")
 
+    steps = doc.get("steps", [])
+    done_count = len([s for s in steps if s.get("done")])
+
     return {
         "id": doc["id"],
         "name": doc.get("name", ""),
@@ -75,6 +81,9 @@ def serialize_candidate(doc):
         "experience": doc.get("experience", ""),
         "stage": doc.get("stage", "Applied"),
         "created_at": doc.get("created_at", ""),
+        "steps": steps,
+        "steps_done_count": done_count,
+        "steps_total_count": len(steps),
     }
 
 
@@ -215,6 +224,7 @@ class CandidateListCreateView(APIView):
             "experience": data.get("experience", ""),
             "stage": data.get("stage", "Applied"),
             "created_at": timezone.now().isoformat(),
+            "steps": snapshot_steps_for_instance("Recruitment"),
         }
         get_candidates_collection().insert_one(candidate_doc)
         return Response(
@@ -258,3 +268,109 @@ class CandidateDetailView(APIView):
 
         get_candidates_collection().delete_one({"id": cand_id})
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def _toggle_candidate_step(cand_id, step_id, done):
+    candidate = get_candidate_by_id(cand_id)
+    if not candidate:
+        return None, Response(
+            {"detail": "Candidate not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    steps = candidate.get("steps", [])
+    step = next((s for s in steps if s.get("id") == step_id), None)
+    if not step:
+        return None, Response(
+            {"detail": "Step not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    step["done"] = done
+    step["done_date"] = date.today().isoformat() if done else None
+
+    update = {"steps": steps}
+    if done and all(s.get("done") for s in steps):
+        update["stage"] = "Documents Pending"
+
+    get_candidates_collection().update_one({"id": cand_id}, {"$set": update})
+    updated = get_candidate_by_id(cand_id)
+    return updated, None
+
+
+class CandidateStepDoneView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, cand_id, step_id):
+        updated, error = _toggle_candidate_step(cand_id, step_id, True)
+        if error:
+            return error
+        return Response(serialize_candidate(updated))
+
+
+class CandidateStepUndoView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, cand_id, step_id):
+        updated, error = _toggle_candidate_step(cand_id, step_id, False)
+        if error:
+            return error
+        return Response(serialize_candidate(updated))
+
+
+class CandidateCreateEmployeeView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, cand_id):
+        candidate = get_candidate_by_id(cand_id)
+        if not candidate:
+            return Response(
+                {"detail": "Candidate not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if candidate.get("stage") != "Documents Pending":
+            return Response(
+                {
+                    "detail": "Employee records can only be created for candidates "
+                    "whose stage is 'Documents Pending'."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        requisition = None
+        requisition_id = candidate.get("requisition_id")
+        if requisition_id:
+            requisition = get_requisition_by_id(requisition_id)
+
+        designation = requisition.get("role", "") if requisition else ""
+        branch = requisition.get("branch", "") if requisition else ""
+        department = ""
+
+        employee_doc = {
+            "name": candidate.get("name", ""),
+            "email": candidate.get("email", ""),
+            "phone": candidate.get("phone", ""),
+            "department": department,
+            "designation": designation,
+            "branch": branch,
+            "date_of_joining": date.today().isoformat(),
+            "ctc": 0,
+            "status": "Onboarding",
+            "family": [],
+            "onboarding_steps": snapshot_steps_for_instance("Onboarding"),
+        }
+        result = get_employees_collection().insert_one(employee_doc)
+        employee_doc["_id"] = result.inserted_id
+
+        position = find_or_create_vacant_position(designation, department, branch)
+        assign_employee_to_position(position, employee_doc)
+
+        get_candidates_collection().update_one(
+            {"id": cand_id}, {"$set": {"stage": "Joined"}}
+        )
+
+        return Response(
+            {"employee_id": str(employee_doc["_id"]), "position_id": position["id"]},
+            status=status.HTTP_201_CREATED,
+        )

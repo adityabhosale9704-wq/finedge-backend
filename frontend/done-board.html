@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Done Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+  .module-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--navy-soft);
+    color: var(--navy);
+    margin-right: 8px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link active"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>Done Board</h1>
+    <p style="color: var(--mut); margin-top: -8px;">Current pending step across Recruitment, Onboarding, and Exit.</p>
+    <div id="page-error" class="form-error"></div>
+    <div id="board-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const DONE_BOARD_API = 'http://127.0.0.1:8000/api/v1/done-board/';
+    const CANDIDATES_API_BASE = 'http://127.0.0.1:8000/api/v1/candidates/';
+    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+    const SEPARATIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/separations/';
+
+    const MODULE_LABELS = {
+      recruitment: 'Recruitment',
+      onboarding: 'Onboarding',
+      exit: 'Exit'
+    };
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadBoard();
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    function showPageError(message) {
+      const el = document.getElementById('page-error');
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+    function hidePageError() {
+      const el = document.getElementById('page-error');
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+
+    async function loadBoard() {
+      hidePageError();
+      const content = document.getElementById('board-content');
+      try {
+        const response = await fetch(DONE_BOARD_API, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load done board.');
+        const items = await response.json();
+        renderBoard(items);
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-board-button">Retry</button></div>';
+        document.getElementById('retry-board-button').addEventListener('click', loadBoard);
+      }
+    }
+
+    function renderBoard(items) {
+      const content = document.getElementById('board-content');
+      if (items.length === 0) {
+        content.innerHTML = '<div class="message">Nothing pending. All caught up.</div>';
+        return;
+      }
+      content.innerHTML = items.map(function (item, index) {
+        return '<div class="step-row">' +
+          '<div class="step-info">' +
+          '<span class="module-chip">' + escapeHtml(MODULE_LABELS[item.module] || item.module) + '</span>' +
+          '<span class="step-name">' + escapeHtml(item.person_name) + '</span>' +
+          '<div class="step-meta">' + escapeHtml(item.step_name) + (item.who ? ' &middot; ' + escapeHtml(item.who) : '') + ' &middot; ' + escapeHtml(item.record_id) + '</div>' +
+          '</div>' +
+          '<button type="button" class="btn-primary btn-row done-btn" data-index="' + index + '">&#10003; Done</button>' +
+          '</div>';
+      }).join('');
+
+      content.querySelectorAll('.done-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const item = items[parseInt(btn.getAttribute('data-index'), 10)];
+          handleMarkDone(item, btn);
+        });
+      });
+    }
+
+    function endpointForModule(item) {
+      if (item.module === 'recruitment') {
+        return CANDIDATES_API_BASE + item.record_id + '/steps/' + item.step_id + '/done/';
+      }
+      if (item.module === 'onboarding') {
+        return EMPLOYEES_API_BASE + item.record_id + '/onboarding-steps/' + item.step_id + '/done/';
+      }
+      if (item.module === 'exit') {
+        return SEPARATIONS_API_BASE + item.record_id + '/steps/' + item.step_id + '/done/';
+      }
+      return null;
+    }
+
+    async function handleMarkDone(item, btn) {
+      const url = endpointForModule(item);
+      if (!url) return;
+      btn.disabled = true;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not mark step as done.');
+        loadBoard();
+      } catch (err) {
+        showPageError(err.message);
+        btn.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>

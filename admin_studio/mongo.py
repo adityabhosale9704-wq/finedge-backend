@@ -18,3 +18,7 @@ def get_departments_collection():
 
 def get_branches_collection():
     return _db["branches"]
+
+
+def get_roles_collection():
+    return _db["roles"]

@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <title>WorkIndia Import</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
 <style>
   .upload-row {
     display: flex;
@@ -11,20 +16,68 @@
     align-items: center;
     flex-wrap: wrap;
   }
+  .wi-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .wi-tab-btn {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--mut);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .wi-tab-btn.active {
+    background: var(--navy);
+    color: #fff;
+    border-color: var(--navy);
+  }
+  .wi-tab-panel { display: none; }
+  .wi-tab-panel.active { display: block; }
+  .diary-entry {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .diary-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 </style>
 </head>
 <body>
 
   <div class="top-nav">
-    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
-    <div class="nav-links" id="nav-links">
-      <a href="dashboard.html">Dashboard</a>
-      <a href="employees.html">Employees</a>
-      <a href="positions.html">Employee IDs</a>
-      <a href="recruitment.html">Recruitment</a>
-      <a href="tasks.html">Tasks</a>
-      <a href="admin.html">Admin Studio</a>
-      <a href="workindia.html" class="active">WorkIndia Import</a>
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link active"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
     </div>
   </div>
 
@@ -33,29 +86,53 @@
   </div>
 
   <div class="container">
-    <h2>Upload CSV</h2>
-    <div id="upload-error" class="form-error"></div>
-    <div id="upload-success" class="success-message"></div>
-    <div class="upload-row">
-      <input type="file" id="csv-file-input" accept=".csv">
-      <button type="button" class="btn-primary" id="import-button">Import</button>
+    <div class="wi-tabs">
+      <button type="button" class="wi-tab-btn active" data-tab="upload">Upload CSV</button>
+      <button type="button" class="wi-tab-btn" data-tab="selected">Selected</button>
+      <button type="button" class="wi-tab-btn" data-tab="log">Interview Calling Log</button>
     </div>
-  </div>
 
-  <div class="container">
-    <div class="toolbar">
-      <h2 style="margin-bottom: 0;">Imported Candidates</h2>
-      <input type="text" id="search-input" class="search-input" placeholder="Search name, city, skills...">
-    </div>
     <div id="page-error" class="form-error"></div>
-    <div id="workindia-content">
-      <div class="loading-state"><div class="spinner"></div><div>Loading imported candidates...</div></div>
+
+    <div class="wi-tab-panel active" id="tab-upload">
+      <h2>Upload CSV</h2>
+      <div id="upload-error" class="form-error"></div>
+      <div id="upload-success" class="success-message"></div>
+      <div class="upload-row">
+        <input type="file" id="csv-file-input" accept=".csv">
+        <button type="button" class="btn-primary" id="import-button">Import</button>
+      </div>
+
+      <div class="toolbar" style="margin-top: 20px;">
+        <h2 style="margin-bottom: 0;">Uploaded Candidates</h2>
+        <input type="text" id="search-input" class="search-input" placeholder="Search name, city, skills...">
+      </div>
+      <div class="form-actions" style="margin: 10px 0;">
+        <button type="button" class="btn-primary" id="bulk-select-button">Move Checked to Selected</button>
+      </div>
+      <div id="upload-content">
+        <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="wi-tab-panel" id="tab-selected">
+      <h2>Selected for Interview</h2>
+      <div id="selected-content">
+        <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="wi-tab-panel" id="tab-log">
+      <h2>Interview Calling Log</h2>
+      <div id="log-content">
+        <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+      </div>
     </div>
   </div>
 
   <div class="modal-overlay" id="promote-modal-overlay">
     <div class="modal-card">
-      <h2>Promote to Candidate</h2>
+      <h2>Select for Interview</h2>
       <div id="promote-form-error" class="form-error"></div>
       <form id="promote-form">
         <div class="field">
@@ -63,8 +140,38 @@
           <select id="promote-requisition-select" required></select>
         </div>
         <div class="form-actions">
-          <button type="submit" class="btn-primary" id="promote-submit-button">Promote</button>
+          <button type="submit" class="btn-primary" id="promote-submit-button">Confirm</button>
           <button type="button" class="btn-secondary" id="promote-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="log-call-modal-overlay">
+    <div class="modal-card">
+      <h2>Log Call</h2>
+      <div id="log-call-form-error" class="form-error"></div>
+      <form id="log-call-form">
+        <div class="field">
+          <label for="log-call-status">Call Status</label>
+          <select id="log-call-status" required>
+            <option value="Not Reached">Not Reached</option>
+            <option value="Interested">Interested</option>
+            <option value="Not Interested">Not Interested</option>
+            <option value="Callback Requested">Callback Requested</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="log-call-notes">Call Notes</label>
+          <textarea id="log-call-notes" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label for="log-call-datetime">Interview Date/Time</label>
+          <input type="datetime-local" id="log-call-datetime">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="log-call-submit-button">Save</button>
+          <button type="button" class="btn-secondary" id="log-call-cancel-button">Cancel</button>
         </div>
       </form>
     </div>
@@ -78,18 +185,14 @@
     if (!token) {
       window.location.href = 'login.html';
     } else {
-      loadWorkindia();
+      loadUploadTab();
+      loadSelectedTab();
+      loadLogTab();
     }
 
-    const navToggle = document.getElementById('nav-toggle');
-    const navLinks = document.getElementById('nav-links');
-    if (navToggle && navLinks) {
-      navToggle.addEventListener('click', function () {
-        navLinks.classList.toggle('open');
-      });
-    }
-
-    let allCandidates = [];
+    let uploadCandidates = [];
+    let selectedCandidates = [];
+    let logCandidates = [];
     let searchTerm = '';
     let searchDebounceTimer = null;
 
@@ -125,83 +228,92 @@
       pageError.style.display = 'none';
     }
 
-    async function loadWorkindia() {
-      const content = document.getElementById('workindia-content');
+    // ---------- Tabs ----------
+
+    document.querySelectorAll('.wi-tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.wi-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.wi-tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.getAttribute('data-tab')).classList.add('active');
+      });
+    });
+
+    // ---------- Upload tab ----------
+
+    async function loadUploadTab() {
+      const content = document.getElementById('upload-content');
       hidePageError();
-
       try {
-        const url = searchTerm
-          ? WORKINDIA_API_BASE + '?q=' + encodeURIComponent(searchTerm)
-          : WORKINDIA_API_BASE;
-
-        const response = await fetch(url, {
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-
-        if (handleUnauthorized(response)) {
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to load imported candidates.');
-        }
-
-        allCandidates = await response.json();
-        renderWorkindiaTable();
+        const url = WORKINDIA_API_BASE + '?stage=Uploaded' + (searchTerm ? '&q=' + encodeURIComponent(searchTerm) : '');
+        const response = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load uploaded candidates.');
+        uploadCandidates = await response.json();
+        renderUploadTable();
       } catch (err) {
-        content.innerHTML = '<div class="error-state"><div>' +
-          escapeHtml(err.message || 'Could not load imported candidates.') +
-          '</div><button type="button" class="btn-secondary" id="retry-workindia-button">Retry</button></div>';
-        document.getElementById('retry-workindia-button').addEventListener('click', loadWorkindia);
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-upload-button">Retry</button></div>';
+        document.getElementById('retry-upload-button').addEventListener('click', loadUploadTab);
       }
     }
 
-    function renderWorkindiaTable() {
-      const content = document.getElementById('workindia-content');
-
-      if (allCandidates.length === 0) {
-        content.innerHTML = '<div class="message">No imported candidates found.</div>';
+    function renderUploadTable() {
+      const content = document.getElementById('upload-content');
+      if (uploadCandidates.length === 0) {
+        content.innerHTML = '<div class="message">No uploaded candidates found.</div>';
         return;
       }
-
-      const rows = allCandidates.map(function (cand) {
-        const statusChip = cand.promoted
-          ? '<span class="chip chip-green">Promoted</span>'
-          : '<span class="chip chip-gray">Not yet</span>';
-
-        const actionCell = cand.promoted
-          ? ''
-          : '<button type="button" class="btn-primary btn-row promote-btn" data-id="' + escapeHtml(cand.id) + '">Promote to Candidate</button>';
-
+      const rows = uploadCandidates.map(function (cand) {
         return '<tr>' +
+          '<td><input type="checkbox" class="wi-select-checkbox" data-id="' + escapeHtml(cand.id) + '"></td>' +
           '<td>' + escapeHtml(cand.full_name) + '</td>' +
           '<td>' + escapeHtml(cand.mobile) + '</td>' +
           '<td>' + escapeHtml(cand.city) + '</td>' +
           '<td>' + escapeHtml(cand.qualification) + '</td>' +
           '<td>' + escapeHtml(cand.relevant_experience || cand.experience_level) + '</td>' +
           '<td>' + escapeHtml(cand.skills) + '</td>' +
-          '<td>' + statusChip + '</td>' +
-          '<td>' + actionCell + '</td>' +
+          '<td><button type="button" class="btn-delete btn-row wi-remove-btn" data-id="' + escapeHtml(cand.id) + '">Remove</button></td>' +
           '</tr>';
       }).join('');
 
       content.innerHTML =
         '<table>' +
-        '<thead><tr><th>Name</th><th>Mobile</th><th>City</th><th>Qualification</th><th>Experience</th><th>Skills</th><th>Status</th><th>Actions</th></tr></thead>' +
+        '<thead><tr><th></th><th>Name</th><th>Mobile</th><th>City</th><th>Qualification</th><th>Experience</th><th>Skills</th><th>Actions</th></tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
         '</table>';
 
-      content.querySelectorAll('.promote-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          openPromoteModal(btn.getAttribute('data-id'));
-        });
+      content.querySelectorAll('.wi-remove-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleRemove(btn.getAttribute('data-id'), loadUploadTab); });
       });
     }
 
     document.getElementById('search-input').addEventListener('input', function (event) {
       searchTerm = event.target.value.trim();
       clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(loadWorkindia, 300);
+      searchDebounceTimer = setTimeout(loadUploadTab, 300);
+    });
+
+    document.getElementById('bulk-select-button').addEventListener('click', async function () {
+      const checked = Array.from(document.querySelectorAll('.wi-select-checkbox:checked')).map(function (cb) {
+        return cb.getAttribute('data-id');
+      });
+      if (checked.length === 0) {
+        showPageError('Check at least one candidate to move to Selected.');
+        return;
+      }
+      hidePageError();
+      try {
+        await Promise.all(checked.map(function (id) {
+          return fetch(WORKINDIA_API_BASE + id + '/select/', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+        }));
+        loadUploadTab();
+        loadSelectedTab();
+      } catch (err) {
+        showPageError('Could not move candidates to Selected.');
+      }
     });
 
     // ---------- CSV import ----------
@@ -247,13 +359,131 @@
         uploadSuccess.textContent = 'Imported ' + data.imported + ' candidate(s) successfully.';
         uploadSuccess.style.display = 'block';
         fileInput.value = '';
-        loadWorkindia();
+        loadUploadTab();
       } catch (err) {
         uploadError.textContent = err.message || 'Something went wrong. Please try again.';
         uploadError.style.display = 'block';
       } finally {
         importButton.disabled = false;
       }
+    }
+
+    // ---------- Selected tab ----------
+
+    async function loadSelectedTab() {
+      const content = document.getElementById('selected-content');
+      try {
+        const response = await fetch(WORKINDIA_API_BASE + '?stage=Selected', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load selected candidates.');
+        selectedCandidates = await response.json();
+        renderSelectedTable();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-selected-button">Retry</button></div>';
+        document.getElementById('retry-selected-button').addEventListener('click', loadSelectedTab);
+      }
+    }
+
+    function renderSelectedTable() {
+      const content = document.getElementById('selected-content');
+      if (selectedCandidates.length === 0) {
+        content.innerHTML = '<div class="message">No candidates in Selected stage.</div>';
+        return;
+      }
+      const rows = selectedCandidates.map(function (cand) {
+        return '<tr>' +
+          '<td>' + escapeHtml(cand.full_name) + '</td>' +
+          '<td>' + escapeHtml(cand.mobile) + '</td>' +
+          '<td>' + escapeHtml(cand.city) + '</td>' +
+          '<td>' + escapeHtml(cand.skills) + '</td>' +
+          '<td>' +
+          '<button type="button" class="btn-secondary btn-row wi-log-call-btn" data-id="' + escapeHtml(cand.id) + '">&#128222; Log Call</button>' +
+          (cand.promoted ? '<span class="chip chip-green">Promoted</span>' : '<button type="button" class="btn-primary btn-row wi-promote-btn" data-id="' + escapeHtml(cand.id) + '">Select for Interview</button>') +
+          '<button type="button" class="btn-delete btn-row wi-remove-btn" data-id="' + escapeHtml(cand.id) + '">Remove</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
+
+      content.innerHTML =
+        '<table>' +
+        '<thead><tr><th>Name</th><th>Mobile</th><th>City</th><th>Skills</th><th>Actions</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>';
+
+      wireRowActions(content, loadSelectedTab);
+    }
+
+    // ---------- Interview Calling Log tab ----------
+
+    async function loadLogTab() {
+      const content = document.getElementById('log-content');
+      try {
+        const response = await fetch(WORKINDIA_API_BASE + '?stage=Called', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load calling log.');
+        logCandidates = await response.json();
+        renderLogList();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-log-button">Retry</button></div>';
+        document.getElementById('retry-log-button').addEventListener('click', loadLogTab);
+      }
+    }
+
+    function renderLogList() {
+      const content = document.getElementById('log-content');
+      if (logCandidates.length === 0) {
+        content.innerHTML = '<div class="message">No calls logged yet.</div>';
+        return;
+      }
+      const sorted = logCandidates.slice().sort(function (a, b) {
+        return String(b.interview_datetime || '').localeCompare(String(a.interview_datetime || ''));
+      });
+
+      content.innerHTML = sorted.map(function (cand) {
+        return '<div class="diary-entry">' +
+          '<div class="diary-entry-header">' +
+          '<span class="step-name">' + escapeHtml(cand.full_name) + ' &middot; ' + escapeHtml(cand.mobile) + '</span>' +
+          '<span class="chip">' + escapeHtml(cand.call_status || 'No status') + '</span>' +
+          '</div>' +
+          '<div class="step-meta" style="margin-top: 6px;">' +
+          (cand.interview_datetime ? 'Interview: ' + escapeHtml(cand.interview_datetime) + ' &middot; ' : '') +
+          (cand.call_notes ? escapeHtml(cand.call_notes) : 'No notes') +
+          '</div>' +
+          '<div class="form-actions" style="margin-top: 10px;">' +
+          '<button type="button" class="btn-secondary btn-row wi-log-call-btn" data-id="' + escapeHtml(cand.id) + '">&#128222; Log Call</button>' +
+          (cand.promoted ? '<span class="chip chip-green">Promoted</span>' : '<button type="button" class="btn-primary btn-row wi-promote-btn" data-id="' + escapeHtml(cand.id) + '">Select for Interview</button>') +
+          '<button type="button" class="btn-delete btn-row wi-remove-btn" data-id="' + escapeHtml(cand.id) + '">Remove</button>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+
+      wireRowActions(content, loadLogTab);
+    }
+
+    // ---------- Shared row actions ----------
+
+    function wireRowActions(container, refreshFn) {
+      container.querySelectorAll('.wi-promote-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { openPromoteModal(btn.getAttribute('data-id')); });
+      });
+      container.querySelectorAll('.wi-log-call-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { openLogCallModal(btn.getAttribute('data-id')); });
+      });
+      container.querySelectorAll('.wi-remove-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleRemove(btn.getAttribute('data-id'), refreshFn); });
+      });
+    }
+
+    async function handleRemove(id, refreshFn) {
+      if (!confirm('Remove this candidate from the pipeline?')) return;
+      const response = await fetch(WORKINDIA_API_BASE + id + '/remove/', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (handleUnauthorized(response)) return;
+      loadUploadTab();
+      loadSelectedTab();
+      loadLogTab();
     }
 
     // ---------- Promote modal ----------
@@ -349,11 +579,12 @@
 
         if (!response.ok) {
           const data = await response.json().catch(function () { return {}; });
-          throw new Error(data.detail || 'Could not promote candidate.');
+          throw new Error(data.detail || 'Could not select candidate for interview.');
         }
 
         closePromoteModal();
-        loadWorkindia();
+        loadSelectedTab();
+        loadLogTab();
       } catch (err) {
         promoteFormError.textContent = err.message || 'Something went wrong. Please try again.';
         promoteFormError.style.display = 'block';
@@ -361,6 +592,60 @@
         promoteSubmitButton.disabled = false;
       }
     }
+
+    // ---------- Log Call modal ----------
+
+    const logCallModalOverlay = document.getElementById('log-call-modal-overlay');
+    const logCallForm = document.getElementById('log-call-form');
+    const logCallFormError = document.getElementById('log-call-form-error');
+    let loggingCandidateId = null;
+
+    document.getElementById('log-call-cancel-button').addEventListener('click', closeLogCallModal);
+    logCallModalOverlay.addEventListener('click', function (event) {
+      if (event.target === logCallModalOverlay) closeLogCallModal();
+    });
+
+    function openLogCallModal(candId) {
+      loggingCandidateId = candId;
+      logCallForm.reset();
+      logCallFormError.style.display = 'none';
+      logCallModalOverlay.classList.add('open');
+    }
+
+    function closeLogCallModal() {
+      logCallModalOverlay.classList.remove('open');
+      logCallForm.reset();
+      loggingCandidateId = null;
+    }
+
+    logCallForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (!loggingCandidateId) return;
+
+      const datetimeValue = document.getElementById('log-call-datetime').value;
+      const payload = {
+        call_status: document.getElementById('log-call-status').value,
+        call_notes: document.getElementById('log-call-notes').value,
+        interview_datetime: datetimeValue ? new Date(datetimeValue).toISOString() : null
+      };
+
+      try {
+        const response = await fetch(WORKINDIA_API_BASE + loggingCandidateId + '/log-call/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not log call.');
+
+        closeLogCallModal();
+        loadSelectedTab();
+        loadLogTab();
+      } catch (err) {
+        logCallFormError.textContent = err.message;
+        logCallFormError.style.display = 'block';
+      }
+    });
   </script>
 
 </body>

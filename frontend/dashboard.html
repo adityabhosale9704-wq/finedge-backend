@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <title>Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
 <style>
   .greeting-date {
     font-size: 14px;
@@ -100,15 +105,27 @@
 <body>
 
   <div class="top-nav">
-    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
-    <div class="nav-links" id="nav-links">
-      <a href="dashboard.html" class="active">Dashboard</a>
-      <a href="employees.html">Employees</a>
-      <a href="positions.html">Employee IDs</a>
-      <a href="recruitment.html">Recruitment</a>
-      <a href="tasks.html">Tasks</a>
-      <a href="admin.html">Admin Studio</a>
-      <a href="workindia.html">WorkIndia Import</a>
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link active"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
     </div>
   </div>
 
@@ -120,19 +137,23 @@
   <div class="container">
     <div class="kpi-grid">
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-navy"><i class="fa-solid fa-users"></i></div>
         <div class="kpi-label">Total Active Employees</div>
         <div class="kpi-value" id="kpi-active-employees">0</div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-gold"><i class="fa-solid fa-briefcase"></i></div>
         <div class="kpi-label">Open Requisitions</div>
         <div class="kpi-value" id="kpi-open-requisitions">0</div>
         <div class="kpi-sub" id="kpi-open-requisitions-sub">0 openings</div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-navy"><i class="fa-solid fa-user-clock"></i></div>
         <div class="kpi-label">Candidates In Pipeline</div>
         <div class="kpi-value" id="kpi-in-pipeline">0</div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
         <div class="kpi-label">Overdue Tasks</div>
         <div class="kpi-value" id="kpi-overdue-tasks">0</div>
       </div>
@@ -195,13 +216,6 @@
       loadAll();
     }
 
-    const navToggle = document.getElementById('nav-toggle');
-    const navLinks = document.getElementById('nav-links');
-    if (navToggle && navLinks) {
-      navToggle.addEventListener('click', function () {
-        navLinks.classList.toggle('open');
-      });
-    }
 
     function escapeHtml(value) {
       if (value === undefined || value === null) {

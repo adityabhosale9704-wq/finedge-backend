@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <title>Employees</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
 <style>
   #list-view h1 {
     margin-bottom: 20px;
@@ -222,15 +227,27 @@
 <body>
 
   <div class="top-nav">
-    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
-    <div class="nav-links" id="nav-links">
-      <a href="dashboard.html">Dashboard</a>
-      <a href="employees.html" class="active">Employees</a>
-      <a href="positions.html">Employee IDs</a>
-      <a href="recruitment.html">Recruitment</a>
-      <a href="tasks.html">Tasks</a>
-      <a href="admin.html">Admin Studio</a>
-      <a href="workindia.html">WorkIndia Import</a>
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link active"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
     </div>
   </div>
 
@@ -374,18 +391,22 @@
 
     <div class="kpi-grid">
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-navy"><i class="fa-solid fa-calendar-day"></i></div>
         <div class="kpi-label">Date of Joining</div>
         <div class="kpi-value" id="kpi-doj">&mdash;</div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-gold"><i class="fa-solid fa-sack-dollar"></i></div>
         <div class="kpi-label">CTC</div>
         <div class="kpi-value" id="kpi-ctc">&mdash;</div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-red"><i class="fa-solid fa-droplet"></i></div>
         <div class="kpi-label">Blood Group</div>
         <div class="kpi-value" id="kpi-blood-group">&mdash;</div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-navy"><i class="fa-solid fa-phone"></i></div>
         <div class="kpi-label">Emergency Contact</div>
         <div class="kpi-value" id="kpi-emergency-name">&mdash;</div>
         <div class="kpi-sub" id="kpi-emergency-phone"></div>
@@ -516,13 +537,6 @@
       loadDepartmentAndBranchOptions();
     }
 
-    const navToggle = document.getElementById('nav-toggle');
-    const navLinks = document.getElementById('nav-links');
-    if (navToggle && navLinks) {
-      navToggle.addEventListener('click', function () {
-        navLinks.classList.toggle('open');
-      });
-    }
 
     async function loadDepartmentAndBranchOptions() {
       try {
@@ -934,6 +948,17 @@
       return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
     }
 
+    const AVATAR_PALETTE = ['#1b2a4a', '#a67f2c', '#2a5db0', '#1e7e34', '#8a3ab2', '#b7472a', '#0f766e'];
+
+    function getAvatarColor(name) {
+      const str = String(name || '?');
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash * 31 + str.charCodeAt(i)) % AVATAR_PALETTE.length;
+      }
+      return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+    }
+
     function formatCurrency(value) {
       const number = Number(value);
       if (isNaN(number)) {
@@ -1026,7 +1051,9 @@
       }
       const emp = currentProfileEmployee;
 
-      document.getElementById('profile-avatar').textContent = getInitials(emp.name);
+      const profileAvatarEl = document.getElementById('profile-avatar');
+      profileAvatarEl.textContent = getInitials(emp.name);
+      profileAvatarEl.style.background = getAvatarColor(emp.name);
       document.getElementById('profile-name').textContent = emp.name || '';
       document.getElementById('profile-subtitle').textContent =
         [emp.designation, emp.department, emp.branch, emp.id].filter(Boolean).join(' · ');
@@ -1425,14 +1452,58 @@
       }
     };
 
-    function computeSalaryBreakup(ctc) {
+    let salaryStructureCache = null;
+
+    async function fetchSalaryStructure() {
+      if (salaryStructureCache) {
+        return salaryStructureCache;
+      }
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/v1/salary-structure/', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (response.ok) {
+          salaryStructureCache = await response.json();
+        }
+      } catch (err) {
+        // Fall through to defaults below if the structure can't be loaded.
+      }
+      if (!salaryStructureCache) {
+        salaryStructureCache = {
+          basic_pct: 50,
+          hra_pct_metro: 50,
+          hra_pct_nonmetro: 40,
+          pf_cap_monthly: 1800,
+          gratuity_pct: 4.81,
+          esi_limit_monthly: 21000,
+          professional_tax_monthly: 200
+        };
+      }
+      return salaryStructureCache;
+    }
+
+    function computeSalaryBreakup(ctc, isMetro) {
+      const structure = salaryStructureCache || {
+        basic_pct: 50,
+        hra_pct_metro: 50,
+        hra_pct_nonmetro: 40,
+        pf_cap_monthly: 1800,
+        gratuity_pct: 4.81,
+        esi_limit_monthly: 21000,
+        professional_tax_monthly: 200
+      };
+
       const annualCtc = Number(ctc) || 0;
       const monthlyGross = annualCtc / 12;
-      const basic = 0.5 * monthlyGross;
-      const hra = 0.4 * basic;
-      const employerPf = Math.min(0.12 * basic, 1800);
-      const netMonthly = monthlyGross - employerPf;
-      return { monthlyGross, basic, hra, employerPf, netMonthly };
+      const basic = (structure.basic_pct / 100) * monthlyGross;
+      const hraPct = isMetro ? structure.hra_pct_metro : structure.hra_pct_nonmetro;
+      const hra = (hraPct / 100) * basic;
+      const employerPf = Math.min(0.12 * basic, structure.pf_cap_monthly);
+      const gratuity = (structure.gratuity_pct / 100) * basic;
+      const esi = monthlyGross <= structure.esi_limit_monthly ? monthlyGross * 0.0325 : 0;
+      const professionalTax = structure.professional_tax_monthly;
+      const netMonthly = monthlyGross - employerPf - professionalTax - esi;
+      return { monthlyGross, basic, hra, employerPf, gratuity, esi, professionalTax, netMonthly };
     }
 
     function formatMoney(value) {
@@ -1456,7 +1527,7 @@
 
     function buildLetterHtml(fields) {
       const paragraphs = LETTER_TEMPLATES[fields.letterType](fields);
-      const breakup = computeSalaryBreakup(fields.ctc);
+      const breakup = computeSalaryBreakup(fields.ctc, fields.isMetro);
       const todayStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
       const salaryRow = function (label, monthly) {
@@ -1470,13 +1541,16 @@
         '<div class="letter-body">' +
         paragraphs.map(function (p) { return '<p>' + escapeHtml(p) + '</p>'; }).join('') +
         '</div>' +
-        '<h3>Salary Annexure</h3>' +
+        '<h3>Salary Annexure (' + (fields.isMetro ? 'Metro' : 'Non-metro') + ')</h3>' +
         '<table>' +
         '<thead><tr><th>Component</th><th>Monthly</th><th>Annual</th></tr></thead>' +
         '<tbody>' +
         salaryRow('Basic', breakup.basic) +
         salaryRow('HRA', breakup.hra) +
         salaryRow('Employer PF Contribution', breakup.employerPf) +
+        salaryRow('Gratuity', breakup.gratuity) +
+        salaryRow('ESI', breakup.esi) +
+        salaryRow('Professional Tax', breakup.professionalTax) +
         salaryRow('Monthly Gross', breakup.monthlyGross) +
         salaryRow('Net Monthly (take-home estimate)', breakup.netMonthly) +
         '</tbody>' +
@@ -1536,6 +1610,13 @@
         '<option value="None">None</option>' +
         '</select>' +
         '</div>' +
+        '<div class="field">' +
+        '<label for="letter-metro">Location Type</label>' +
+        '<select id="letter-metro">' +
+        '<option value="metro">Metro</option>' +
+        '<option value="nonmetro">Non-metro</option>' +
+        '</select>' +
+        '</div>' +
         '</div>' +
         '<div class="form-actions">' +
         '<button type="button" class="btn-primary" id="generate-letter-button">Generate</button>' +
@@ -1578,11 +1659,12 @@
         ctc: ctc,
         ctcFormatted: formatMoney(ctc),
         probation: document.getElementById('letter-probation').value,
+        isMetro: document.getElementById('letter-metro').value === 'metro',
         refNumber: buildLetterReferenceNumber(letterType)
       };
     }
 
-    function handleGenerateLetter() {
+    async function handleGenerateLetter() {
       const letterFormError = document.getElementById('letter-form-error');
       letterFormError.style.display = 'none';
 
@@ -1593,6 +1675,7 @@
         return;
       }
 
+      await fetchSalaryStructure();
       currentLetterHtml = buildLetterHtml(fields);
       currentLetterMeta = { letterType: fields.letterType, dateStr: new Date().toISOString().slice(0, 10) };
 
@@ -1605,12 +1688,19 @@
     }
 
     function buildStandaloneLetterDocument() {
+      // Closing tags below are built via concatenation, not written as literal
+      // contiguous "closing tag" substrings, so dev-server tools that naively
+      // text-scan served HTML for a closing tag to inject into (e.g. Live
+      // Server's auto-reload snippet) don't mistake this JS string for the
+      // page's real markup and inject a stray script tag into the middle of it.
+      var close = '<' + '/';
       return (
         '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' +
         escapeHtml(currentLetterMeta.letterType) +
-        '</title><style>body{font-family:Arial,Helvetica,sans-serif;padding:32px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:14px;} .letterhead{text-align:center;} .letter-title{text-align:center;text-decoration:underline;}</style></head><body>' +
+        '</title><style>body{font-family:Arial,Helvetica,sans-serif;padding:32px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:14px;} .letterhead{text-align:center;} .letter-title{text-align:center;text-decoration:underline;}</style>' +
+        close + 'head><body>' +
         currentLetterHtml +
-        '</body></html>'
+        close + 'body>' + close + 'html>'
       );
     }
 

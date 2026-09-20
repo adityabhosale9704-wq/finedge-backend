@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Engagement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+  .celebration-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    background: var(--gold-bg);
+    color: var(--gold);
+    margin-right: 8px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="nav-bar">
+      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <div class="nav-links" id="nav-links">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="employees.html" class="nav-link"><i class="fa-solid fa-users"></i> Employees</a>
+      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
+      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
+      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
+      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
+      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
+      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
+      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
+      <a href="engagement.html" class="nav-link active"><i class="fa-solid fa-heart"></i> Engagement</a>
+      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
+      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
+      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
+      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>Engagement</h1>
+  </div>
+
+  <div class="container">
+    <h2>Celebrations This Month</h2>
+    <div id="celebrations-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h2 style="margin-bottom: 0;">Contests</h2>
+      <button type="button" class="btn-primary" id="add-contest-button">+ Add Contest</button>
+    </div>
+    <div id="contest-form-error" class="form-error"></div>
+    <div id="contests-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading contests...</div></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h2 style="margin-bottom: 0;">Suggestion Box</h2>
+      <button type="button" class="btn-primary" id="add-suggestion-button">+ Add Suggestion</button>
+    </div>
+    <div id="suggestion-form-error" class="form-error"></div>
+    <div id="suggestions-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading suggestions...</div></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h2 style="margin-bottom: 0;">Activity Calendar</h2>
+      <button type="button" class="btn-primary" id="add-activity-button">+ Add Activity</button>
+    </div>
+    <div id="activity-form-error" class="form-error"></div>
+    <div id="activities-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading activities...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="contest-modal-overlay">
+    <div class="modal-card">
+      <h2 id="contest-modal-title">Add Contest</h2>
+      <div id="contest-modal-form-error" class="form-error"></div>
+      <form id="contest-form">
+        <div class="field"><label for="contest-name">Name</label><input type="text" id="contest-name" required></div>
+        <div class="field"><label for="contest-audience">Audience</label><input type="text" id="contest-audience"></div>
+        <div class="field"><label for="contest-start">Period Start</label><input type="date" id="contest-start"></div>
+        <div class="field"><label for="contest-end">Period End</label><input type="date" id="contest-end"></div>
+        <div class="field"><label for="contest-metric">Target Metric</label><input type="text" id="contest-metric"></div>
+        <div class="field"><label for="contest-prize">Prize</label><input type="text" id="contest-prize"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="contest-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="contest-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="suggestion-modal-overlay">
+    <div class="modal-card">
+      <h2>Add Suggestion</h2>
+      <div id="suggestion-modal-form-error" class="form-error"></div>
+      <form id="suggestion-form">
+        <div class="field"><label for="suggestion-submitted-by">Submitted By</label><input type="text" id="suggestion-submitted-by" placeholder="Leave blank for Anonymous"></div>
+        <div class="field"><label for="suggestion-text">Suggestion</label><textarea id="suggestion-text" rows="4" required></textarea></div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="suggestion-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="suggestion-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="activity-modal-overlay">
+    <div class="modal-card">
+      <h2 id="activity-modal-title">Add Activity</h2>
+      <div id="activity-modal-form-error" class="form-error"></div>
+      <form id="activity-form">
+        <div class="field"><label for="activity-name">Name</label><input type="text" id="activity-name" required></div>
+        <div class="field"><label for="activity-date">Date / Recurrence</label><input type="text" id="activity-date" placeholder="e.g. 2026-10-15, or 'Every Friday'"></div>
+        <div class="field"><label for="activity-audience">Audience</label><input type="text" id="activity-audience"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="activity-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="activity-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+    const CONTESTS_API_BASE = 'http://127.0.0.1:8000/api/v1/engagement/contests/';
+    const SUGGESTIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/engagement/suggestions/';
+    const ACTIVITIES_API_BASE = 'http://127.0.0.1:8000/api/v1/engagement/activities/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadCelebrations();
+      loadContests();
+      loadSuggestions();
+      loadActivities();
+    }
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    // ---------- Celebrations this month ----------
+
+    async function loadCelebrations() {
+      const content = document.getElementById('celebrations-content');
+      try {
+        const response = await fetch(EMPLOYEES_API_BASE, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load employees.');
+        }
+
+        const employees = await response.json();
+        renderCelebrations(employees);
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message || 'Could not load celebrations.') + '</div></div>';
+      }
+    }
+
+    function renderCelebrations(employees) {
+      const content = document.getElementById('celebrations-content');
+      const now = new Date();
+      const currentMonth = now.getMonth();
+
+      const items = [];
+      employees.forEach(function (emp) {
+        [
+          { field: emp.date_of_joining, type: 'Work Anniversary' },
+          { field: emp.dob, type: 'Birthday' }
+        ].forEach(function (entry) {
+          if (!entry.field) {
+            return;
+          }
+          const d = new Date(entry.field + 'T00:00:00');
+          if (isNaN(d.getTime())) {
+            return;
+          }
+          if (d.getMonth() === currentMonth) {
+            items.push({ name: emp.name, type: entry.type, day: d.getDate() });
+          }
+        });
+      });
+
+      items.sort(function (a, b) { return a.day - b.day; });
+
+      if (items.length === 0) {
+        content.innerHTML = '<div class="message">No celebrations this month.</div>';
+        return;
+      }
+
+      content.innerHTML = '<ul style="list-style: none; margin: 0; padding: 0;">' + items.map(function (item) {
+        return '<li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line-2); font-size: 14px;">' +
+          '<span><span class="celebration-badge">' + item.type + '</span>' + escapeHtml(item.name) + '</span>' +
+          '<span>Day ' + item.day + '</span>' +
+          '</li>';
+      }).join('') + '</ul>';
+    }
+
+    // ---------- Contests ----------
+
+    let allContests = [];
+
+    async function loadContests() {
+      const content = document.getElementById('contests-content');
+      try {
+        const response = await fetch(CONTESTS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load contests.');
+        allContests = await response.json();
+        renderContests();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-contests-button">Retry</button></div>';
+        document.getElementById('retry-contests-button').addEventListener('click', loadContests);
+      }
+    }
+
+    function renderContests() {
+      const content = document.getElementById('contests-content');
+      if (allContests.length === 0) {
+        content.innerHTML = '<div class="message">No contests added yet.</div>';
+        return;
+      }
+      const rows = allContests.map(function (c) {
+        return '<tr><td>' + escapeHtml(c.name) + '</td><td>' + (c.audience ? escapeHtml(c.audience) : '&mdash;') + '</td>' +
+          '<td>' + (c.period_start ? escapeHtml(c.period_start) : '&mdash;') + ' &ndash; ' + (c.period_end ? escapeHtml(c.period_end) : '&mdash;') + '</td>' +
+          '<td>' + (c.target_metric ? escapeHtml(c.target_metric) : '&mdash;') + '</td>' +
+          '<td>' + (c.prize ? escapeHtml(c.prize) : '&mdash;') + '</td>' +
+          '<td><button type="button" class="btn-edit btn-row edit-contest-btn" data-id="' + escapeHtml(c.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-contest-btn" data-id="' + escapeHtml(c.id) + '">Delete</button></td></tr>';
+      }).join('');
+      content.innerHTML = '<table><thead><tr><th>Name</th><th>Audience</th><th>Period</th><th>Metric</th><th>Prize</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+      content.querySelectorAll('.edit-contest-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const c = allContests.find(function (x) { return x.id === btn.getAttribute('data-id'); });
+          if (c) openContestModal('edit', c);
+        });
+      });
+      content.querySelectorAll('.delete-contest-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleDeleteContest(btn.getAttribute('data-id')); });
+      });
+    }
+
+    async function handleDeleteContest(id) {
+      if (!confirm('Delete this contest?')) return;
+      const response = await fetch(CONTESTS_API_BASE + id + '/', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+      if (handleUnauthorized(response)) return;
+      loadContests();
+    }
+
+    const contestModalOverlay = document.getElementById('contest-modal-overlay');
+    const contestForm = document.getElementById('contest-form');
+    let editingContestId = null;
+
+    document.getElementById('add-contest-button').addEventListener('click', function () { openContestModal('add', null); });
+    document.getElementById('contest-cancel-button').addEventListener('click', closeContestModal);
+    contestModalOverlay.addEventListener('click', function (e) { if (e.target === contestModalOverlay) closeContestModal(); });
+    contestForm.addEventListener('submit', handleContestSubmit);
+
+    function openContestModal(mode, c) {
+      editingContestId = mode === 'edit' && c ? c.id : null;
+      document.getElementById('contest-modal-title').textContent = mode === 'edit' ? 'Edit Contest' : 'Add Contest';
+      document.getElementById('contest-submit-button').textContent = mode === 'edit' ? 'Update' : 'Add';
+      document.getElementById('contest-name').value = c ? (c.name || '') : '';
+      document.getElementById('contest-audience').value = c ? (c.audience || '') : '';
+      document.getElementById('contest-start').value = c ? (c.period_start || '') : '';
+      document.getElementById('contest-end').value = c ? (c.period_end || '') : '';
+      document.getElementById('contest-metric').value = c ? (c.target_metric || '') : '';
+      document.getElementById('contest-prize').value = c ? (c.prize || '') : '';
+      document.getElementById('contest-modal-form-error').style.display = 'none';
+      contestModalOverlay.classList.add('open');
+    }
+    function closeContestModal() {
+      contestModalOverlay.classList.remove('open');
+      contestForm.reset();
+      editingContestId = null;
+    }
+    async function handleContestSubmit(event) {
+      event.preventDefault();
+      const payload = {
+        name: document.getElementById('contest-name').value,
+        audience: document.getElementById('contest-audience').value,
+        period_start: document.getElementById('contest-start').value || null,
+        period_end: document.getElementById('contest-end').value || null,
+        target_metric: document.getElementById('contest-metric').value,
+        prize: document.getElementById('contest-prize').value
+      };
+      const isEditing = editingContestId !== null;
+      const url = isEditing ? CONTESTS_API_BASE + editingContestId + '/' : CONTESTS_API_BASE;
+      try {
+        const response = await fetch(url, {
+          method: isEditing ? 'PATCH' : 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not save contest.');
+        closeContestModal();
+        loadContests();
+      } catch (err) {
+        const errorEl = document.getElementById('contest-modal-form-error');
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    }
+
+    // ---------- Suggestions ----------
+
+    let allSuggestions = [];
+    const SUGGESTION_STATUSES = ['New', 'Reviewed', 'Actioned'];
+
+    async function loadSuggestions() {
+      const content = document.getElementById('suggestions-content');
+      try {
+        const response = await fetch(SUGGESTIONS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load suggestions.');
+        allSuggestions = await response.json();
+        renderSuggestions();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-suggestions-button">Retry</button></div>';
+        document.getElementById('retry-suggestions-button').addEventListener('click', loadSuggestions);
+      }
+    }
+
+    function renderSuggestions() {
+      const content = document.getElementById('suggestions-content');
+      if (allSuggestions.length === 0) {
+        content.innerHTML = '<div class="message">No suggestions submitted yet.</div>';
+        return;
+      }
+      content.innerHTML = allSuggestions.map(function (s) {
+        const statusOptions = SUGGESTION_STATUSES.map(function (opt) {
+          return '<option value="' + opt + '"' + (opt === s.status ? ' selected' : '') + '>' + opt + '</option>';
+        }).join('');
+        return '<div class="step-row" style="align-items: flex-start;">' +
+          '<div class="step-info">' +
+          '<div class="step-name">' + escapeHtml(s.submitted_by || 'Anonymous') + '</div>' +
+          '<div class="step-meta">' + escapeHtml(s.text) + '</div>' +
+          '<textarea class="response-note-input" data-id="' + escapeHtml(s.id) + '" placeholder="Response note..." rows="2" style="width: 100%; margin-top: 6px;">' + escapeHtml(s.response_note) + '</textarea>' +
+          '<button type="button" class="btn-secondary btn-row save-response-btn" data-id="' + escapeHtml(s.id) + '" style="margin-top: 4px;">Save Note</button>' +
+          '</div>' +
+          '<div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">' +
+          '<select class="suggestion-status-select" data-id="' + escapeHtml(s.id) + '">' + statusOptions + '</select>' +
+          '<button type="button" class="btn-delete btn-row delete-suggestion-btn" data-id="' + escapeHtml(s.id) + '">Delete</button>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+
+      content.querySelectorAll('.suggestion-status-select').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          handleUpdateSuggestion(sel.getAttribute('data-id'), { status: sel.value });
+        });
+      });
+      content.querySelectorAll('.save-response-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const id = btn.getAttribute('data-id');
+          const textarea = content.querySelector('.response-note-input[data-id="' + id + '"]');
+          handleUpdateSuggestion(id, { response_note: textarea.value });
+        });
+      });
+      content.querySelectorAll('.delete-suggestion-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleDeleteSuggestion(btn.getAttribute('data-id')); });
+      });
+    }
+
+    async function handleUpdateSuggestion(id, payload) {
+      try {
+        const response = await fetch(SUGGESTIONS_API_BASE + id + '/', {
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not save.');
+        loadSuggestions();
+      } catch (err) {
+        showFormErrorFor('suggestion-form-error', err.message);
+      }
+    }
+
+    async function handleDeleteSuggestion(id) {
+      if (!confirm('Delete this suggestion?')) return;
+      const response = await fetch(SUGGESTIONS_API_BASE + id + '/', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+      if (handleUnauthorized(response)) return;
+      loadSuggestions();
+    }
+
+    function showFormErrorFor(id, message) {
+      const el = document.getElementById(id);
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+
+    const suggestionModalOverlay = document.getElementById('suggestion-modal-overlay');
+    const suggestionForm = document.getElementById('suggestion-form');
+    document.getElementById('add-suggestion-button').addEventListener('click', function () {
+      suggestionForm.reset();
+      document.getElementById('suggestion-modal-form-error').style.display = 'none';
+      suggestionModalOverlay.classList.add('open');
+    });
+    document.getElementById('suggestion-cancel-button').addEventListener('click', function () {
+      suggestionModalOverlay.classList.remove('open');
+    });
+    suggestionModalOverlay.addEventListener('click', function (e) { if (e.target === suggestionModalOverlay) suggestionModalOverlay.classList.remove('open'); });
+    suggestionForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const payload = {
+        submitted_by: document.getElementById('suggestion-submitted-by').value || 'Anonymous',
+        text: document.getElementById('suggestion-text').value
+      };
+      try {
+        const response = await fetch(SUGGESTIONS_API_BASE, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not submit suggestion.');
+        suggestionModalOverlay.classList.remove('open');
+        loadSuggestions();
+      } catch (err) {
+        showFormErrorFor('suggestion-modal-form-error', err.message);
+      }
+    });
+
+    // ---------- Activities ----------
+
+    let allActivities = [];
+
+    async function loadActivities() {
+      const content = document.getElementById('activities-content');
+      try {
+        const response = await fetch(ACTIVITIES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load activities.');
+        allActivities = await response.json();
+        renderActivities();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-activities-button">Retry</button></div>';
+        document.getElementById('retry-activities-button').addEventListener('click', loadActivities);
+      }
+    }
+
+    function renderActivities() {
+      const content = document.getElementById('activities-content');
+      if (allActivities.length === 0) {
+        content.innerHTML = '<div class="message">No activities scheduled yet.</div>';
+        return;
+      }
+      const sorted = allActivities.slice().sort(function (a, b) {
+        return String(a.date_or_recurrence || '').localeCompare(String(b.date_or_recurrence || ''));
+      });
+      const rows = sorted.map(function (a) {
+        return '<tr><td>' + escapeHtml(a.name) + '</td><td>' + (a.date_or_recurrence ? escapeHtml(a.date_or_recurrence) : '&mdash;') + '</td>' +
+          '<td>' + (a.audience ? escapeHtml(a.audience) : '&mdash;') + '</td>' +
+          '<td><button type="button" class="btn-edit btn-row edit-activity-btn" data-id="' + escapeHtml(a.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-activity-btn" data-id="' + escapeHtml(a.id) + '">Delete</button></td></tr>';
+      }).join('');
+      content.innerHTML = '<table><thead><tr><th>Name</th><th>Date / Recurrence</th><th>Audience</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+      content.querySelectorAll('.edit-activity-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const a = allActivities.find(function (x) { return x.id === btn.getAttribute('data-id'); });
+          if (a) openActivityModal('edit', a);
+        });
+      });
+      content.querySelectorAll('.delete-activity-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleDeleteActivity(btn.getAttribute('data-id')); });
+      });
+    }
+
+    async function handleDeleteActivity(id) {
+      if (!confirm('Delete this activity?')) return;
+      const response = await fetch(ACTIVITIES_API_BASE + id + '/', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+      if (handleUnauthorized(response)) return;
+      loadActivities();
+    }
+
+    const activityModalOverlay = document.getElementById('activity-modal-overlay');
+    const activityForm = document.getElementById('activity-form');
+    let editingActivityId = null;
+
+    document.getElementById('add-activity-button').addEventListener('click', function () { openActivityModal('add', null); });
+    document.getElementById('activity-cancel-button').addEventListener('click', closeActivityModal);
+    activityModalOverlay.addEventListener('click', function (e) { if (e.target === activityModalOverlay) closeActivityModal(); });
+    activityForm.addEventListener('submit', handleActivitySubmit);
+
+    function openActivityModal(mode, a) {
+      editingActivityId = mode === 'edit' && a ? a.id : null;
+      document.getElementById('activity-modal-title').textContent = mode === 'edit' ? 'Edit Activity' : 'Add Activity';
+      document.getElementById('activity-submit-button').textContent = mode === 'edit' ? 'Update' : 'Add';
+      document.getElementById('activity-name').value = a ? (a.name || '') : '';
+      document.getElementById('activity-date').value = a ? (a.date_or_recurrence || '') : '';
+      document.getElementById('activity-audience').value = a ? (a.audience || '') : '';
+      document.getElementById('activity-modal-form-error').style.display = 'none';
+      activityModalOverlay.classList.add('open');
+    }
+    function closeActivityModal() {
+      activityModalOverlay.classList.remove('open');
+      activityForm.reset();
+      editingActivityId = null;
+    }
+    async function handleActivitySubmit(event) {
+      event.preventDefault();
+      const payload = {
+        name: document.getElementById('activity-name').value,
+        date_or_recurrence: document.getElementById('activity-date').value,
+        audience: document.getElementById('activity-audience').value
+      };
+      const isEditing = editingActivityId !== null;
+      const url = isEditing ? ACTIVITIES_API_BASE + editingActivityId + '/' : ACTIVITIES_API_BASE;
+      try {
+        const response = await fetch(url, {
+          method: isEditing ? 'PATCH' : 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not save activity.');
+        closeActivityModal();
+        loadActivities();
+      } catch (err) {
+        showFormErrorFor('activity-modal-form-error', err.message);
+      }
+    }
+  </script>
+
+</body>
+</html>
