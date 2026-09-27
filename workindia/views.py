@@ -192,6 +192,12 @@ class WorkIndiaPromoteView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        if workindia_candidate.get("excluded"):
+            return Response(
+                {"detail": "This candidate has been removed and cannot be promoted."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if workindia_candidate.get("promoted"):
             return Response(
                 {"detail": "This candidate has already been promoted."},
@@ -241,6 +247,12 @@ class WorkIndiaSelectView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        if workindia_candidate.get("excluded"):
+            return Response(
+                {"detail": "This candidate has been removed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         get_workindia_collection().update_one(
             {"id": wi_id}, {"$set": {"stage": "Selected"}}
         )
@@ -258,6 +270,12 @@ class WorkIndiaLogCallView(APIView):
             return Response(
                 {"detail": "WorkIndia candidate not found."},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if workindia_candidate.get("excluded"):
+            return Response(
+                {"detail": "This candidate has been removed."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = WorkIndiaLogCallSerializer(data=request.data)

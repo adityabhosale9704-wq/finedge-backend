@@ -44,7 +44,12 @@ class ReferenceCheckListCreateView(APIView):
     def post(self, request):
         serializer = ReferenceCheckSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = get_reference_checks_collection().insert_one(dict(serializer.validated_data))
+        data = serializer.validated_data
+
+        if not get_candidate_by_id(data["candidate_id"]):
+            return Response({"detail": "Candidate not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        result = get_reference_checks_collection().insert_one(dict(data))
         created = get_reference_checks_collection().find_one({"_id": result.inserted_id})
         return Response(serialize(created), status=status.HTTP_201_CREATED)
 

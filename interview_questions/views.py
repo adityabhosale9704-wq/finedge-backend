@@ -50,7 +50,7 @@ class InterviewQuestionListCreateView(APIView):
                     {"detail": "question_texts must be a non-empty list."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            created = []
+            validated_docs = []
             for question_text in question_texts:
                 serializer = InterviewQuestionSerializer(data={
                     "department": payload.get("department", ""),
@@ -58,8 +58,13 @@ class InterviewQuestionListCreateView(APIView):
                     "question_text": question_text,
                 })
                 serializer.is_valid(raise_exception=True)
-                result = get_interview_questions_collection().insert_one(dict(serializer.validated_data))
-                created.append(serialize(get_interview_questions_collection().find_one({"_id": result.inserted_id})))
+                validated_docs.append(dict(serializer.validated_data))
+
+            result = get_interview_questions_collection().insert_many(validated_docs)
+            created = [
+                serialize(get_interview_questions_collection().find_one({"_id": inserted_id}))
+                for inserted_id in result.inserted_ids
+            ]
             return Response(created, status=status.HTTP_201_CREATED)
 
         serializer = InterviewQuestionSerializer(data=payload)

@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 
 from accounts.authentication import JWTAuthentication
 from employees.mongo import get_employees_collection
+from employees.views import get_employee_by_pk
 from recruitment.mongo import get_candidates_collection
 from separations.mongo import get_separations_collection
 
@@ -44,7 +45,7 @@ class DoneBoardView(APIView):
                 items.append({
                     "module": "onboarding",
                     "person_name": employee.get("name"),
-                    "record_id": employee.get("id"),
+                    "record_id": str(employee["_id"]),
                     "step_id": step.get("id"),
                     "step_name": step.get("step_name"),
                     "who": step.get("who"),
@@ -58,7 +59,7 @@ class DoneBoardView(APIView):
                 continue
             step = first_undone_step(steps)
             if step:
-                employee = get_employees_collection().find_one({"id": separation.get("employee_id")})
+                employee = get_employee_by_pk(separation.get("employee_id"))
                 items.append({
                     "module": "exit",
                     "person_name": employee.get("name") if employee else separation.get("employee_id"),
