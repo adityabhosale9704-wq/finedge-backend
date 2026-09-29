@@ -3,6 +3,14 @@
    theme is applied before first paint, avoiding a flash of the
    wrong theme. */
 
+/* Single place every page's API_BASE-prefixed fetch calls point at.
+   Local dev (Django on your own machine): leave this as-is.
+   After hosting the backend on AWS: change ONLY this one line to your
+   server's address (e.g. 'https://api.yourdomain.com/api/v1' or
+   'http://<your-ec2-ip>:8000/api/v1') and every page picks it up —
+   no need to touch the 17 HTML files individually again. */
+window.API_BASE = 'http://127.0.0.1:8000/api/v1';
+
 (function () {
   var savedTheme = localStorage.getItem('theme');
   if (savedTheme === 'dark' || savedTheme === 'light') {
@@ -31,11 +39,50 @@ function updateThemeToggleIcon() {
 function initSharedNav() {
   var navToggle = document.getElementById('nav-toggle');
   var navLinks = document.getElementById('nav-links');
-  if (navToggle && navLinks) {
+  var sidebar = document.querySelector('.top-nav');
+
+  // Backdrop behind the sliding sidebar on mobile — created here instead
+  // of being baked into every page's HTML.
+  var backdrop = document.createElement('div');
+  backdrop.className = 'nav-backdrop';
+  document.body.appendChild(backdrop);
+
+  function setToggleIcon(open) {
+    if (!navToggle) return;
+    navToggle.innerHTML = open ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+  }
+
+  function closeSidebar() {
+    if (sidebar) sidebar.classList.remove('open');
+    backdrop.classList.remove('open');
+    setToggleIcon(false);
+  }
+
+  function openSidebar() {
+    if (sidebar) sidebar.classList.add('open');
+    backdrop.classList.add('open');
+    setToggleIcon(true);
+  }
+
+  if (navToggle && sidebar) {
     navToggle.addEventListener('click', function () {
-      navLinks.classList.toggle('open');
+      if (sidebar.classList.contains('open')) closeSidebar();
+      else openSidebar();
     });
   }
+  backdrop.addEventListener('click', closeSidebar);
+  // Tapping a nav link closes the sidebar again on mobile.
+  if (navLinks) {
+    navLinks.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', closeSidebar);
+    });
+  }
+  // Sidebar becomes fixed-but-hidden only below 720px — if the window is
+  // resized back up while it was left open, make sure it doesn't stay
+  // stuck mid-transition.
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 720) closeSidebar();
+  });
 
   var themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {

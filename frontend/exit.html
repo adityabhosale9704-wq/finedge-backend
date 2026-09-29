@@ -132,8 +132,8 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const SEPARATIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/separations/';
-    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+    const SEPARATIONS_API_BASE = API_BASE + '/separations/';
+    const EMPLOYEES_API_BASE = API_BASE + '/employees/';
 
     if (!token) {
       window.location.href = 'login.html';

@@ -204,10 +204,10 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
-    const REQUISITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/requisitions/';
-    const CANDIDATES_API_BASE = 'http://127.0.0.1:8000/api/v1/candidates/';
-    const TASKS_API_BASE = 'http://127.0.0.1:8000/api/v1/tasks/';
+    const EMPLOYEES_API_BASE = API_BASE + '/employees/';
+    const REQUISITIONS_API_BASE = API_BASE + '/requisitions/';
+    const CANDIDATES_API_BASE = API_BASE + '/candidates/';
+    const TASKS_API_BASE = API_BASE + '/tasks/';
 
     if (!token) {
       window.location.href = 'login.html';

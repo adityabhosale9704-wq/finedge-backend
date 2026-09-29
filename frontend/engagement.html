@@ -144,10 +144,10 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
-    const CONTESTS_API_BASE = 'http://127.0.0.1:8000/api/v1/engagement/contests/';
-    const SUGGESTIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/engagement/suggestions/';
-    const ACTIVITIES_API_BASE = 'http://127.0.0.1:8000/api/v1/engagement/activities/';
+    const EMPLOYEES_API_BASE = API_BASE + '/employees/';
+    const CONTESTS_API_BASE = API_BASE + '/engagement/contests/';
+    const SUGGESTIONS_API_BASE = API_BASE + '/engagement/suggestions/';
+    const ACTIVITIES_API_BASE = API_BASE + '/engagement/activities/';
 
     if (!token) {
       window.location.href = 'login.html';

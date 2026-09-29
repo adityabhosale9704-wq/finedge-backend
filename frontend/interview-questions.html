@@ -108,7 +108,7 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const QUESTIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/interview-questions/';
+    const QUESTIONS_API_BASE = API_BASE + '/interview-questions/';
 
     if (!token) {
       window.location.href = 'login.html';

@@ -526,9 +526,9 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
-    const DEPARTMENTS_API_BASE = 'http://127.0.0.1:8000/api/v1/departments/';
-    const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
+    const EMPLOYEES_API_BASE = API_BASE + '/employees/';
+    const DEPARTMENTS_API_BASE = API_BASE + '/departments/';
+    const BRANCHES_API_BASE = API_BASE + '/branches/';
 
     if (!token) {
       window.location.href = 'login.html';
@@ -610,7 +610,7 @@
       const content = document.getElementById('content');
 
       try {
-        const response = await fetch(API_BASE, {
+        const response = await fetch(EMPLOYEES_API_BASE, {
           method: 'GET',
           headers: {
             'Authorization': 'Bearer ' + token
@@ -817,7 +817,7 @@
 
       const isEditing = editingId !== null;
       const savedId = editingId;
-      const url = isEditing ? API_BASE + editingId + '/' : API_BASE;
+      const url = isEditing ? EMPLOYEES_API_BASE + editingId + '/' : EMPLOYEES_API_BASE;
       const method = isEditing ? 'PATCH' : 'POST';
 
       try {
@@ -861,7 +861,7 @@
       }
 
       try {
-        const response = await fetch(API_BASE + id + '/', {
+        const response = await fetch(EMPLOYEES_API_BASE + id + '/', {
           method: 'DELETE',
           headers: {
             'Authorization': 'Bearer ' + token
@@ -976,7 +976,7 @@
     }
 
     async function fetchEmployee(id) {
-      const response = await fetch(API_BASE + id + '/', {
+      const response = await fetch(EMPLOYEES_API_BASE + id + '/', {
         method: 'GET',
         headers: {
           'Authorization': 'Bearer ' + token
@@ -1459,7 +1459,7 @@
         return salaryStructureCache;
       }
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/v1/salary-structure/', {
+        const response = await fetch(EMPLOYEES_API_BASE + '/salary-structure/', {
           headers: { 'Authorization': 'Bearer ' + token }
         });
         if (response.ok) {
@@ -1751,7 +1751,7 @@
 
       try {
         const response = await fetch(
-          API_BASE + currentProfileEmployee.id + '/documents/',
+          EMPLOYEES_API_BASE + currentProfileEmployee.id + '/documents/',
           {
             method: 'POST',
             headers: {
@@ -1839,8 +1839,8 @@
 
       const isEditing = editingFamilyId !== null;
       const url = isEditing
-        ? API_BASE + currentProfileEmployee.id + '/family/' + editingFamilyId + '/'
-        : API_BASE + currentProfileEmployee.id + '/family/';
+        ? EMPLOYEES_API_BASE + currentProfileEmployee.id + '/family/' + editingFamilyId + '/'
+        : EMPLOYEES_API_BASE + currentProfileEmployee.id + '/family/';
       const method = isEditing ? 'PATCH' : 'POST';
 
       try {
@@ -1888,7 +1888,7 @@
 
       try {
         const response = await fetch(
-          API_BASE + currentProfileEmployee.id + '/family/' + familyId + '/',
+          EMPLOYEES_API_BASE + currentProfileEmployee.id + '/family/' + familyId + '/',
           {
             method: 'DELETE',
             headers: {
@@ -1969,8 +1969,8 @@
 
       const isEditing = editingFacilityId !== null;
       const url = isEditing
-        ? API_BASE + currentProfileEmployee.id + '/facilities/' + editingFacilityId + '/'
-        : API_BASE + currentProfileEmployee.id + '/facilities/';
+        ? EMPLOYEES_API_BASE + currentProfileEmployee.id + '/facilities/' + editingFacilityId + '/'
+        : EMPLOYEES_API_BASE + currentProfileEmployee.id + '/facilities/';
       const method = isEditing ? 'PATCH' : 'POST';
 
       try {
@@ -2018,7 +2018,7 @@
 
       try {
         const response = await fetch(
-          API_BASE + currentProfileEmployee.id + '/facilities/' + facilityId + '/',
+          EMPLOYEES_API_BASE + currentProfileEmployee.id + '/facilities/' + facilityId + '/',
           {
             method: 'DELETE',
             headers: {
@@ -2094,7 +2094,7 @@
 
       try {
         const response = await fetch(
-          API_BASE + currentProfileEmployee.id + '/documents/',
+          EMPLOYEES_API_BASE + currentProfileEmployee.id + '/documents/',
           {
             method: 'POST',
             headers: {
@@ -2178,7 +2178,7 @@
 
       try {
         const response = await fetch(
-          API_BASE + currentProfileEmployee.id + '/documents/' + editingDocId + '/',
+          EMPLOYEES_API_BASE + currentProfileEmployee.id + '/documents/' + editingDocId + '/',
           {
             method: 'PATCH',
             headers: {
@@ -2224,7 +2224,7 @@
 
       try {
         const response = await fetch(
-          API_BASE + currentProfileEmployee.id + '/documents/' + docId + '/',
+          EMPLOYEES_API_BASE + currentProfileEmployee.id + '/documents/' + docId + '/',
           {
             method: 'DELETE',
             headers: {

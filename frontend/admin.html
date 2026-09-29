@@ -180,10 +180,10 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const DEPARTMENTS_API_BASE = 'http://127.0.0.1:8000/api/v1/departments/';
-    const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
-    const ROLES_API_BASE = 'http://127.0.0.1:8000/api/v1/roles/';
-    const WORKFLOW_TEMPLATES_API_BASE = 'http://127.0.0.1:8000/api/v1/workflow-templates/';
+    const DEPARTMENTS_API_BASE = API_BASE + '/departments/';
+    const BRANCHES_API_BASE = API_BASE + '/branches/';
+    const ROLES_API_BASE = API_BASE + '/roles/';
+    const WORKFLOW_TEMPLATES_API_BASE = API_BASE + '/workflow-templates/';
 
     if (!token) {
       window.location.href = 'login.html';

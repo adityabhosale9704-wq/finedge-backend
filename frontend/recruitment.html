@@ -311,10 +311,10 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const REQUISITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/requisitions/';
-    const CANDIDATES_API_BASE = 'http://127.0.0.1:8000/api/v1/candidates/';
-    const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
-    const REFERENCE_CHECKS_API_BASE = 'http://127.0.0.1:8000/api/v1/reference-checks/';
+    const REQUISITIONS_API_BASE = API_BASE + '/requisitions/';
+    const CANDIDATES_API_BASE = API_BASE + '/candidates/';
+    const BRANCHES_API_BASE = API_BASE + '/branches/';
+    const REFERENCE_CHECKS_API_BASE = API_BASE + '/reference-checks/';
 
     if (!token) {
       window.location.href = 'login.html';

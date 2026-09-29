@@ -86,8 +86,8 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const COMPLIANCE_API_BASE = 'http://127.0.0.1:8000/api/v1/compliance/';
-    const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
+    const COMPLIANCE_API_BASE = API_BASE + '/compliance/';
+    const BRANCHES_API_BASE = API_BASE + '/branches/';
 
     if (!token) {
       window.location.href = 'login.html';

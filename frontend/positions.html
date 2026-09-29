@@ -166,10 +166,10 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const POSITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/positions/';
-    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
-    const DEPARTMENTS_API_BASE = 'http://127.0.0.1:8000/api/v1/departments/';
-    const BRANCHES_API_BASE = 'http://127.0.0.1:8000/api/v1/branches/';
+    const POSITIONS_API_BASE = API_BASE + '/positions/';
+    const EMPLOYEES_API_BASE = API_BASE + '/employees/';
+    const DEPARTMENTS_API_BASE = API_BASE + '/departments/';
+    const BRANCHES_API_BASE = API_BASE + '/branches/';
 
     if (!token) {
       window.location.href = 'login.html';

@@ -95,7 +95,7 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+    const EMPLOYEES_API_BASE = API_BASE + '/employees/';
     const ONBOARDING_LIST_API = EMPLOYEES_API_BASE + 'onboarding/';
 
     if (!token) {

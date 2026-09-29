@@ -96,9 +96,9 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const STRUCTURE_API_BASE = 'http://127.0.0.1:8000/api/v1/salary-structure/';
-    const REVISIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/salary-revisions/';
-    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
+    const STRUCTURE_API_BASE = API_BASE + '/salary-structure/';
+    const REVISIONS_API_BASE = API_BASE + '/salary-revisions/';
+    const EMPLOYEES_API_BASE = API_BASE + '/employees/';
 
     if (!token) {
       window.location.href = 'login.html';

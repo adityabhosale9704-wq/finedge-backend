@@ -179,8 +179,8 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const WORKINDIA_API_BASE = 'http://127.0.0.1:8000/api/v1/workindia/';
-    const REQUISITIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/requisitions/';
+    const WORKINDIA_API_BASE = API_BASE + '/workindia/';
+    const REQUISITIONS_API_BASE = API_BASE + '/requisitions/';
 
     if (!token) {
       window.location.href = 'login.html';

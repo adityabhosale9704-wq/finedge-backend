@@ -60,10 +60,10 @@
 
   <script>
     const token = localStorage.getItem('authToken');
-    const DONE_BOARD_API = 'http://127.0.0.1:8000/api/v1/done-board/';
-    const CANDIDATES_API_BASE = 'http://127.0.0.1:8000/api/v1/candidates/';
-    const EMPLOYEES_API_BASE = 'http://127.0.0.1:8000/api/v1/employees/';
-    const SEPARATIONS_API_BASE = 'http://127.0.0.1:8000/api/v1/separations/';
+    const DONE_BOARD_API = API_BASE + '/done-board/';
+    const CANDIDATES_API_BASE = API_BASE + '/candidates/';
+    const EMPLOYEES_API_BASE = API_BASE + '/employees/';
+    const SEPARATIONS_API_BASE = API_BASE + '/separations/';
 
     const MODULE_LABELS = {
       recruitment: 'Recruitment',

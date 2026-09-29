@@ -150,22 +150,31 @@ body {
   }
 }
 
+/* Sidebar nav (fixed to the left, always visible on desktop, slides
+   in/out as an overlay on narrow screens). Same markup as before
+   (#nav-toggle, #nav-links, .nav-link, #theme-toggle) — only the
+   layout changed, so no page HTML needed to change for this. */
+
 .top-nav {
-  max-width: 1100px;
-  margin: 0 auto 24px;
-  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
-  border-radius: var(--radius);
-  box-shadow: 0 6px 20px rgba(165, 49, 74, 0.28);
-  overflow: visible;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 250px;
+  background: linear-gradient(165deg, var(--navy) 0%, var(--navy-2) 100%);
+  box-shadow: 4px 0 20px rgba(165, 49, 74, 0.22);
+  overflow-y: auto;
+  z-index: 1000;
+  transition: left var(--transition);
 }
 
 .nav-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 18px;
-  position: relative;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 100%;
+  gap: 2px;
+  padding: 18px 14px 24px;
 }
 
 .nav-logo {
@@ -175,27 +184,28 @@ body {
   color: #ffffff;
   font-family: 'Archivo', 'IBM Plex Sans', sans-serif;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 18px;
   letter-spacing: 0.2px;
   text-decoration: none;
   white-space: nowrap;
+  padding: 4px 10px 18px;
 }
 
 .nav-logo i {
   color: var(--gold-bg);
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .nav-links {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
 }
 
 .top-nav a {
-  padding: 8px 14px;
-  border-radius: 999px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: rgba(255, 255, 255, 0.78);
   font-size: 13.5px;
@@ -206,8 +216,8 @@ body {
 }
 
 .top-nav a i {
-  margin-right: 6px;
-  width: 14px;
+  margin-right: 9px;
+  width: 15px;
   text-align: center;
 }
 
@@ -246,45 +256,69 @@ body {
 .theme-toggle {
   padding: 8px 12px;
   flex-shrink: 0;
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
+/* Backdrop shown behind the sidebar when it's slid open on a narrow
+   screen — injected by shared.js so no page HTML needs to add it. */
+.nav-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(36, 19, 24, 0.45);
+  z-index: 999;
+}
+
+.nav-backdrop.open {
+  display: block;
+}
+
+/* Room for the fixed sidebar on wide screens. */
+@media (min-width: 721px) {
+  body {
+    padding-left: 274px;
+  }
 }
 
 @media (max-width: 720px) {
-  .nav-toggle {
-    display: inline-block;
+  .top-nav {
+    left: -270px;
   }
 
-  .nav-links {
-    display: none;
-    flex-direction: column;
-    align-items: stretch;
-    position: absolute;
-    top: calc(100% + 8px);
+  .top-nav.open {
     left: 0;
-    right: 0;
-    background: var(--navy);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-modal);
-    padding: 8px;
-    z-index: 40;
   }
 
-  .nav-links.open {
+  .nav-toggle {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    background: var(--navy);
+    box-shadow: 0 4px 14px rgba(165, 49, 74, 0.35);
+    z-index: 1001;
   }
 
-  .top-nav a {
-    width: 100%;
-    border-radius: var(--radius-sm);
-  }
-
-  .theme-toggle {
-    order: 2;
+  .nav-toggle:hover {
+    background: var(--navy-2);
   }
 }
 
 @media print {
-  .top-nav {
+  .top-nav,
+  .nav-toggle,
+  .nav-backdrop {
     display: none !important;
+  }
+
+  body {
+    padding-left: 16px !important;
   }
 }
 
