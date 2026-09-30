@@ -261,6 +261,7 @@
             '<textarea class="fnf-note-input" data-sep-id="' + escapeHtml(sep.id) + '" rows="3">' + escapeHtml(sep.full_final_settlement_note) + '</textarea>' +
             '<button type="button" class="btn-secondary save-fnf-btn" data-sep-id="' + escapeHtml(sep.id) + '" style="margin-top: 6px;">Save Note</button>' +
             '</div>' +
+            '<button type="button" class="btn-delete delete-sep-btn" data-sep-id="' + escapeHtml(sep.id) + '" style="margin-top: 6px;">Delete Separation</button>' +
             '</div>';
         } else {
           const doneCount = sep.steps_done_count || 0;
@@ -318,6 +319,36 @@
           handleUpdateSeparation(sepId, { full_final_settlement_note: textarea.value });
         });
       });
+
+      content.querySelectorAll('.delete-sep-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          handleDeleteSeparation(btn.getAttribute('data-sep-id'));
+        });
+      });
+    }
+
+    async function handleDeleteSeparation(sepId) {
+      if (!confirm('Delete this separation record? This cannot be undone.')) {
+        return;
+      }
+      hidePageError();
+      try {
+        const response = await fetch(SEPARATIONS_API_BASE + sepId + '/', {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (handleUnauthorized(response)) {
+          return;
+        }
+        if (!response.ok && response.status !== 204) {
+          throw new Error('Could not delete separation.');
+        }
+        expandedIds.delete(sepId);
+        loadSeparations();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
     }
 
     async function handleStepToggle(sepId, stepId, action) {

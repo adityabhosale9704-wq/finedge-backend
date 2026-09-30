@@ -11,6 +11,15 @@ class ContestSerializer(serializers.Serializer):
     target_metric = serializers.CharField(required=False, allow_blank=True, default="")
     prize = serializers.CharField(required=False, allow_blank=True, default="")
 
+    def validate(self, data):
+        start = data.get("period_start")
+        end = data.get("period_end")
+        if start and end and end < start:
+            raise serializers.ValidationError(
+                "period_end cannot be before period_start."
+            )
+        return data
+
 
 class SuggestionSerializer(serializers.Serializer):
     submitted_by = serializers.CharField(required=False, allow_blank=True, default="Anonymous")

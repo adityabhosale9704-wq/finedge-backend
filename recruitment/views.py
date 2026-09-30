@@ -10,6 +10,7 @@ from accounts.authentication import JWTAuthentication
 from employees.mongo import get_employees_collection
 from positions.views import assign_employee_to_position, find_or_create_vacant_position
 from recruitment.mongo import get_candidates_collection, get_requisitions_collection
+from reference_checks.mongo import get_reference_checks_collection
 from recruitment.serializers import (
     CandidateCreateSerializer,
     CandidateUpdateSerializer,
@@ -266,6 +267,7 @@ class CandidateDetailView(APIView):
                 {"detail": "Candidate not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
+        get_reference_checks_collection().delete_many({"candidate_id": cand_id})
         get_candidates_collection().delete_one({"id": cand_id})
         return Response(status=status.HTTP_204_NO_CONTENT)
 

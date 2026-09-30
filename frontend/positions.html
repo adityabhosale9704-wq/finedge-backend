@@ -122,13 +122,6 @@
             <option value="" disabled selected>Select branch</option>
           </select>
         </div>
-        <div class="field">
-          <label for="position-status">Status</label>
-          <select id="position-status">
-            <option value="Vacant">Vacant</option>
-            <option value="Active">Active</option>
-          </select>
-        </div>
         <div class="form-actions">
           <button type="submit" class="btn-primary" id="position-submit-button">Add</button>
           <button type="button" class="btn-secondary" id="position-cancel-button">Cancel</button>
@@ -383,7 +376,6 @@
       document.getElementById('position-designation').value = pos ? (pos.designation || '') : '';
       document.getElementById('position-department').value = pos ? (pos.department || '') : '';
       document.getElementById('position-branch').value = pos ? (pos.branch || '') : '';
-      document.getElementById('position-status').value = pos ? (pos.status || 'Vacant') : 'Vacant';
 
       positionFormError.style.display = 'none';
       positionFormError.textContent = '';
@@ -404,8 +396,7 @@
       const payload = {
         designation: document.getElementById('position-designation').value,
         department: document.getElementById('position-department').value,
-        branch: document.getElementById('position-branch').value,
-        status: document.getElementById('position-status').value
+        branch: document.getElementById('position-branch').value
       };
 
       const isEditing = editingPositionId !== null;

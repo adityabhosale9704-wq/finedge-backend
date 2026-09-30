@@ -124,7 +124,7 @@ class PositionListCreateView(APIView):
             "designation": data["designation"],
             "department": data["department"],
             "branch": data["branch"],
-            "status": data.get("status", "Vacant"),
+            "status": "Vacant",
             "current_employee_id": None,
             "created_at": timezone.now().isoformat(),
             "history": [],

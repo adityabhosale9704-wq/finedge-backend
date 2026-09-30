@@ -344,6 +344,7 @@
     let allRequisitions = [];
     let allCandidates = [];
     let allReferenceChecks = [];
+    let appointmentLetterEligibility = {};
 
     const pageError = document.getElementById('page-error');
 
@@ -417,6 +418,7 @@
         allRequisitions = await reqResponse.json();
         allCandidates = await candResponse.json();
         allReferenceChecks = await refResponse.json();
+        await loadAppointmentLetterEligibility();
         renderAll();
       } catch (err) {
         const retryHtml = '<div class="error-state"><div>' +
@@ -428,6 +430,27 @@
           btn.addEventListener('click', loadAll);
         });
       }
+    }
+
+    async function loadAppointmentLetterEligibility() {
+      appointmentLetterEligibility = {};
+      const pendingDocsCandidates = allCandidates.filter(function (c) {
+        return c.stage === 'Documents Pending';
+      });
+
+      await Promise.all(pendingDocsCandidates.map(async function (cand) {
+        try {
+          const response = await fetch(
+            CANDIDATES_API_BASE + cand.id + '/can-issue-appointment-letter/',
+            { headers: { 'Authorization': 'Bearer ' + token } }
+          );
+          if (response.ok) {
+            appointmentLetterEligibility[cand.id] = await response.json();
+          }
+        } catch (err) {
+          // Non-fatal — the badge just won't show for this candidate.
+        }
+      }));
     }
 
     function renderAll() {
@@ -592,6 +615,15 @@
           return r.candidate_id === cand.id && r.status === 'Positive';
         }).length;
 
+        const eligibility = appointmentLetterEligibility[cand.id];
+        const appointmentLetterBadge = (cand.stage === 'Documents Pending' && eligibility)
+          ? '<div class="candidate-meta">Appointment Letter: ' +
+            (eligibility.can_issue
+              ? '<span class="chip chip-green">Eligible</span>'
+              : '<span class="chip chip-amber">Needs 2 positive references</span>') +
+            '</div>'
+          : '';
+
         return '<div class="candidate-card candidate-card-clickable" data-id="' + escapeHtml(cand.id) + '">' +
           '<div class="candidate-header">' +
           '<span class="candidate-identity">' +
@@ -604,6 +636,7 @@
           '<div class="candidate-meta">Source: ' + (cand.source ? escapeHtml(cand.source) : '&mdash;') + '</div>' +
           '<div class="candidate-meta">Experience: ' + (cand.experience ? escapeHtml(cand.experience) : '&mdash;') + '</div>' +
           '<div class="candidate-meta">References: ' + positiveRefCount + ' positive</div>' +
+          appointmentLetterBadge +
           checklistBlock +
           '<div class="candidate-actions" style="margin-top: 10px; flex-wrap: wrap;">' +
           createEmployeeBtn +
@@ -1178,6 +1211,7 @@
 
         const refResponse = await fetch(REFERENCE_CHECKS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
         allReferenceChecks = await refResponse.json();
+        await loadAppointmentLetterEligibility();
         resetReferenceCheckForm();
         renderReferenceChecksModalList();
         renderCandidatesList();
@@ -1196,6 +1230,7 @@
       });
       if (handleUnauthorized(response)) return;
       allReferenceChecks = allReferenceChecks.filter(function (r) { return r.id !== id; });
+      await loadAppointmentLetterEligibility();
       renderReferenceChecksModalList();
       renderCandidatesList();
     }

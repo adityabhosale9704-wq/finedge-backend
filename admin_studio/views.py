@@ -87,6 +87,7 @@ class DepartmentDetailView(APIView):
                 {"detail": "Department not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
+        get_roles_collection().delete_many({"department_id": department["_id"]})
         get_departments_collection().delete_one({"_id": department["_id"]})
         return Response(status=status.HTTP_204_NO_CONTENT)
 

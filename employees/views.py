@@ -142,6 +142,12 @@ class EmployeeDetailView(APIView):
             return Response(
                 {"detail": "Employee not found."}, status=status.HTTP_404_NOT_FOUND
             )
+
+        # Deferred import: positions.views imports get_employee_by_pk from this
+        # module, so importing it back at module load time would be circular.
+        from positions.views import unassign_position_for_employee
+
+        unassign_position_for_employee(str(employee["_id"]))
         get_employees_collection().delete_one({"_id": employee["_id"]})
         return Response(status=status.HTTP_204_NO_CONTENT)
 

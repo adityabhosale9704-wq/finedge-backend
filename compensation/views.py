@@ -13,6 +13,7 @@ from compensation.serializers import (
     SalaryRevisionCreateSerializer,
     SalaryStructureSerializer,
 )
+from employees.mongo import get_employees_collection
 from employees.views import get_employee_by_pk
 
 DEFAULT_SALARY_STRUCTURE = {
@@ -161,6 +162,16 @@ class SalaryRevisionApproveView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        employee = get_employee_by_pk(revision.get("employee_id", ""))
+        if not employee:
+            return Response(
+                {"detail": "The employee this revision belongs to no longer exists."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        get_employees_collection().update_one(
+            {"_id": employee["_id"]}, {"$set": {"ctc": revision["proposed_ctc"]}}
+        )
         get_salary_revisions_collection().update_one(
             {"id": rev_id}, {"$set": {"status": "Approved"}}
         )

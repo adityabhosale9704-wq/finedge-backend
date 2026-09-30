@@ -123,6 +123,16 @@ class SeparationDetailView(APIView):
         updated = get_separation_by_id(sep_id)
         return Response(serialize_separation(updated))
 
+    def delete(self, request, sep_id):
+        separation = get_separation_by_id(sep_id)
+        if not separation:
+            return Response(
+                {"detail": "Separation not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        get_separations_collection().delete_one({"id": sep_id})
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 def _toggle_separation_step(sep_id, step_id, done):
     separation = get_separation_by_id(sep_id)

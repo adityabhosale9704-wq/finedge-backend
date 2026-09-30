@@ -1459,7 +1459,7 @@
         return salaryStructureCache;
       }
       try {
-        const response = await fetch(EMPLOYEES_API_BASE + '/salary-structure/', {
+        const response = await fetch(API_BASE + '/salary-structure/', {
           headers: { 'Authorization': 'Bearer ' + token }
         });
         if (response.ok) {

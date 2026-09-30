@@ -10,7 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,15 +25,34 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ex7b$i_0c4g)up_*934_g^ksv-=9c&o#v@d5k+moax9!aleime'
+# Read from .env (gitignored) instead of being hardcoded here. The fallback
+# value only exists so local dev still boots if .env is momentarily missing
+# a key; always set a real SECRET_KEY in .env for any shared/deployed env.
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-ex7b$i_0c4g)up_*934_g^ksv-=9c&o#v@d5k+moax9!aleime',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+    if host.strip()
+]
 
-# TODO: restrict to specific origins before deployment.
-CORS_ALLOW_ALL_ORIGINS = True
+# In dev (DEBUG=True) we still allow every origin for convenience, since the
+# frontend is served from a plain static server on a throwaway port. Once
+# DEBUG=False (staging/prod), only the explicit origins in .env are allowed.
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = [
+        origin.strip()
+        for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+        if origin.strip()
+    ]
 
 
 # Application definition
