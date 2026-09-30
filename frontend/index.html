@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+  body {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #f4f5f7 0%, #eef1f7 60%, #f6ecd2 140%);
+  }
+
+  .login-card {
+    background: #ffffff;
+    padding: 36px 32px;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 48px rgba(27, 42, 74, 0.16);
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .login-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: var(--navy);
+    font-weight: 800;
+    font-size: 20px;
+  }
+
+  .login-logo i {
+    color: var(--gold);
+  }
+
+  .login-card h1 {
+    margin: 0 0 24px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-body);
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border: 1px solid #d7dae0;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.1);
+  }
+
+  button {
+    width: 100%;
+    font-size: 15px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="login-logo"><i class="fa-solid fa-building-columns"></i> HR OS</div>
+    <h1>Sign in to your account</h1>
+    <div id="error-message" class="form-error"></div>
+    <form id="login-form">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required autocomplete="email">
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required autocomplete="current-password">
+
+      <button type="submit" id="login-button" class="btn-primary">Log In</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const errorMessage = document.getElementById('error-message');
+    const loginButton = document.getElementById('login-button');
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      errorMessage.style.display = 'none';
+      errorMessage.textContent = '';
+      loginButton.disabled = true;
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch(API_BASE + '/auth/login/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: email, password: password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || 'Login failed. Please try again.');
+        }
+
+        localStorage.setItem('authToken', data.token);
+        window.location.href = 'employees.html';
+      } catch (err) {
+        errorMessage.textContent = err.message || 'Something went wrong. Please try again.';
+        errorMessage.style.display = 'block';
+      } finally {
+        loginButton.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>
