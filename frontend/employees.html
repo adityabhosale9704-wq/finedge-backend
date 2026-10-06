@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css">
-<script src="shared.js"></script>
+<link rel="stylesheet" href="shared.css?v=2">
+<script src="shared.js?v=2"></script>
 <style>
   #list-view h1 {
     margin-bottom: 20px;
@@ -228,30 +228,7 @@
 </head>
 <body>
 
-  <div class="top-nav">
-    <div class="nav-bar">
-      <a href="dashboard.html" class="nav-logo"><i class="fa-solid fa-building-columns"></i> HR OS</a>
-      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><i class="fa-solid fa-bars"></i></button>
-      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
-      <div class="nav-links" id="nav-links">
-      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
-      <a href="employees.html" class="nav-link active"><i class="fa-solid fa-users"></i> Employees</a>
-      <a href="positions.html" class="nav-link"><i class="fa-solid fa-id-badge"></i> Employee IDs</a>
-      <a href="recruitment.html" class="nav-link"><i class="fa-solid fa-user-plus"></i> Recruitment</a>
-      <a href="onboarding.html" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Onboarding</a>
-      <a href="tasks.html" class="nav-link"><i class="fa-solid fa-list-check"></i> Tasks</a>
-      <a href="salary-structure.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i> Salary Structure</a>
-      <a href="increments.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Increments</a>
-      <a href="exit.html" class="nav-link"><i class="fa-solid fa-door-open"></i> Exit</a>
-      <a href="engagement.html" class="nav-link"><i class="fa-solid fa-heart"></i> Engagement</a>
-      <a href="compliance.html" class="nav-link"><i class="fa-solid fa-scale-balanced"></i> Compliance</a>
-      <a href="done-board.html" class="nav-link"><i class="fa-solid fa-square-check"></i> Done Board</a>
-      <a href="interview-questions.html" class="nav-link"><i class="fa-solid fa-circle-question"></i> Interview Questions</a>
-      <a href="admin.html" class="nav-link"><i class="fa-solid fa-gear"></i> Admin Studio</a>
-      <a href="workindia.html" class="nav-link"><i class="fa-solid fa-file-import"></i> WorkIndia Import</a>
-      </div>
-    </div>
-  </div>
+  <div class="top-nav" id="app-sidebar"></div>
 
   <div class="container">
     <h2 id="form-title">Add Employee</h2>
