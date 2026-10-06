@@ -15,6 +15,7 @@ from compensation.serializers import (
 )
 from employees.mongo import get_employees_collection
 from employees.views import get_employee_by_pk
+from positions.views import build_employee_name_lookup
 
 DEFAULT_SALARY_STRUCTURE = {
     "basic_pct": 50,
@@ -97,12 +98,18 @@ def get_revision_by_id(rev_id):
     return get_salary_revisions_collection().find_one({"id": rev_id})
 
 
-def serialize_revision(doc):
-    employee = get_employee_by_pk(doc.get("employee_id", ""))
+def serialize_revision(doc, employee_name_lookup=None):
+    employee_id = doc.get("employee_id", "")
+    if employee_name_lookup is not None:
+        employee_name = employee_name_lookup.get(employee_id, "")
+    else:
+        employee = get_employee_by_pk(employee_id)
+        employee_name = employee.get("name", "") if employee else ""
+
     return {
         "id": doc["id"],
         "employee_id": doc.get("employee_id", ""),
-        "employee_name": employee.get("name", "") if employee else "",
+        "employee_name": employee_name,
         "current_ctc": doc.get("current_ctc", 0),
         "proposed_ctc": doc.get("proposed_ctc", 0),
         "effective_date": doc.get("effective_date", ""),
@@ -117,8 +124,13 @@ class SalaryRevisionListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        revisions = get_salary_revisions_collection().find()
-        return Response([serialize_revision(r) for r in revisions])
+        revisions = list(get_salary_revisions_collection().find())
+        employee_name_lookup = build_employee_name_lookup(
+            r.get("employee_id") for r in revisions if r.get("employee_id")
+        )
+        return Response(
+            [serialize_revision(r, employee_name_lookup) for r in revisions]
+        )
 
     def post(self, request):
         serializer = SalaryRevisionCreateSerializer(data=request.data)

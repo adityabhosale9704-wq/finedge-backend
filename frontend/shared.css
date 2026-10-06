@@ -3,35 +3,44 @@
    Page-specific layouts/components stay in each page's own
    <style> block; only cross-page, duplicated rules live here.
 
-   Theme: "FinEdge HR OS" palette (light + dark, toggled via
+   Theme: "Glassmorphism" palette (light + dark, toggled via
    data-theme on <html>, persisted in localStorage — see shared.js).
+   Frosted-glass cards + sidebar over a gradient-mesh background,
+   indigo/purple accent, vibrant gradient icon tiles.
    Fonts: Archivo (headings) + IBM Plex Sans (body), loaded via
    Google Fonts link tag in each page's <head>. Icons: Font Awesome.
+
+   Every component below still targets the exact same class names
+   as the previous theme (.container, .btn-primary, .kpi-card, …)
+   so no page HTML had to change — only the surfaces/colors did.
+   Most of that rides on --navy/--navy-2/--navy-soft now aliasing
+   to the new indigo/purple accent instead of the old maroon one.
    ============================================================ */
 
 :root {
-  --ink: #241318;
-  --navy: #a5314a;
-  --navy-2: #c24363;
-  --navy-soft: #fbe4e8;
-  --bg: #fdf6f3;
-  --card: #ffffff;
-  --line: #f0dee0;
-  --line-2: #f6e9ea;
-  --txt: #3a2226;
-  --mut: #8b6b70;
-  --faint: #c6abae;
-  --gold: #c97a3d;
-  --gold-bg: #fbebda;
-  --green: #16a34a;
-  --green-bg: #dcfce7;
-  --red: #dc2626;
-  --red-bg: #fee2e2;
-  --amber: #d97706;
-  --amber-bg: #fef3c7;
+  --ink: #1e1b3a;
+  --navy: #6366f1;
+  --navy-2: #a855f7;
+  --navy-soft: rgba(99, 102, 241, 0.12);
+  --bg: #eef0fb;
+  --card: rgba(255, 255, 255, 0.6);
+  --card-solid: #ffffff;
+  --line: rgba(99, 102, 241, 0.14);
+  --line-2: rgba(99, 102, 241, 0.08);
+  --txt: #3f3d63;
+  --mut: #7b78a0;
+  --faint: #b7b4d6;
+  --gold: #f59e0b;
+  --gold-bg: rgba(245, 158, 11, 0.15);
+  --green: #10b981;
+  --green-bg: rgba(16, 185, 129, 0.15);
+  --red: #f43f5e;
+  --red-bg: rgba(244, 63, 94, 0.14);
+  --amber: #f59e0b;
+  --amber-bg: rgba(245, 158, 11, 0.15);
 
-  /* Back-compat aliases so earlier component CSS (written against the
-     previous navy/gold token names) keeps resolving to the new palette. */
+  /* Back-compat aliases so earlier component CSS (written against
+     previous token names) keeps resolving to the new palette. */
   --navy-dark: var(--ink);
   --gold-light: var(--gold-bg);
   --gold-dark: var(--gold);
@@ -40,61 +49,64 @@
   --text-muted: var(--mut);
   --border: var(--line);
 
-  --radius: 16px;
-  --radius-sm: 10px;
-  --shadow-card: 0 1px 2px rgba(165, 49, 74, 0.05), 0 10px 26px rgba(165, 49, 74, 0.08);
-  --shadow-modal: 0 16px 40px rgba(165, 49, 74, 0.22);
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow-card: 0 8px 32px rgba(99, 102, 241, 0.12), 0 2px 10px rgba(30, 27, 58, 0.06);
+  --shadow-modal: 0 24px 64px rgba(30, 27, 58, 0.28);
+  --glass-blur: blur(20px) saturate(160%);
   --transition: 160ms ease;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ink: #f5e7e9;
-    --navy: #d9506e;
-    --navy-2: #e8708a;
-    --navy-soft: #3a222c;
-    --bg: #1b1114;
-    --card: #241419;
-    --line: #3a2229;
-    --line-2: #32202a;
-    --txt: #e3cdd1;
-    --mut: #9c7a7f;
-    --faint: #6b4d52;
-    --gold: #e0a066;
-    --gold-bg: #3a2c1c;
-    --green: #4ade80;
-    --green-bg: #143a24;
-    --red: #f87171;
-    --red-bg: #3a1a1a;
+    --ink: #eceaff;
+    --navy: #818cf8;
+    --navy-2: #c084fc;
+    --navy-soft: rgba(129, 140, 248, 0.18);
+    --bg: #0f0c29;
+    --card: rgba(30, 27, 58, 0.55);
+    --card-solid: #1a1733;
+    --line: rgba(129, 140, 248, 0.2);
+    --line-2: rgba(129, 140, 248, 0.12);
+    --txt: #d4d1f0;
+    --mut: #9a97c2;
+    --faint: #565280;
+    --gold: #fbbf24;
+    --gold-bg: rgba(251, 191, 36, 0.16);
+    --green: #34d399;
+    --green-bg: rgba(52, 211, 153, 0.16);
+    --red: #fb7185;
+    --red-bg: rgba(251, 113, 133, 0.16);
     --amber: #fbbf24;
-    --amber-bg: #3a2c10;
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 26px rgba(0, 0, 0, 0.35);
-    --shadow-modal: 0 16px 40px rgba(0, 0, 0, 0.5);
+    --amber-bg: rgba(251, 191, 36, 0.16);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.3);
+    --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.6);
   }
 }
 
 :root[data-theme="dark"] {
-  --ink: #f5e7e9;
-  --navy: #d9506e;
-  --navy-2: #e8708a;
-  --navy-soft: #3a222c;
-  --bg: #1b1114;
-  --card: #241419;
-  --line: #3a2229;
-  --line-2: #32202a;
-  --txt: #e3cdd1;
-  --mut: #9c7a7f;
-  --faint: #6b4d52;
-  --gold: #e0a066;
-  --gold-bg: #3a2c1c;
-  --green: #4ade80;
-  --green-bg: #143a24;
-  --red: #f87171;
-  --red-bg: #3a1a1a;
+  --ink: #eceaff;
+  --navy: #818cf8;
+  --navy-2: #c084fc;
+  --navy-soft: rgba(129, 140, 248, 0.18);
+  --bg: #0f0c29;
+  --card: rgba(30, 27, 58, 0.55);
+  --card-solid: #1a1733;
+  --line: rgba(129, 140, 248, 0.2);
+  --line-2: rgba(129, 140, 248, 0.12);
+  --txt: #d4d1f0;
+  --mut: #9a97c2;
+  --faint: #565280;
+  --gold: #fbbf24;
+  --gold-bg: rgba(251, 191, 36, 0.16);
+  --green: #34d399;
+  --green-bg: rgba(52, 211, 153, 0.16);
+  --red: #fb7185;
+  --red-bg: rgba(251, 113, 133, 0.16);
   --amber: #fbbf24;
-  --amber-bg: #3a2c10;
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 26px rgba(0, 0, 0, 0.35);
-  --shadow-modal: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --amber-bg: rgba(251, 191, 36, 0.16);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.3);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -105,7 +117,12 @@ body {
   margin: 0;
   min-height: 100vh;
   background: var(--bg);
-  background-image: linear-gradient(160deg, #fce8ec 0%, #fdf3f0 45%, #fbeae7 100%);
+  background-image:
+    radial-gradient(circle at 10% 10%, rgba(165, 180, 252, 0.55) 0%, transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(240, 171, 252, 0.5) 0%, transparent 45%),
+    radial-gradient(circle at 20% 90%, rgba(196, 181, 253, 0.5) 0%, transparent 45%),
+    radial-gradient(circle at 90% 85%, rgba(251, 207, 232, 0.5) 0%, transparent 45%),
+    linear-gradient(160deg, #e0e7ff 0%, #ede9fe 45%, #fce7f3 100%);
   background-attachment: fixed;
   font-family: 'IBM Plex Sans', Arial, Helvetica, sans-serif;
   color: var(--txt);
@@ -114,12 +131,22 @@ body {
 }
 
 :root[data-theme="dark"] body {
-  background-image: none;
+  background-image:
+    radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(192, 132, 252, 0.2) 0%, transparent 45%),
+    radial-gradient(circle at 20% 90%, rgba(129, 140, 248, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 90% 85%, rgba(236, 72, 153, 0.15) 0%, transparent 45%),
+    linear-gradient(160deg, #0f0c29 0%, #15122e 50%, #1a1733 100%);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) body {
-    background-image: none;
+    background-image:
+      radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.25) 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(192, 132, 252, 0.2) 0%, transparent 45%),
+      radial-gradient(circle at 20% 90%, rgba(129, 140, 248, 0.18) 0%, transparent 45%),
+      radial-gradient(circle at 90% 85%, rgba(236, 72, 153, 0.15) 0%, transparent 45%),
+      linear-gradient(160deg, #0f0c29 0%, #15122e 50%, #1a1733 100%);
   }
 }
 
@@ -135,12 +162,24 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   background: var(--card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
   padding: 28px;
   margin-bottom: 24px;
   overflow-x: auto;
-  border: 1px solid var(--line-2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+:root[data-theme="dark"] .container {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .container {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
 }
 
 @media (max-width: 480px) {
@@ -153,16 +192,21 @@ body {
 /* Sidebar nav (fixed to the left, always visible on desktop, slides
    in/out as an overlay on narrow screens). Same markup as before
    (#nav-toggle, #nav-links, .nav-link, #theme-toggle) — only the
-   layout changed, so no page HTML needed to change for this. */
+   surface treatment changed to frosted glass, so no page HTML
+   needed to change for this. */
 
 .top-nav {
   position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 250px;
-  background: linear-gradient(165deg, var(--navy) 0%, var(--navy-2) 100%);
-  box-shadow: 4px 0 20px rgba(165, 49, 74, 0.22);
+  top: 12px;
+  left: 12px;
+  bottom: 12px;
+  width: 246px;
+  background: linear-gradient(165deg, rgba(99, 102, 241, 0.92) 0%, rgba(168, 85, 247, 0.92) 100%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 16px 40px rgba(79, 70, 229, 0.28);
   overflow-y: auto;
   z-index: 1000;
   transition: left var(--transition);
@@ -192,27 +236,27 @@ body {
 }
 
 .nav-logo i {
-  color: var(--gold-bg);
+  color: #fde68a;
   font-size: 17px;
 }
 
 .nav-links {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   flex: 1;
 }
 
 .top-nav a {
   padding: 10px 14px;
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 13.5px;
   font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
-  transition: background-color var(--transition), color var(--transition);
+  transition: background-color var(--transition), color var(--transition), box-shadow var(--transition);
 }
 
 .top-nav a i {
@@ -222,19 +266,20 @@ body {
 }
 
 .top-nav a:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.16);
   color: #ffffff;
 }
 
 .top-nav a.active {
   background: #ffffff;
-  color: var(--navy);
+  color: var(--navy-2);
   font-weight: 700;
+  box-shadow: 0 6px 16px rgba(30, 27, 58, 0.2);
 }
 
 .nav-toggle,
 .theme-toggle {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
   border: none;
   border-radius: var(--radius-sm);
@@ -246,7 +291,7 @@ body {
 
 .nav-toggle:hover,
 .theme-toggle:hover {
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .nav-toggle {
@@ -266,7 +311,8 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(36, 19, 24, 0.45);
+  background: rgba(15, 12, 41, 0.5);
+  backdrop-filter: blur(2px);
   z-index: 999;
 }
 
@@ -277,7 +323,7 @@ body {
 /* Room for the fixed sidebar on wide screens. */
 @media (min-width: 721px) {
   body {
-    padding-left: 274px;
+    padding-left: 286px;
   }
 }
 
@@ -287,7 +333,7 @@ body {
   }
 
   .top-nav.open {
-    left: 0;
+    left: 12px;
   }
 
   .nav-toggle {
@@ -300,13 +346,13 @@ body {
     width: 42px;
     height: 42px;
     padding: 0;
-    background: var(--navy);
-    box-shadow: 0 4px 14px rgba(165, 49, 74, 0.35);
+    background: linear-gradient(135deg, var(--navy), var(--navy-2));
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
     z-index: 1001;
   }
 
   .nav-toggle:hover {
-    background: var(--navy-2);
+    filter: brightness(1.08);
   }
 }
 
@@ -373,7 +419,7 @@ h3 {
   font-size: 14px;
   font-family: inherit;
   color: var(--txt);
-  background: var(--card);
+  background: var(--card-solid);
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
@@ -465,13 +511,14 @@ button:active {
 }
 
 .btn-primary {
-  background: var(--navy);
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(165, 49, 74, 0.28);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
 }
 
 .btn-primary:hover {
-  background: var(--navy-2);
+  filter: brightness(1.06);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
 }
 
 .btn-primary:disabled {
@@ -481,7 +528,7 @@ button:active {
 }
 
 .btn-secondary {
-  background: var(--card);
+  background: var(--card-solid);
   color: var(--txt);
   border: 1px solid var(--line);
 }
@@ -494,7 +541,7 @@ button:active {
 .btn-secondary:disabled {
   color: var(--faint);
   cursor: not-allowed;
-  background: var(--card);
+  background: var(--card-solid);
 }
 
 .btn-edit {
@@ -748,7 +795,7 @@ tr:hover td {
   font-size: 20px;
   font-weight: 700;
   flex-shrink: 0;
-  background: var(--navy);
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
 }
 
 .avatar-small {
@@ -780,49 +827,67 @@ tr:hover td {
 
 .kpi-card {
   position: relative;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius);
   padding: 16px 18px;
   background: var(--card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   transition: box-shadow var(--transition), transform var(--transition);
+}
+
+:root[data-theme="dark"] .kpi-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .kpi-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
 }
 
 .kpi-card:hover {
   box-shadow: var(--shadow-card);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .kpi-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 15px;
   margin-bottom: 10px;
   color: #ffffff;
-  background: var(--navy);
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
 }
 
 .kpi-icon-gold {
-  background: var(--gold);
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
 }
 
 .kpi-icon-green {
-  background: var(--green);
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
 }
 
 .kpi-icon-amber {
-  background: var(--amber);
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
 }
 
 .kpi-icon-red {
-  background: var(--red);
+  background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
+  box-shadow: 0 6px 16px rgba(244, 63, 94, 0.35);
 }
 
 .kpi-icon-navy {
-  background: var(--navy);
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
 }
 
 .kpi-label {
@@ -926,14 +991,14 @@ tr:hover td {
   max-width: 320px;
   padding: 9px 12px 9px 34px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   font-size: 14px;
   font-family: inherit;
   color: var(--txt);
-  background-color: var(--card);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b6b70' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-color: var(--card-solid);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237b78a0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: 10px center;
+  background-position: 12px center;
   background-size: 14px;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
@@ -969,7 +1034,7 @@ tr:hover td {
 }
 
 .tab.active {
-  background: var(--navy);
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
   color: #ffffff;
 }
 
@@ -983,7 +1048,8 @@ tr:hover td {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(36, 19, 24, 0.5);
+  background: rgba(15, 12, 41, 0.55);
+  backdrop-filter: blur(4px);
   align-items: center;
   justify-content: center;
   padding: 16px;
@@ -996,6 +1062,9 @@ tr:hover td {
 
 .modal-card {
   background: var(--card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: var(--radius);
   box-shadow: var(--shadow-modal);
   padding: 26px;
@@ -1003,6 +1072,16 @@ tr:hover td {
   max-width: 420px;
   max-height: 85vh;
   overflow-y: auto;
+}
+
+:root[data-theme="dark"] .modal-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .modal-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
 }
 
 /* ---------- Toolbar (search + tabs rows) ---------- */
@@ -1036,7 +1115,7 @@ tr:hover td {
 
 .progress-fill {
   height: 100%;
-  background: var(--navy);
+  background: linear-gradient(90deg, var(--navy) 0%, var(--navy-2) 100%);
   border-radius: 999px;
   transition: width var(--transition);
 }

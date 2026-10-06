@@ -1,5 +1,7 @@
 from datetime import date
 
+from bson import ObjectId
+from bson.errors import InvalidId
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -86,13 +88,16 @@ def assign_employee_to_position(position, employee):
     )
 
 
-def serialize_position(doc):
+def serialize_position(doc, employee_name_lookup=None):
     current_employee_id = doc.get("current_employee_id")
     current_holder_name = None
     if current_employee_id:
-        employee = get_employee_by_pk(current_employee_id)
-        if employee:
-            current_holder_name = employee.get("name")
+        if employee_name_lookup is not None:
+            current_holder_name = employee_name_lookup.get(current_employee_id)
+        else:
+            employee = get_employee_by_pk(current_employee_id)
+            if employee:
+                current_holder_name = employee.get("name")
 
     return {
         "id": doc["id"],
@@ -106,13 +111,35 @@ def serialize_position(doc):
     }
 
 
+def build_employee_name_lookup(employee_ids):
+    """One batched query instead of one lookup per row — avoids N+1 queries
+    when serializing a list of positions/separations/etc."""
+    object_ids = []
+    for employee_id in employee_ids:
+        try:
+            object_ids.append(ObjectId(employee_id))
+        except (InvalidId, TypeError):
+            continue
+    if not object_ids:
+        return {}
+    employees = get_employees_collection().find(
+        {"_id": {"$in": object_ids}}, {"name": 1}
+    )
+    return {str(e["_id"]): e.get("name", "") for e in employees}
+
+
 class PositionListCreateView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        positions = get_positions_collection().find()
-        return Response([serialize_position(p) for p in positions])
+        positions = list(get_positions_collection().find())
+        employee_name_lookup = build_employee_name_lookup(
+            p.get("current_employee_id") for p in positions if p.get("current_employee_id")
+        )
+        return Response(
+            [serialize_position(p, employee_name_lookup) for p in positions]
+        )
 
     def post(self, request):
         serializer = PositionCreateSerializer(data=request.data)

@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from accounts.authentication import JWTAuthentication
 from employees.mongo import get_employees_collection
 from employees.views import get_employee_by_pk
-from positions.views import unassign_position_for_employee
+from positions.views import build_employee_name_lookup, unassign_position_for_employee
 from separations.mongo import get_separations_collection
 from separations.serializers import SeparationCreateSerializer, SeparationUpdateSerializer
 from workflows.views import snapshot_steps_for_instance
@@ -31,15 +31,21 @@ def get_separation_by_id(sep_id):
     return get_separations_collection().find_one({"id": sep_id})
 
 
-def serialize_separation(doc):
-    employee = get_employee_by_pk(doc.get("employee_id", ""))
+def serialize_separation(doc, employee_name_lookup=None):
+    employee_id = doc.get("employee_id", "")
+    if employee_name_lookup is not None:
+        employee_name = employee_name_lookup.get(employee_id, "")
+    else:
+        employee = get_employee_by_pk(employee_id)
+        employee_name = employee.get("name", "") if employee else ""
+
     steps = doc.get("steps", [])
     done_count = len([s for s in steps if s.get("done")])
 
     return {
         "id": doc["id"],
         "employee_id": doc.get("employee_id", ""),
-        "employee_name": employee.get("name", "") if employee else "",
+        "employee_name": employee_name,
         "resignation_date": doc.get("resignation_date", ""),
         "last_working_day": doc.get("last_working_day", ""),
         "notice_period_days": doc.get("notice_period_days", 30),
@@ -58,8 +64,13 @@ class SeparationListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        separations = get_separations_collection().find()
-        return Response([serialize_separation(s) for s in separations])
+        separations = list(get_separations_collection().find())
+        employee_name_lookup = build_employee_name_lookup(
+            s.get("employee_id") for s in separations if s.get("employee_id")
+        )
+        return Response(
+            [serialize_separation(s, employee_name_lookup) for s in separations]
+        )
 
     def post(self, request):
         serializer = SeparationCreateSerializer(data=request.data)

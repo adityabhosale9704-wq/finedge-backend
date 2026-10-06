@@ -5,8 +5,10 @@
 <title>Recruitment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
+<link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
 <link rel="stylesheet" href="shared.css">
 <script src="shared.js"></script>
 <style>
@@ -433,24 +435,23 @@
     }
 
     async function loadAppointmentLetterEligibility() {
+      // Computed client-side from allReferenceChecks (already loaded in one
+      // request by loadAll) instead of calling the backend once per
+      // Documents-Pending candidate — same "2 positive references" rule the
+      // backend's /can-issue-appointment-letter/ endpoint applies, with zero
+      // extra network round trips.
       appointmentLetterEligibility = {};
-      const pendingDocsCandidates = allCandidates.filter(function (c) {
-        return c.stage === 'Documents Pending';
-      });
-
-      await Promise.all(pendingDocsCandidates.map(async function (cand) {
-        try {
-          const response = await fetch(
-            CANDIDATES_API_BASE + cand.id + '/can-issue-appointment-letter/',
-            { headers: { 'Authorization': 'Bearer ' + token } }
-          );
-          if (response.ok) {
-            appointmentLetterEligibility[cand.id] = await response.json();
-          }
-        } catch (err) {
-          // Non-fatal — the badge just won't show for this candidate.
-        }
-      }));
+      allCandidates
+        .filter(function (c) { return c.stage === 'Documents Pending'; })
+        .forEach(function (cand) {
+          const positiveCount = allReferenceChecks.filter(function (r) {
+            return r.candidate_id === cand.id && r.status === 'Positive';
+          }).length;
+          appointmentLetterEligibility[cand.id] = {
+            can_issue: positiveCount >= 2,
+            positive_count: positiveCount
+          };
+        });
     }
 
     function renderAll() {

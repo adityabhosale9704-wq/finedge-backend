@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 
 from accounts.authentication import JWTAuthentication
 from employees.mongo import get_employees_collection
-from employees.views import get_employee_by_pk
+from positions.views import build_employee_name_lookup
 from recruitment.mongo import get_candidates_collection
 from separations.mongo import get_separations_collection
 
@@ -51,6 +51,7 @@ class DoneBoardView(APIView):
                     "who": step.get("who"),
                 })
 
+        in_progress_separations = []
         for separation in get_separations_collection().find():
             steps = separation.get("steps", [])
             done_count = sum(1 for s in steps if s.get("done"))
@@ -59,14 +60,20 @@ class DoneBoardView(APIView):
                 continue
             step = first_undone_step(steps)
             if step:
-                employee = get_employee_by_pk(separation.get("employee_id"))
-                items.append({
-                    "module": "exit",
-                    "person_name": employee.get("name") if employee else separation.get("employee_id"),
-                    "record_id": separation.get("id"),
-                    "step_id": step.get("id"),
-                    "step_name": step.get("step_name"),
-                    "who": step.get("who"),
-                })
+                in_progress_separations.append((separation, step))
+
+        employee_name_lookup = build_employee_name_lookup(
+            s.get("employee_id") for s, _ in in_progress_separations if s.get("employee_id")
+        )
+        for separation, step in in_progress_separations:
+            employee_id = separation.get("employee_id")
+            items.append({
+                "module": "exit",
+                "person_name": employee_name_lookup.get(employee_id, employee_id),
+                "record_id": separation.get("id"),
+                "step_id": step.get("id"),
+                "step_name": step.get("step_name"),
+                "who": step.get("who"),
+            })
 
         return Response(items)

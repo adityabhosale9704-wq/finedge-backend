@@ -3,3 +3,6 @@ db.sqlite3
 venv/
 __pycache__/
 *.pyc
+
+# Personal files (resume, interview prep, etc.) - never part of the project
+Claude outputs/

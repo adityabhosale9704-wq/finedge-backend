@@ -57,12 +57,24 @@ def serialize_requisition(doc):
     }
 
 
-def serialize_candidate(doc):
+def build_requisition_lookup(requisition_ids):
+    """One batched query instead of one lookup per candidate row."""
+    ids = [r for r in requisition_ids if r]
+    if not ids:
+        return {}
+    requisitions = get_requisitions_collection().find({"id": {"$in": ids}})
+    return {r["id"]: r for r in requisitions}
+
+
+def serialize_candidate(doc, requisition_lookup=None):
     requisition_id = doc.get("requisition_id")
     requisition_role = None
     requisition_branch = None
     if requisition_id:
-        requisition = get_requisition_by_id(requisition_id)
+        if requisition_lookup is not None:
+            requisition = requisition_lookup.get(requisition_id)
+        else:
+            requisition = get_requisition_by_id(requisition_id)
         if requisition:
             requisition_role = requisition.get("role")
             requisition_branch = requisition.get("branch")
@@ -201,8 +213,13 @@ class CandidateListCreateView(APIView):
         if requisition_id:
             query["requisition_id"] = requisition_id
 
-        candidates = get_candidates_collection().find(query)
-        return Response([serialize_candidate(c) for c in candidates])
+        candidates = list(get_candidates_collection().find(query))
+        requisition_lookup = build_requisition_lookup(
+            c.get("requisition_id") for c in candidates
+        )
+        return Response(
+            [serialize_candidate(c, requisition_lookup) for c in candidates]
+        )
 
     def post(self, request):
         serializer = CandidateCreateSerializer(data=request.data)

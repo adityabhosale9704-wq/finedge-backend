@@ -9,7 +9,7 @@
    server's address (e.g. 'https://api.yourdomain.com/api/v1' or
    'http://<your-ec2-ip>:8000/api/v1') and every page picks it up —
    no need to touch the 17 HTML files individually again. */
-window.API_BASE = 'http://127.0.0.1:8000/api/v1';
+window.API_BASE = 'http://16.170.98.44/api/v1';
 
 (function () {
   var savedTheme = localStorage.getItem('theme');
