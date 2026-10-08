@@ -1,6 +1,7 @@
 from django.urls import path
 
 from admin_studio.views import (
+    AllRolesListView,
     BranchDetailView,
     BranchListCreateView,
     DepartmentDetailView,
@@ -10,6 +11,7 @@ from admin_studio.views import (
 )
 
 urlpatterns = [
+    path("roles/", AllRolesListView.as_view(), name="role-list-all"),
     path(
         "departments/",
         DepartmentListCreateView.as_view(),

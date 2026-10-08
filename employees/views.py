@@ -57,6 +57,7 @@ def serialize_employee(doc, request=None):
     doc.setdefault("policy_accepted", False)
     doc.setdefault("facilities", [])
     doc.setdefault("position_id", None)
+    doc.setdefault("source_candidate_id", None)
     doc.setdefault("onboarding_steps", [])
 
     docs_list = doc.get("docs", [])
@@ -87,7 +88,12 @@ class EmployeeListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        employees = get_employees_collection().find()
+        query = {}
+        branch = request.query_params.get("branch")
+        if branch:
+            query["branch"] = branch
+
+        employees = get_employees_collection().find(query)
         return Response([serialize_employee(e, request) for e in employees])
 
     def post(self, request):

@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=2">
-<script src="shared.js?v=2"></script>
+<link rel="stylesheet" href="shared.css?v=5">
+<script src="shared.js?v=5"></script>
 <style>
   .greeting-date {
     font-size: 14px;
@@ -109,8 +109,13 @@
   <div class="top-nav" id="app-sidebar"></div>
 
   <div class="container">
-    <h1 id="greeting-heading">Hello</h1>
-    <div class="greeting-date" id="greeting-date"></div>
+    <div class="page-header-row">
+      <div>
+        <h1 id="greeting-heading">Hello</h1>
+        <div class="greeting-date" id="greeting-date"></div>
+      </div>
+      <div id="global-branch-filter-container"></div>
+    </div>
   </div>
 
   <div class="container">
@@ -193,6 +198,7 @@
     } else {
       renderGreeting();
       loadAll();
+      initGlobalBranchFilter('global-branch-filter-container', function () { loadAll(); });
     }
 
 
@@ -228,11 +234,12 @@
 
     async function loadAll() {
       try {
+        const branchQuery = getGlobalBranchFilter() ? '?branch=' + encodeURIComponent(getGlobalBranchFilter()) : '';
         const [empRes, reqRes, candRes, taskRes] = await Promise.all([
-          fetch(EMPLOYEES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch(EMPLOYEES_API_BASE + branchQuery, { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch(REQUISITIONS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch(CANDIDATES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
-          fetch(TASKS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } })
+          fetch(TASKS_API_BASE + branchQuery, { headers: { 'Authorization': 'Bearer ' + token } })
         ]);
 
         if ([empRes, reqRes, candRes, taskRes].some(handleUnauthorized)) {

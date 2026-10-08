@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.authentication import JWTAuthentication
+from employees.mongo import get_employees_collection
 from employees.views import get_employee_by_pk
 from tasks.mongo import get_tasks_collection
 from tasks.serializers import TaskCreateSerializer, TaskUpdateSerializer
@@ -68,6 +69,13 @@ class TaskListCreateView(APIView):
         assigned_to = request.query_params.get("assigned_to")
         if assigned_to:
             query["assigned_to"] = assigned_to
+
+        branch = request.query_params.get("branch")
+        if branch:
+            branch_employee_ids = [
+                str(e["_id"]) for e in get_employees_collection().find({"branch": branch}, {"_id": 1})
+            ]
+            query["assigned_to"] = {"$in": branch_employee_ids}
 
         tasks = get_tasks_collection().find(query)
         return Response([serialize_task(t) for t in tasks])

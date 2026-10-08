@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=2">
-<script src="shared.js?v=2"></script>
+<link rel="stylesheet" href="shared.css?v=5">
+<script src="shared.js?v=5"></script>
 <style>
   .header-actions {
     display: flex;
@@ -294,6 +294,7 @@
     const CANDIDATES_API_BASE = API_BASE + '/candidates/';
     const BRANCHES_API_BASE = API_BASE + '/branches/';
     const REFERENCE_CHECKS_API_BASE = API_BASE + '/reference-checks/';
+    const ROLES_API_BASE = API_BASE + '/roles/';
 
     if (!token) {
       window.location.href = 'login.html';
@@ -324,6 +325,15 @@
     let allCandidates = [];
     let allReferenceChecks = [];
     let appointmentLetterEligibility = {};
+    let allRoles = [];
+
+    function findJobDescriptionForRole(roleTitle) {
+      if (!roleTitle) return '';
+      const match = allRoles.find(function (r) {
+        return (r.title || '').trim().toLowerCase() === roleTitle.trim().toLowerCase();
+      });
+      return match ? (match.job_description || '') : '';
+    }
 
     const pageError = document.getElementById('page-error');
 
@@ -380,23 +390,25 @@
     async function loadAll() {
       hidePageError();
       try {
-        const [reqResponse, candResponse, refResponse] = await Promise.all([
+        const [reqResponse, candResponse, refResponse, rolesResponse] = await Promise.all([
           fetch(REQUISITIONS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch(CANDIDATES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
-          fetch(REFERENCE_CHECKS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } })
+          fetch(REFERENCE_CHECKS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch(ROLES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } })
         ]);
 
-        if (handleUnauthorized(reqResponse) || handleUnauthorized(candResponse) || handleUnauthorized(refResponse)) {
+        if (handleUnauthorized(reqResponse) || handleUnauthorized(candResponse) || handleUnauthorized(refResponse) || handleUnauthorized(rolesResponse)) {
           return;
         }
 
-        if (!reqResponse.ok || !candResponse.ok || !refResponse.ok) {
+        if (!reqResponse.ok || !candResponse.ok || !refResponse.ok || !rolesResponse.ok) {
           throw new Error('Failed to load recruitment data.');
         }
 
         allRequisitions = await reqResponse.json();
         allCandidates = await candResponse.json();
         allReferenceChecks = await refResponse.json();
+        allRoles = await rolesResponse.json();
         await loadAppointmentLetterEligibility();
         renderAll();
       } catch (err) {
@@ -586,7 +598,12 @@
             '<button type="button" class="btn-secondary btn-row cand-withdraw-btn" data-id="' + escapeHtml(cand.id) + '">Withdraw</button>';
 
         const createEmployeeBtn = cand.stage === 'Documents Pending'
-          ? '<button type="button" class="btn-primary btn-row create-employee-btn" data-id="' + escapeHtml(cand.id) + '">Create Employee</button>'
+          ? '<a href="documents-pending.html" class="btn-view">Review Documents &amp; Create Employee</a>'
+          : '';
+
+        const jobDescription = findJobDescriptionForRole(cand.requisition_role);
+        const sendJdBtn = (cand.phone && jobDescription)
+          ? '<button type="button" class="btn-secondary btn-row send-jd-btn" data-id="' + escapeHtml(cand.id) + '">Send JD</button>'
           : '';
 
         const positiveRefCount = allReferenceChecks.filter(function (r) {
@@ -602,6 +619,13 @@
             '</div>'
           : '';
 
+        const frozenBanner = cand.frozen
+          ? '<div class="form-error" style="display: block; margin-top: 10px;">' +
+            '&#10060; Frozen: ' + escapeHtml(cand.frozen_reason || 'Reference check discrepancy') +
+            ' <button type="button" class="btn-secondary btn-row unfreeze-btn" data-id="' + escapeHtml(cand.id) + '" style="margin-left: 8px;">Unfreeze</button>' +
+            '</div>'
+          : '';
+
         return '<div class="candidate-card candidate-card-clickable" data-id="' + escapeHtml(cand.id) + '">' +
           '<div class="candidate-header">' +
           '<span class="candidate-identity">' +
@@ -610,6 +634,7 @@
           '</span>' +
           '<span class="chip ' + stageChipClass(cand.stage) + '">' + escapeHtml(cand.stage) + '</span>' +
           '</div>' +
+          frozenBanner +
           '<div class="candidate-meta">' + requisitionLabel + '</div>' +
           '<div class="candidate-meta">Source: ' + (cand.source ? escapeHtml(cand.source) : '&mdash;') + '</div>' +
           '<div class="candidate-meta">Experience: ' + (cand.experience ? escapeHtml(cand.experience) : '&mdash;') + '</div>' +
@@ -618,6 +643,7 @@
           checklistBlock +
           '<div class="candidate-actions" style="margin-top: 10px; flex-wrap: wrap;">' +
           createEmployeeBtn +
+          sendJdBtn +
           manualActions +
           '<button type="button" class="btn-secondary btn-row ref-checks-btn" data-id="' + escapeHtml(cand.id) + '">References</button>' +
           '<button type="button" class="btn-edit btn-row edit-cand-btn" data-id="' + escapeHtml(cand.id) + '">Edit</button>' +
@@ -649,6 +675,37 @@
         });
       });
 
+      content.querySelectorAll('.unfreeze-btn').forEach(function (btn) {
+        btn.addEventListener('click', async function (event) {
+          event.stopPropagation();
+          const candId = btn.getAttribute('data-id');
+          try {
+            const response = await fetch(CANDIDATES_API_BASE + candId + '/unfreeze/', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (handleUnauthorized(response)) return;
+            if (!response.ok) throw new Error('Could not unfreeze candidate.');
+            loadAll();
+          } catch (err) {
+            showPageError(err.message);
+          }
+        });
+      });
+
+      content.querySelectorAll('.send-jd-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          const candId = btn.getAttribute('data-id');
+          const cand = allCandidates.find(function (c) { return c.id === candId; });
+          if (!cand) return;
+          const jd = findJobDescriptionForRole(cand.requisition_role);
+          const message = 'Hi ' + cand.name + ', here are the role details for ' + (cand.requisition_role || 'the position') + ':\n\n' + jd;
+          const phone = (cand.phone || '').replace(/\D/g, '');
+          window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(message), '_blank');
+        });
+      });
+
       content.querySelectorAll('.cand-step-toggle').forEach(function (btn) {
         btn.addEventListener('click', function () {
           handleCandidateStepToggle(
@@ -668,12 +725,6 @@
       content.querySelectorAll('.cand-withdraw-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
           handleCandidateManualStage(btn.getAttribute('data-id'), 'Withdrawn');
-        });
-      });
-
-      content.querySelectorAll('.create-employee-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          handleCreateEmployeeFromCandidate(btn.getAttribute('data-id'));
         });
       });
 
@@ -1025,48 +1076,6 @@
       } catch (err) {
         showPageError(err.message || 'Something went wrong. Please try again.');
       }
-    }
-
-    async function handleCreateEmployeeFromCandidate(candId) {
-      const confirmed = confirm('Create an employee record from this candidate? This cannot be undone.');
-      if (!confirmed) {
-        return;
-      }
-
-      hidePageError();
-      try {
-        const response = await fetch(CANDIDATES_API_BASE + candId + '/create-employee/', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-
-        if (handleUnauthorized(response)) {
-          return;
-        }
-
-        if (!response.ok) {
-          const data = await response.json().catch(function () { return {}; });
-          throw new Error(data.detail || 'Could not create employee from this candidate.');
-        }
-
-        const data = await response.json();
-        pageSuccessMessage(
-          'Employee created successfully. <a href="employees.html" target="_blank" rel="noopener noreferrer">View in Employees</a> (search for the new record).' +
-          (data.employee_id ? ' Employee ID: ' + escapeHtml(data.employee_id) : '')
-        );
-        loadAll();
-      } catch (err) {
-        showPageError(err.message || 'Something went wrong. Please try again.');
-      }
-    }
-
-    function pageSuccessMessage(html) {
-      const successEl = document.getElementById('page-success');
-      if (!successEl) {
-        return;
-      }
-      successEl.innerHTML = html;
-      successEl.style.display = 'block';
     }
 
     async function handleDeleteCandidate(candId) {

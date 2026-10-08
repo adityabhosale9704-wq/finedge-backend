@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=2">
-<script src="shared.js?v=2"></script>
+<link rel="stylesheet" href="shared.css?v=5">
+<script src="shared.js?v=5"></script>
 <style>
   .kpi-grid {
     grid-template-columns: repeat(5, 1fr);
@@ -29,8 +29,11 @@
 
   <div class="container">
     <div class="page-header-row">
-      <h1>TAT / Task Tracking</h1>
-      <button type="button" class="btn-primary" id="add-task-button">+ New Task</button>
+      <h1>TAT Tracker</h1>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div id="global-branch-filter-container"></div>
+        <button type="button" class="btn-primary" id="add-task-button">+ New Task</button>
+      </div>
     </div>
   </div>
 
@@ -65,7 +68,7 @@
 
     <div class="tabs">
       <button type="button" class="tab active" data-tab="All" id="tab-All">All (0)</button>
-      <button type="button" class="tab" data-tab="Open" id="tab-Open">Open (0)</button>
+      <button type="button" class="tab" data-tab="Open" id="tab-Open">In Progress (0)</button>
       <button type="button" class="tab" data-tab="Early" id="tab-Early">Early (0)</button>
       <button type="button" class="tab" data-tab="On Time" id="tab-On Time">On Time (0)</button>
       <button type="button" class="tab" data-tab="Delayed" id="tab-Delayed">Delayed (0)</button>
@@ -116,6 +119,7 @@
       window.location.href = 'login.html';
     } else {
       loadAll();
+      initGlobalBranchFilter('global-branch-filter-container', function () { loadAll(); });
     }
 
 
@@ -156,8 +160,9 @@
     async function loadAll() {
       hidePageError();
       try {
+        const branchQuery = getGlobalBranchFilter() ? '?branch=' + encodeURIComponent(getGlobalBranchFilter()) : '';
         const [tasksResponse, employeesResponse] = await Promise.all([
-          fetch(TASKS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch(TASKS_API_BASE + branchQuery, { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch(EMPLOYEES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } })
         ]);
 
@@ -181,6 +186,7 @@
     }
 
     const TAB_NAMES = ['All', 'Open', 'Early', 'On Time', 'Delayed', 'Overdue'];
+    const TAB_LABELS = { 'Open': 'In Progress' };
 
     function renderAll() {
       renderKpis();
@@ -205,7 +211,7 @@
           ? allTasks.length
           : allTasks.filter(function (t) { return t.status === name; }).length;
         const tabBtn = document.getElementById('tab-' + name);
-        tabBtn.textContent = name + ' (' + count + ')';
+        tabBtn.textContent = (TAB_LABELS[name] || name) + ' (' + count + ')';
         tabBtn.classList.toggle('active', name === currentTab);
       });
     }

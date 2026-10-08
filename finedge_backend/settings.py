@@ -82,6 +82,10 @@ INSTALLED_APPS = [
     'done_board',
     'interview_questions',
     'reference_checks',
+    'policies',
+    'letter_templates',
+    'doc_checklist',
+    'notifications',
 ]
 
 MIDDLEWARE = [

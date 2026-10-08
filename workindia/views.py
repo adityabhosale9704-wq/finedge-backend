@@ -112,7 +112,23 @@ class WorkIndiaImportView(APIView):
             if field_key:
                 header_map[header] = field_key
 
+        # Mobile numbers already known to the system — either previously
+        # imported via WorkIndia, or already a Recruitment candidate — are
+        # skipped on re-upload so the same person never gets duplicated.
+        existing_mobiles = {
+            doc.get("mobile", "").strip()
+            for doc in get_workindia_collection().find({}, {"mobile": 1})
+            if doc.get("mobile", "").strip()
+        }
+        existing_mobiles |= {
+            doc.get("phone", "").strip()
+            for doc in get_candidates_collection().find({}, {"phone": 1})
+            if doc.get("phone", "").strip()
+        }
+
         parsed_rows = []
+        skipped_duplicates = 0
+        seen_in_this_file = set()
         for row in reader:
             doc = {field: "" for field in FIELD_KEYS}
             for original_header, field_key in header_map.items():
@@ -120,8 +136,17 @@ class WorkIndiaImportView(APIView):
                 if value:
                     doc[field_key] = value.strip()
 
-            if any(doc.values()):
-                parsed_rows.append(doc)
+            if not any(doc.values()):
+                continue
+
+            mobile = doc.get("mobile", "").strip()
+            if mobile and (mobile in existing_mobiles or mobile in seen_in_this_file):
+                skipped_duplicates += 1
+                continue
+
+            if mobile:
+                seen_in_this_file.add(mobile)
+            parsed_rows.append(doc)
 
         collection = get_workindia_collection()
         max_num = 0
@@ -148,7 +173,8 @@ class WorkIndiaImportView(APIView):
             collection.insert_many(parsed_rows)
 
         return Response(
-            {"imported": len(parsed_rows)}, status=status.HTTP_201_CREATED
+            {"imported": len(parsed_rows), "skipped_duplicates": skipped_duplicates},
+            status=status.HTTP_201_CREATED,
         )
 
 

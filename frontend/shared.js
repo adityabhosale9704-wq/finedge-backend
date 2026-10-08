@@ -11,6 +11,44 @@
    no need to touch the 17 HTML files individually again. */
 window.API_BASE = 'http://16.170.98.44/api/v1';
 
+/* ---------- Global City/Branch filter ----------
+   Per the user manual: narrows Dashboard, TAT Tracker, Employees and Exit
+   down to one office; "All" (the default) shows everything. WorkIndia,
+   Interview Questions and Admin Studio intentionally never use this. */
+
+function getGlobalBranchFilter() {
+  return localStorage.getItem('globalBranchFilter') || '';
+}
+
+function initGlobalBranchFilter(containerId, onChange) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var token = localStorage.getItem('authToken');
+  if (!token) return;
+
+  fetch(window.API_BASE + '/branches/', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function (response) { return response.ok ? response.json() : []; })
+    .then(function (branches) {
+      var current = getGlobalBranchFilter();
+      var select = document.createElement('select');
+      select.id = 'global-branch-filter-select';
+      select.style.maxWidth = '220px';
+      var options = '<option value="">All Branches</option>' + branches.map(function (b) {
+        return '<option value="' + b.name + '"' + (b.name === current ? ' selected' : '') + '>' + b.name + '</option>';
+      }).join('');
+      select.innerHTML = options;
+      select.addEventListener('change', function () {
+        localStorage.setItem('globalBranchFilter', select.value);
+        if (onChange) onChange(select.value);
+      });
+      container.innerHTML = '<label for="global-branch-filter-select" style="font-size: 12px; color: var(--mut); margin-right: 8px;">Branch</label>';
+      container.appendChild(select);
+    })
+    .catch(function () {
+      // Non-fatal — the page just shows unfiltered data.
+    });
+}
+
 (function () {
   var savedTheme = localStorage.getItem('theme');
   if (savedTheme === 'dark' || savedTheme === 'light') {
@@ -24,6 +62,51 @@ function getCurrentTheme() {
     return explicit;
   }
   return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+/* ---------- Language switch (EN/HI) ----------
+   The toggle + translation mechanism is fully wired up; only the sidebar
+   nav labels and the Dashboard greeting are translated so far (per the
+   agreed scope) — extend TRANSLATIONS.hi to cover more screens later
+   without touching this mechanism again. */
+
+var TRANSLATIONS = {
+  hi: {
+    'Dashboard': 'डैशबोर्ड',
+    'HR Management': 'एचआर प्रबंधन',
+    'Employees': 'कर्मचारी',
+    'Employee IDs': 'कर्मचारी आईडी',
+    'Recruitment': 'भर्ती',
+    'Documents Pending': 'दस्तावेज़ लंबित',
+    'Onboarding': 'ऑनबोर्डिंग',
+    'TAT Tracker': 'टीडी ट्रैकर',
+    'Operations': 'संचालन',
+    'Salary Structure': 'वेतन संरचना',
+    'Increments': 'वेतनवृद्धि',
+    'Exit': 'निकासी',
+    'Engagement': 'जुड़ाव',
+    'Compliance': 'अनुपालन',
+    'Reports & Tools': 'रिपोर्ट और उपकरण',
+    'Done Board': 'डन बोर्ड',
+    'Interview Questions': 'साक्षात्कार प्रश्न',
+    'Docs': 'दस्तावेज़',
+    'Settings': 'सेटिंग',
+    'Admin Studio': 'एडमिन स्टूडियो',
+    'WorkIndia Import': 'वर्कइंडिया आयात',
+    'Good Morning': 'शुभ प्रभात',
+    'Good Afternoon': 'शुभ दोपहर',
+    'Good Evening': 'शुभ संध्या'
+  }
+};
+
+function getCurrentLanguage() {
+  return localStorage.getItem('language') === 'hi' ? 'hi' : 'en';
+}
+
+function t(key) {
+  var lang = getCurrentLanguage();
+  if (lang === 'en') return key;
+  return (TRANSLATIONS.hi && TRANSLATIONS.hi[key]) || key;
 }
 
 function updateThemeToggleIcon() {
@@ -51,8 +134,9 @@ var NAV_CONFIG = [
       { href: 'employees.html', icon: 'fa-users', label: 'Employees' },
       { href: 'positions.html', icon: 'fa-id-badge', label: 'Employee IDs' },
       { href: 'recruitment.html', icon: 'fa-user-plus', label: 'Recruitment' },
+      { href: 'documents-pending.html', icon: 'fa-file-circle-check', label: 'Documents Pending' },
       { href: 'onboarding.html', icon: 'fa-clipboard-check', label: 'Onboarding' },
-      { href: 'tasks.html', icon: 'fa-list-check', label: 'Tasks' }
+      { href: 'tasks.html', icon: 'fa-list-check', label: 'TAT Tracker' }
     ]
   },
   {
@@ -73,7 +157,8 @@ var NAV_CONFIG = [
     icon: 'fa-chart-pie',
     items: [
       { href: 'done-board.html', icon: 'fa-square-check', label: 'Done Board' },
-      { href: 'interview-questions.html', icon: 'fa-circle-question', label: 'Interview Questions' }
+      { href: 'interview-questions.html', icon: 'fa-circle-question', label: 'Interview Questions' },
+      { href: 'docs-vault.html', icon: 'fa-folder-open', label: 'Docs' }
     ]
   },
   {
@@ -99,8 +184,10 @@ function buildSidebarHtml(currentPage) {
   html += '<div class="nav-bar">';
   html += '  <div class="nav-header">';
   html += '    <a href="dashboard.html" class="nav-logo"><span class="nav-logo-badge"><i class="fa-solid fa-building-columns"></i></span><span>HR OS</span></a>';
+  html += '    <button type="button" class="nav-bell-toggle" id="nav-bell-toggle" aria-label="Notifications"><i class="fa-solid fa-bell"></i><span class="nav-bell-dot" id="nav-bell-dot" style="display:none;"></span></button>';
   html += '    <button type="button" class="nav-collapse-toggle" id="nav-collapse-toggle" aria-label="Collapse sidebar"><i class="fa-solid fa-chevron-left"></i></button>';
   html += '  </div>';
+  html += '  <div class="nav-bell-panel" id="nav-bell-panel"></div>';
 
   html += '  <div class="nav-search">';
   html += '    <i class="fa-solid fa-magnifying-glass"></i>';
@@ -114,7 +201,7 @@ function buildSidebarHtml(currentPage) {
     if (!entry.items) {
       var isActive = entry.href === currentPage;
       html += '<a href="' + entry.href + '" class="nav-link' + (isActive ? ' active' : '') + '" data-nav-label="' + entry.label.toLowerCase() + '">' +
-        '<i class="fa-solid ' + entry.icon + '"></i><span>' + entry.label + '</span></a>';
+        '<i class="fa-solid ' + entry.icon + '"></i><span>' + t(entry.label) + '</span></a>';
       return;
     }
 
@@ -123,13 +210,13 @@ function buildSidebarHtml(currentPage) {
 
     html += '<div class="nav-group' + (isOpen ? ' open' : '') + '" data-group="' + entry.key + '">';
     html += '  <button type="button" class="nav-group-header">' +
-      '<i class="fa-solid ' + entry.icon + '"></i><span>' + entry.label + '</span>' +
+      '<i class="fa-solid ' + entry.icon + '"></i><span>' + t(entry.label) + '</span>' +
       '<i class="fa-solid fa-chevron-down nav-group-chevron"></i></button>';
     html += '  <div class="nav-group-items">';
     entry.items.forEach(function (item) {
       var isActive = item.href === currentPage;
       html += '<a href="' + item.href + '" class="nav-link nav-sublink' + (isActive ? ' active' : '') + '" data-nav-label="' + item.label.toLowerCase() + '">' +
-        '<i class="fa-solid ' + item.icon + '"></i><span>' + item.label + '</span></a>';
+        '<i class="fa-solid ' + item.icon + '"></i><span>' + t(item.label) + '</span></a>';
     });
     html += '  </div>';
     html += '</div>';
@@ -137,7 +224,10 @@ function buildSidebarHtml(currentPage) {
 
   html += '  </div>';
 
-  html += '  <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>';
+  html += '  <div style="display:flex; gap:6px;">';
+  html += '    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" style="flex:1;"><i class="fa-solid fa-moon"></i></button>';
+  html += '    <button type="button" class="theme-toggle" id="lang-toggle" aria-label="Toggle language">' + (getCurrentLanguage() === 'hi' ? 'EN' : 'हि') + '</button>';
+  html += '  </div>';
 
   html += '  <div class="nav-profile" id="nav-profile">';
   html += '    <span class="nav-profile-avatar" id="nav-profile-avatar">…</span>';
@@ -198,9 +288,12 @@ function initSidebarInteractions() {
   var navToggle = document.getElementById('nav-toggle');
   var navLinks = document.getElementById('nav-links');
 
-  var backdrop = document.createElement('div');
-  backdrop.className = 'nav-backdrop';
-  document.body.appendChild(backdrop);
+  var backdrop = document.querySelector('.nav-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'nav-backdrop';
+    document.body.appendChild(backdrop);
+  }
 
   function setToggleIcon(open) {
     if (!navToggle) return;
@@ -219,13 +312,20 @@ function initSidebarInteractions() {
     setToggleIcon(true);
   }
 
-  if (navToggle && sidebar) {
+  // navToggle and backdrop persist across re-renders (e.g. a language
+  // switch just rebuilds the sidebar's own innerHTML), so guard against
+  // attaching duplicate listeners to those two persistent elements.
+  if (navToggle && sidebar && !navToggle.dataset.wired) {
+    navToggle.dataset.wired = 'true';
     navToggle.addEventListener('click', function () {
       if (sidebar.classList.contains('mobile-open')) closeMobileSidebar();
       else openMobileSidebar();
     });
   }
-  backdrop.addEventListener('click', closeMobileSidebar);
+  if (!backdrop.dataset.wired) {
+    backdrop.dataset.wired = 'true';
+    backdrop.addEventListener('click', closeMobileSidebar);
+  }
   if (navLinks) {
     navLinks.querySelectorAll('a').forEach(function (a) {
       a.addEventListener('click', closeMobileSidebar);
@@ -307,7 +407,61 @@ function initSidebarInteractions() {
     });
   }
 
+  var langToggle = document.getElementById('lang-toggle');
+  if (langToggle) {
+    langToggle.addEventListener('click', function () {
+      var next = getCurrentLanguage() === 'hi' ? 'en' : 'hi';
+      localStorage.setItem('language', next);
+      if (window.onLanguageChange) window.onLanguageChange(next);
+      renderSidebarContent();
+    });
+  }
+
   loadNavProfile();
+  initNotificationsBell();
+}
+
+function initNotificationsBell() {
+  var bellToggle = document.getElementById('nav-bell-toggle');
+  var bellPanel = document.getElementById('nav-bell-panel');
+  var bellDot = document.getElementById('nav-bell-dot');
+  if (!bellToggle || !bellPanel) return;
+
+  var token = localStorage.getItem('authToken');
+  if (!token) return;
+
+  bellToggle.addEventListener('click', function () {
+    bellPanel.classList.toggle('open');
+  });
+
+  fetch(window.API_BASE + '/notifications/', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function (response) { return response.ok ? response.json() : null; })
+    .then(function (data) {
+      if (!data) return;
+      if (data.count > 0) {
+        bellDot.style.display = 'block';
+      }
+      if (data.items.length === 0) {
+        bellPanel.innerHTML = '<div class="nav-bell-empty">Nothing needs attention.</div>';
+        return;
+      }
+      bellPanel.innerHTML = data.items.slice(0, 12).map(function (item) {
+        var div = document.createElement('div');
+        div.textContent = item.message;
+        return '<a href="' + item.page + '" class="nav-bell-item">' + div.innerHTML + '</a>';
+      }).join('');
+    })
+    .catch(function () {
+      // Non-fatal — the bell just shows nothing.
+    });
+}
+
+function renderSidebarContent() {
+  var mount = document.getElementById('app-sidebar');
+  if (!mount) return;
+  var currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+  mount.innerHTML = buildSidebarHtml(currentPage);
+  initSidebarInteractions();
 }
 
 function initSharedNav() {
@@ -317,20 +471,21 @@ function initSharedNav() {
     return;
   }
 
-  var currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
-
   // Mobile hamburger button lives outside the sidebar markup itself so it
-  // stays visible even while the sidebar is off-screen.
-  var navToggle = document.createElement('button');
-  navToggle.type = 'button';
-  navToggle.id = 'nav-toggle';
-  navToggle.className = 'nav-toggle';
-  navToggle.setAttribute('aria-label', 'Toggle navigation');
-  navToggle.innerHTML = '<i class="fa-solid fa-bars"></i>';
-  document.body.insertBefore(navToggle, document.body.firstChild);
+  // stays visible even while the sidebar is off-screen. Only created once —
+  // renderSidebarContent() re-renders the sidebar itself (e.g. on language
+  // switch) without touching this or re-adding a duplicate backdrop.
+  if (!document.getElementById('nav-toggle')) {
+    var navToggle = document.createElement('button');
+    navToggle.type = 'button';
+    navToggle.id = 'nav-toggle';
+    navToggle.className = 'nav-toggle';
+    navToggle.setAttribute('aria-label', 'Toggle navigation');
+    navToggle.innerHTML = '<i class="fa-solid fa-bars"></i>';
+    document.body.insertBefore(navToggle, document.body.firstChild);
+  }
 
-  mount.innerHTML = buildSidebarHtml(currentPage);
-  initSidebarInteractions();
+  renderSidebarContent();
 }
 
 document.addEventListener('DOMContentLoaded', initSharedNav);

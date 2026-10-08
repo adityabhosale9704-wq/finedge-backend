@@ -11,3 +11,5 @@ class WorkIndiaLogCallSerializer(serializers.Serializer):
     call_status = serializers.ChoiceField(choices=CALL_STATUS_CHOICES)
     call_notes = serializers.CharField(required=False, allow_blank=True, default="")
     interview_datetime = serializers.DateTimeField(required=False, allow_null=True, default=None)
+    email = serializers.EmailField(required=False, allow_blank=True, default="")
+    position_discussed = serializers.CharField(required=False, allow_blank=True, default="")

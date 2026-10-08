@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=2">
-<script src="shared.js?v=2"></script>
+<link rel="stylesheet" href="shared.css?v=5">
+<script src="shared.js?v=5"></script>
 <style>
   .celebration-badge {
     display: inline-block;
@@ -357,7 +357,9 @@
         }).join('');
         return '<div class="step-row" style="align-items: flex-start;">' +
           '<div class="step-info">' +
-          '<div class="step-name">' + escapeHtml(s.submitted_by || 'Anonymous') + '</div>' +
+          '<div class="step-name">' + escapeHtml(s.submitted_by || 'Anonymous') +
+          (s.response_overdue ? ' <span class="chip chip-red">Overdue (48h)</span>' : '') +
+          '</div>' +
           '<div class="step-meta">' + escapeHtml(s.text) + '</div>' +
           '<textarea class="response-note-input" data-id="' + escapeHtml(s.id) + '" placeholder="Response note..." rows="2" style="width: 100%; margin-top: 6px;">' + escapeHtml(s.response_note) + '</textarea>' +
           '<button type="button" class="btn-secondary btn-row save-response-btn" data-id="' + escapeHtml(s.id) + '" style="margin-top: 4px;">Save Note</button>' +

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
+<link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+<link rel="stylesheet" href="shared.css?v=5">
+<script src="shared.js?v=5"></script>
+<style>
+  .docs-panel { display: none; }
+  .docs-panel.active { display: block; }
+  .doc-vault-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line-2);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .doc-vault-detail {
+    margin-top: 8px;
+    padding: 10px 0 0;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav" id="app-sidebar"></div>
+
+  <div class="container">
+    <h1>Docs</h1>
+    <p style="color: var(--mut); margin-top: -8px;">Search for one person's documents without opening their full profile.</p>
+    <div class="tabs" id="docs-tabs" style="margin: 14px 0;">
+      <button type="button" class="tab active" data-panel="employees">Employees</button>
+      <button type="button" class="tab" data-panel="candidates">Interview Candidates</button>
+      <button type="button" class="tab" data-panel="leavers">Leaver</button>
+    </div>
+
+    <input type="text" id="docs-search-input" class="search-input" placeholder="Search by name..." style="margin-bottom: 14px; max-width: 320px;">
+    <div id="page-error" class="form-error"></div>
+
+    <div class="docs-panel active" id="panel-employees">
+      <div id="employees-list" class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+    </div>
+    <div class="docs-panel" id="panel-candidates">
+      <div id="candidates-list" class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+    </div>
+    <div class="docs-panel" id="panel-leavers">
+      <div id="leavers-list" class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const EMPLOYEES_API_BASE = API_BASE + '/employees/';
+    const CANDIDATES_API_BASE = API_BASE + '/candidates/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadEmployees();
+      loadCandidates();
+    }
+
+    let allEmployees = [];
+    let allCandidates = [];
+    let searchTerm = '';
+    const expandedIds = new Set();
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    function showPageError(message) {
+      const el = document.getElementById('page-error');
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+
+    document.querySelectorAll('#docs-tabs .tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('#docs-tabs .tab').forEach(function (t) { t.classList.remove('active'); });
+        document.querySelectorAll('.docs-panel').forEach(function (p) { p.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.getAttribute('data-panel')).classList.add('active');
+      });
+    });
+
+    document.getElementById('docs-search-input').addEventListener('input', function (event) {
+      searchTerm = event.target.value.trim().toLowerCase();
+      renderEmployeesPanels();
+      renderCandidatesPanel();
+    });
+
+    async function loadEmployees() {
+      try {
+        const response = await fetch(EMPLOYEES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load employees.');
+        allEmployees = await response.json();
+        renderEmployeesPanels();
+      } catch (err) {
+        showPageError(err.message);
+      }
+    }
+
+    async function loadCandidates() {
+      try {
+        const response = await fetch(CANDIDATES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load candidates.');
+        allCandidates = await response.json();
+        renderCandidatesPanel();
+      } catch (err) {
+        showPageError(err.message);
+      }
+    }
+
+    const candidateChecklistCache = {};
+
+    function renderPersonList(containerId, people, idPrefix, getDocsFn) {
+      const container = document.getElementById(containerId);
+      const filtered = searchTerm
+        ? people.filter(function (p) { return (p.name || '').toLowerCase().indexOf(searchTerm) !== -1; })
+        : people;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="message">No matches.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(function (person) {
+        const rowId = idPrefix + person.id;
+        const isExpanded = expandedIds.has(rowId);
+        const docs = getDocsFn(person);
+        // Candidate doc-checklist entries need the dedicated endpoint for
+        // absolute file URLs (the bulk /candidates/ list only has relative
+        // storage paths) — cached per candidate once fetched, used only for
+        // the expanded detail view's links, not the count badge above.
+        const detailDocs = idPrefix === 'cand-' ? (candidateChecklistCache[person.id] || docs) : docs;
+        let detailHtml = '';
+        if (isExpanded) {
+          if (detailDocs.length === 0) {
+            detailHtml = '<div class="doc-vault-detail message" style="padding: 10px 0;">No documents on file.</div>';
+          } else {
+            detailHtml = '<div class="doc-vault-detail">' + detailDocs.map(function (d) {
+              // Employee doc-vault entries store their absolute URL under
+              // file_path (see employees/views.py::serialize_employee);
+              // candidate doc-checklist entries use file_url instead.
+              const url = d.file_path || d.file_url;
+              return '<div class="step-row"><div class="step-info"><div class="step-name">' + escapeHtml(d.name || d.doc_name) + '</div>' +
+                '<div class="step-meta">' + escapeHtml(d.status || d.category || '') + '</div></div>' +
+                (url ? '<a href="' + escapeHtml(url) + '" target="_blank" class="btn-view">View</a>' : '<span class="chip chip-gray">Not uploaded</span>') +
+                '</div>';
+            }).join('') + '</div>';
+          }
+        }
+        return '<div class="doc-vault-row-wrap">' +
+          '<div class="doc-vault-row" data-row-id="' + escapeHtml(rowId) + '">' +
+          '<span><strong>' + escapeHtml(person.name) + '</strong></span>' +
+          '<span class="chip chip-navy">' + docs.length + ' document(s)</span>' +
+          '</div>' +
+          detailHtml +
+          '</div>';
+      }).join('');
+
+      container.querySelectorAll('.doc-vault-row').forEach(function (row) {
+        row.addEventListener('click', async function () {
+          const id = row.getAttribute('data-row-id');
+          if (expandedIds.has(id)) {
+            expandedIds.delete(id);
+          } else {
+            expandedIds.add(id);
+            if (id.indexOf('cand-') === 0) {
+              const candId = id.slice('cand-'.length);
+              if (!candidateChecklistCache[candId]) {
+                try {
+                  const response = await fetch(CANDIDATES_API_BASE + candId + '/doc-checklist/', { headers: { 'Authorization': 'Bearer ' + token } });
+                  if (response.ok) {
+                    const data = await response.json();
+                    candidateChecklistCache[candId] = data.doc_checklist;
+                  }
+                } catch (err) {
+                  // Non-fatal — detail view just shows nothing for this candidate.
+                }
+              }
+            }
+          }
+          renderEmployeesPanels();
+          renderCandidatesPanel();
+        });
+      });
+    }
+
+    function renderEmployeesPanels() {
+      const employees = allEmployees.filter(function (e) { return e.status !== 'Leaver'; });
+      const leavers = allEmployees.filter(function (e) { return e.status === 'Leaver'; });
+      renderPersonList('employees-list', employees, 'emp-', function (e) { return e.docs || []; });
+      renderPersonList('leavers-list', leavers, 'lvr-', function (e) { return e.docs || []; });
+    }
+
+    function renderCandidatesPanel() {
+      const inPipeline = allCandidates.filter(function (c) {
+        return ['Joined', 'Rejected', 'Withdrawn'].indexOf(c.stage) === -1;
+      });
+      renderPersonList('candidates-list', inPipeline, 'cand-', function (c) { return c.doc_checklist || []; });
+    }
+  </script>
+
+</body>
+</html>

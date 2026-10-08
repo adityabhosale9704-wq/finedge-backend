@@ -11,7 +11,12 @@ from admin_studio.mongo import (
     get_departments_collection,
     get_roles_collection,
 )
-from admin_studio.serializers import BranchSerializer, DepartmentSerializer, RoleSerializer
+from admin_studio.serializers import (
+    BranchSerializer,
+    BranchUpdateSerializer,
+    DepartmentSerializer,
+    RoleSerializer,
+)
 
 
 def serialize_master(doc):
@@ -22,6 +27,9 @@ def serialize_master(doc):
 
 def serialize_branch(doc):
     doc = serialize_master(doc)
+    doc.setdefault("code", "")
+    doc.setdefault("state", "")
+    doc.setdefault("manager_name", "")
     doc.setdefault("s_and_e_number", "")
     return doc
 
@@ -103,7 +111,15 @@ class BranchListCreateView(APIView):
     def post(self, request):
         serializer = BranchSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = get_branches_collection().insert_one(dict(serializer.validated_data))
+        data = serializer.validated_data
+
+        if get_branches_collection().find_one({"code": data["code"]}):
+            return Response(
+                {"detail": "A branch with this code already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        result = get_branches_collection().insert_one(data)
         created = get_branches_collection().find_one({"_id": result.inserted_id})
         return Response(serialize_branch(created), status=status.HTTP_201_CREATED)
 
@@ -119,7 +135,7 @@ class BranchDetailView(APIView):
                 {"detail": "Branch not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = BranchSerializer(data=request.data, partial=True)
+        serializer = BranchUpdateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
@@ -138,6 +154,18 @@ class BranchDetailView(APIView):
 
         get_branches_collection().delete_one({"_id": branch["_id"]})
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AllRolesListView(APIView):
+    """Flat list of every role across every department — used by the
+    Recruitment "Send JD" feature to look up a role's job description by
+    title without needing the department it belongs to."""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response([serialize_role(r) for r in get_roles_collection().find()])
 
 
 class RoleListCreateView(APIView):

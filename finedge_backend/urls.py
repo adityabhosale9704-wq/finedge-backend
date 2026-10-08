@@ -37,6 +37,10 @@ urlpatterns = [
     path('api/v1/', include('done_board.urls')),
     path('api/v1/', include('interview_questions.urls')),
     path('api/v1/', include('reference_checks.urls')),
+    path('api/v1/', include('policies.urls')),
+    path('api/v1/', include('letter_templates.urls')),
+    path('api/v1/', include('doc_checklist.urls')),
+    path('api/v1/', include('notifications.urls')),
 ]
 
 if settings.DEBUG:

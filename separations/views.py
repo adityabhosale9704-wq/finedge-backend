@@ -65,6 +65,14 @@ class SeparationListCreateView(APIView):
 
     def get(self, request):
         separations = list(get_separations_collection().find())
+
+        branch = request.query_params.get("branch")
+        if branch:
+            branch_employee_ids = {
+                str(e["_id"]) for e in get_employees_collection().find({"branch": branch}, {"_id": 1})
+            }
+            separations = [s for s in separations if s.get("employee_id") in branch_employee_ids]
+
         employee_name_lookup = build_employee_name_lookup(
             s.get("employee_id") for s in separations if s.get("employee_id")
         )

@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=2">
-<script src="shared.js?v=2"></script>
+<link rel="stylesheet" href="shared.css?v=5">
+<script src="shared.js?v=5"></script>
 <style>
   #list-view h1 {
     margin-bottom: 20px;
@@ -338,7 +338,10 @@
 
   <div id="list-view">
     <div class="container">
-      <h1>Employees</h1>
+      <div class="page-header-row">
+        <h1 style="margin-bottom: 0;">Employees</h1>
+        <div id="global-branch-filter-container"></div>
+      </div>
       <div class="toolbar">
         <div class="tabs">
           <button type="button" class="tab active" id="tab-active" data-tab="active">Active (0)</button>
@@ -514,6 +517,7 @@
     } else {
       loadEmployees();
       loadDepartmentAndBranchOptions();
+      initGlobalBranchFilter('global-branch-filter-container', function () { loadEmployees(); });
     }
 
 
@@ -589,7 +593,8 @@
       const content = document.getElementById('content');
 
       try {
-        const response = await fetch(EMPLOYEES_API_BASE, {
+        const branchQuery = getGlobalBranchFilter() ? '?branch=' + encodeURIComponent(getGlobalBranchFilter()) : '';
+        const response = await fetch(EMPLOYEES_API_BASE + branchQuery, {
           method: 'GET',
           headers: {
             'Authorization': 'Bearer ' + token
@@ -1388,48 +1393,49 @@
       'Relieving-cum-Experience Letter': 'REL'
     };
 
-    const LETTER_TEMPLATES = {
-      'Offer Letter': function (f) {
-        return [
-          'Dear ' + f.name + ',',
-          'We are pleased to offer you the position of ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location, effective ' + f.doj + '. Your annual CTC will be ' + f.ctcFormatted + ', as detailed in the salary annexure below.',
-          'This offer is subject to a probation period of ' + f.probation + ' from your date of joining, during which your performance and conduct will be reviewed.',
-          'We look forward to welcoming you to the team. Please sign and return a copy of this letter to confirm your acceptance.'
-        ];
-      },
-      'Appointment Letter': function (f) {
-        return [
-          'Dear ' + f.name + ',',
-          'Further to your offer of employment, we are pleased to confirm your appointment as ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location, with effect from ' + f.doj + '.',
-          'Your annual CTC has been fixed at ' + f.ctcFormatted + ', as per the salary annexure enclosed with this letter. Your appointment is subject to a probation period of ' + f.probation + '.',
-          'We trust you will find your role challenging and rewarding, and we look forward to a long and successful association.'
-        ];
-      },
-      'Confirmation Letter': function (f) {
-        return [
-          'Dear ' + f.name + ',',
-          'We are pleased to inform you that, based on a satisfactory review of your performance and conduct during your probation period, your employment as ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location stands confirmed with effect from today.',
-          'Your annual CTC continues at ' + f.ctcFormatted + ', as per the enclosed salary annexure. All other terms of your employment remain unchanged.',
-          'We congratulate you on your confirmation and look forward to your continued contribution to the organization.'
-        ];
-      },
-      'Increment Letter': function (f) {
-        return [
-          'Dear ' + f.name + ',',
-          'We are pleased to inform you that, in recognition of your performance and contribution as ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location, your annual CTC has been revised to ' + f.ctcFormatted + ', effective from today.',
-          'The revised salary annexure is enclosed below for your reference.',
-          'We appreciate your continued dedication and look forward to your ongoing success with the organization.'
-        ];
-      },
-      'Relieving-cum-Experience Letter': function (f) {
-        return [
-          'Dear ' + f.name + ',',
-          'This is to certify that you were employed with us as ' + f.designation + ' in the ' + f.department + ' department at our ' + f.branch + ' location from ' + f.doj + ' until your last working day.',
-          'During your tenure, your annual CTC was ' + f.ctcFormatted + '. We found your conduct and performance to be satisfactory during your association with us.',
-          'We wish you the very best in your future endeavors.'
-        ];
-      }
+    // Fallback wording if the backend's Letter Templates (Admin Studio) can't be
+    // reached — kept in sync with letter_templates/views.py::DEFAULT_BODIES.
+    const DEFAULT_TEMPLATE_BODIES = {
+      'Offer Letter': 'Dear {{name}},\n\nWe are pleased to offer you the position of {{designation}} in the {{department}} department at our {{branch}} location, effective {{doj}}. Your annual CTC will be {{ctc}}, as detailed in the salary annexure below.\n\nThis offer is subject to a probation period of {{probation}} from your date of joining, during which your performance and conduct will be reviewed.\n\nWe look forward to welcoming you to the team. Please sign and return a copy of this letter to confirm your acceptance.',
+      'Appointment Letter': 'Dear {{name}},\n\nFurther to your offer of employment, we are pleased to confirm your appointment as {{designation}} in the {{department}} department at our {{branch}} location, with effect from {{doj}}.\n\nYour annual CTC has been fixed at {{ctc}}, as per the salary annexure enclosed with this letter. Your appointment is subject to a probation period of {{probation}}.\n\nWe trust you will find your role challenging and rewarding, and we look forward to a long and successful association.',
+      'Confirmation Letter': 'Dear {{name}},\n\nWe are pleased to inform you that, based on a satisfactory review of your performance and conduct during your probation period, your employment as {{designation}} in the {{department}} department at our {{branch}} location stands confirmed with effect from today.\n\nYour annual CTC continues at {{ctc}}, as per the enclosed salary annexure. All other terms of your employment remain unchanged.\n\nWe congratulate you on your confirmation and look forward to your continued contribution to the organization.',
+      'Increment Letter': 'Dear {{name}},\n\nWe are pleased to inform you that, in recognition of your performance and contribution as {{designation}} in the {{department}} department at our {{branch}} location, your annual CTC has been revised to {{ctc}}, effective from today.\n\nThe revised salary annexure is enclosed below for your reference.\n\nWe appreciate your continued dedication and look forward to your ongoing success with the organization.',
+      'Relieving-cum-Experience Letter': 'Dear {{name}},\n\nThis is to certify that you were employed with us as {{designation}} in the {{department}} department at our {{branch}} location from {{doj}} until your last working day.\n\nDuring your tenure, your annual CTC was {{ctc}}. We found your conduct and performance to be satisfactory during your association with us.\n\nWe wish you the very best in your future endeavors.'
     };
+
+    let letterTemplatesCache = null;
+
+    async function fetchLetterTemplates() {
+      if (letterTemplatesCache) {
+        return letterTemplatesCache;
+      }
+      letterTemplatesCache = {};
+      try {
+        const response = await fetch(API_BASE + '/letter-templates/', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (response.ok) {
+          const templates = await response.json();
+          templates.forEach(function (t) { letterTemplatesCache[t.letter_type] = t.body; });
+        }
+      } catch (err) {
+        // Fall through to defaults below if templates can't be loaded.
+      }
+      return letterTemplatesCache;
+    }
+
+    function renderLetterParagraphs(letterType, f) {
+      const body = (letterTemplatesCache && letterTemplatesCache[letterType]) || DEFAULT_TEMPLATE_BODIES[letterType];
+      const tokenValues = {
+        name: f.name, designation: f.designation, department: f.department,
+        branch: f.branch, doj: f.doj, ctc: f.ctcFormatted, probation: f.probation
+      };
+      return body.split('\n\n').map(function (paragraph) {
+        return paragraph.replace(/\{\{(\w+)\}\}/g, function (match, key) {
+          return tokenValues[key] !== undefined ? tokenValues[key] : match;
+        });
+      });
+    }
 
     let salaryStructureCache = null;
 
@@ -1505,7 +1511,7 @@
     }
 
     function buildLetterHtml(fields) {
-      const paragraphs = LETTER_TEMPLATES[fields.letterType](fields);
+      const paragraphs = renderLetterParagraphs(fields.letterType, fields);
       const breakup = computeSalaryBreakup(fields.ctc, fields.isMetro);
       const todayStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
@@ -1654,7 +1660,27 @@
         return;
       }
 
+      if (fields.letterType === 'Appointment Letter' && currentProfileEmployee && currentProfileEmployee.source_candidate_id) {
+        try {
+          const eligResponse = await fetch(
+            API_BASE + '/candidates/' + encodeURIComponent(currentProfileEmployee.source_candidate_id) + '/can-issue-appointment-letter/',
+            { headers: { 'Authorization': 'Bearer ' + token } }
+          );
+          if (eligResponse.ok) {
+            const eligibility = await eligResponse.json();
+            if (!eligibility.can_issue) {
+              letterFormError.textContent = 'Cannot generate an Appointment Letter yet — this candidate needs at least 2 positive reference checks (currently ' + eligibility.positive_count + '). Add them in Recruitment first.';
+              letterFormError.style.display = 'block';
+              return;
+            }
+          }
+        } catch (err) {
+          // Non-fatal — if the eligibility check itself can't be reached, don't block letter generation on it.
+        }
+      }
+
       await fetchSalaryStructure();
+      await fetchLetterTemplates();
       currentLetterHtml = buildLetterHtml(fields);
       currentLetterMeta = { letterType: fields.letterType, dateStr: new Date().toISOString().slice(0, 10) };
 

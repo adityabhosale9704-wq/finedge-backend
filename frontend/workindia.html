@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=2">
-<script src="shared.js?v=2"></script>
+<link rel="stylesheet" href="shared.css?v=5">
+<script src="shared.js?v=5"></script>
 <style>
   .upload-row {
     display: flex;
@@ -143,6 +143,14 @@
         <div class="field">
           <label for="log-call-notes">Call Notes</label>
           <textarea id="log-call-notes" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label for="log-call-email">Candidate Email</label>
+          <input type="email" id="log-call-email">
+        </div>
+        <div class="field">
+          <label for="log-call-position">Position / Designation Discussed</label>
+          <input type="text" id="log-call-position">
         </div>
         <div class="field">
           <label for="log-call-datetime">Interview Date/Time</label>
@@ -335,7 +343,8 @@
         }
 
         const data = await response.json();
-        uploadSuccess.textContent = 'Imported ' + data.imported + ' candidate(s) successfully.';
+        uploadSuccess.textContent = 'Imported ' + data.imported + ' candidate(s) successfully.' +
+          (data.skipped_duplicates ? ' Skipped ' + data.skipped_duplicates + ' duplicate mobile number(s).' : '');
         uploadSuccess.style.display = 'block';
         fileInput.value = '';
         loadUploadTab();
@@ -426,6 +435,8 @@
           '</div>' +
           '<div class="step-meta" style="margin-top: 6px;">' +
           (cand.interview_datetime ? 'Interview: ' + escapeHtml(cand.interview_datetime) + ' &middot; ' : '') +
+          (cand.position_discussed ? 'Position: ' + escapeHtml(cand.position_discussed) + ' &middot; ' : '') +
+          (cand.email ? escapeHtml(cand.email) + ' &middot; ' : '') +
           (cand.call_notes ? escapeHtml(cand.call_notes) : 'No notes') +
           '</div>' +
           '<div class="form-actions" style="margin-top: 10px;">' +
@@ -605,6 +616,8 @@
       const payload = {
         call_status: document.getElementById('log-call-status').value,
         call_notes: document.getElementById('log-call-notes').value,
+        email: document.getElementById('log-call-email').value,
+        position_discussed: document.getElementById('log-call-position').value,
         interview_datetime: datetimeValue ? new Date(datetimeValue).toISOString() : null
       };
 

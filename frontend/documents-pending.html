@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Documents Pending</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
+<link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+<link rel="stylesheet" href="shared.css?v=5">
+<script src="shared.js?v=5"></script>
+<style>
+  .doc-category-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--navy);
+    margin: 14px 0 6px;
+  }
+  .doc-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line-2);
+    font-size: 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .candidate-dp-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .candidate-dp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav" id="app-sidebar"></div>
+
+  <div class="container">
+    <h1>Documents Pending</h1>
+    <p style="color: var(--mut); margin-top: -8px;">Candidates whose Recruitment checklist is complete, awaiting document verification before Create Employee.</p>
+    <div id="page-error" class="form-error"></div>
+    <div id="candidates-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="review-modal-overlay">
+    <div class="modal-card">
+      <h2>Extract &amp; Review</h2>
+      <div id="review-form-error" class="form-error"></div>
+      <div id="review-summary"></div>
+      <div class="form-actions" style="margin-top: 16px;">
+        <button type="button" class="btn-primary" id="review-confirm-button">Confirm &amp; Create Employee</button>
+        <button type="button" class="btn-secondary" id="review-cancel-button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="reject-modal-overlay">
+    <div class="modal-card">
+      <h2>Reject Document</h2>
+      <div id="reject-form-error" class="form-error"></div>
+      <form id="reject-form">
+        <div class="field">
+          <label for="reject-reason">Reason</label>
+          <textarea id="reject-reason" rows="3" required></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Reject</button>
+          <button type="button" class="btn-secondary" id="reject-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const CANDIDATES_API_BASE = API_BASE + '/candidates/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      loadCandidates();
+    }
+
+    let allCandidates = [];
+    const checklistCache = {};
+    const expandedIds = new Set();
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        return true;
+      }
+      return false;
+    }
+
+    function showPageError(message) {
+      const el = document.getElementById('page-error');
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+    function hidePageError() {
+      const el = document.getElementById('page-error');
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+
+    async function loadCandidates() {
+      hidePageError();
+      const content = document.getElementById('candidates-content');
+      try {
+        const response = await fetch(CANDIDATES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load candidates.');
+        const candidates = await response.json();
+        allCandidates = candidates.filter(function (c) { return c.stage === 'Documents Pending'; });
+        await Promise.all(allCandidates.map(function (c) { return loadChecklistFor(c.id); }));
+        renderCandidates();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-button">Retry</button></div>';
+        document.getElementById('retry-button').addEventListener('click', loadCandidates);
+      }
+    }
+
+    async function loadChecklistFor(candId) {
+      try {
+        const response = await fetch(CANDIDATES_API_BASE + candId + '/doc-checklist/', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (response.ok) {
+          checklistCache[candId] = await response.json();
+        }
+      } catch (err) {
+        // Non-fatal — that card just won't show its checklist.
+      }
+    }
+
+    function renderCandidates() {
+      const content = document.getElementById('candidates-content');
+      if (allCandidates.length === 0) {
+        content.innerHTML = '<div class="message">No candidates in Documents Pending.</div>';
+        return;
+      }
+
+      content.innerHTML = allCandidates.map(function (cand) {
+        const checklist = checklistCache[cand.id];
+        const isExpanded = expandedIds.has(cand.id);
+        const verifiedCount = checklist ? checklist.verified_count : 0;
+        const totalCount = checklist ? checklist.total_count : 0;
+        const allVerified = checklist ? checklist.all_verified : false;
+
+        let bodyHtml = '';
+        if (isExpanded && checklist) {
+          const categories = {};
+          checklist.doc_checklist.forEach(function (item) {
+            categories[item.category] = categories[item.category] || [];
+            categories[item.category].push(item);
+          });
+
+          const categoriesHtml = Object.keys(categories).map(function (cat) {
+            const itemsHtml = categories[cat].map(function (item) {
+              const statusChip = item.status === 'Verified' ? 'chip-green' : (item.status === 'Rejected' ? 'chip-red' : 'chip-amber');
+              return '<div class="doc-item-row">' +
+                '<span>' + escapeHtml(item.doc_name) +
+                (item.file_url ? ' &middot; <a href="' + escapeHtml(item.file_url) + '" target="_blank">View file</a>' : ' &middot; <span style="color: var(--mut);">not uploaded</span>') +
+                (item.rejection_reason ? '<div class="step-meta">Rejected: ' + escapeHtml(item.rejection_reason) + '</div>' : '') +
+                '</span>' +
+                '<span><span class="chip ' + statusChip + '" style="margin-right: 8px;">' + escapeHtml(item.status) + '</span>' +
+                '<button type="button" class="btn-done btn-row verify-doc-btn" data-cand-id="' + escapeHtml(cand.id) + '" data-item-id="' + escapeHtml(item.id) + '">Verify</button>' +
+                '<button type="button" class="btn-delete btn-row reject-doc-btn" data-cand-id="' + escapeHtml(cand.id) + '" data-item-id="' + escapeHtml(item.id) + '">Reject</button></span>' +
+                '</div>';
+            }).join('');
+            return '<div class="doc-category-title">' + escapeHtml(cat) + '</div>' + itemsHtml;
+          }).join('');
+
+          const additional = checklist.additional_docs;
+          const nomineeHtml = (additional.nominee_docs || []).map(function (n) {
+            return '<div class="doc-item-row"><span>' + escapeHtml(n.doc_name) + '</span>' +
+              (n.file_url ? '<a href="' + escapeHtml(n.file_url) + '" target="_blank">View file</a>' : '<span style="color: var(--mut);">not uploaded</span>') +
+              '</div>';
+          }).join('');
+
+          bodyHtml = '<div style="margin-top: 12px;">' +
+            '<div class="progress-track"><div class="progress-fill" style="width:' + (totalCount ? Math.round(verifiedCount / totalCount * 100) : 0) + '%"></div></div>' +
+            '<div class="progress-label">' + verifiedCount + '/' + totalCount + ' verified</div>' +
+            categoriesHtml +
+            '<div class="doc-category-title">Additional Documents</div>' +
+            '<div class="doc-item-row"><span>UAN Number</span><span>' + (additional.uan_number ? escapeHtml(additional.uan_number) : '&mdash;') + '</span></div>' +
+            '<div class="doc-item-row"><span>Marital Status</span><span>' + (additional.marital_status ? escapeHtml(additional.marital_status) : '&mdash;') + '</span></div>' +
+            (nomineeHtml || '<div class="message" style="padding: 8px 0;">No nominee documents submitted yet.</div>') +
+            '<div class="form-actions" style="margin-top: 14px;">' +
+            '<button type="button" class="btn-secondary send-link-btn" data-cand-id="' + escapeHtml(cand.id) + '" data-phone="' + escapeHtml(cand.phone || '') + '">Send Link</button>' +
+            '<button type="button" class="btn-primary extract-review-btn" data-cand-id="' + escapeHtml(cand.id) + '" ' + (allVerified ? '' : 'data-move-anyway-needed="1"') + '>Extract &amp; Review &rarr; Create Employee</button>' +
+            '</div>' +
+            '</div>';
+        } else {
+          bodyHtml = '<div class="progress-label" style="margin-top: 8px;">' + verifiedCount + '/' + totalCount + ' documents verified &mdash; click to expand</div>';
+        }
+
+        return '<div class="candidate-dp-card">' +
+          '<div class="candidate-dp-header dp-toggle" data-cand-id="' + escapeHtml(cand.id) + '">' +
+          '<span><strong>' + escapeHtml(cand.name) + '</strong><div class="step-meta">' + escapeHtml(cand.id) + (cand.requisition_role ? ' &middot; ' + escapeHtml(cand.requisition_role) : '') + '</div></span>' +
+          '<span class="chip ' + (allVerified ? 'chip-green' : 'chip-amber') + '">' + verifiedCount + '/' + totalCount + '</span>' +
+          '</div>' +
+          bodyHtml +
+          '</div>';
+      }).join('');
+
+      content.querySelectorAll('.dp-toggle').forEach(function (header) {
+        header.addEventListener('click', function () {
+          const id = header.getAttribute('data-cand-id');
+          if (expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id);
+          renderCandidates();
+        });
+      });
+
+      content.querySelectorAll('.verify-doc-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          handleVerifyDoc(btn.getAttribute('data-cand-id'), btn.getAttribute('data-item-id'));
+        });
+      });
+
+      content.querySelectorAll('.reject-doc-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openRejectModal(btn.getAttribute('data-cand-id'), btn.getAttribute('data-item-id'));
+        });
+      });
+
+      content.querySelectorAll('.send-link-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          handleSendLink(btn.getAttribute('data-cand-id'), btn.getAttribute('data-phone'));
+        });
+      });
+
+      content.querySelectorAll('.extract-review-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openReviewModal(btn.getAttribute('data-cand-id'), btn.hasAttribute('data-move-anyway-needed'));
+        });
+      });
+    }
+
+    async function handleVerifyDoc(candId, itemId) {
+      hidePageError();
+      try {
+        const response = await fetch(CANDIDATES_API_BASE + candId + '/doc-checklist/' + itemId + '/verify/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not verify document.');
+        checklistCache[candId] = await response.json();
+        renderCandidates();
+      } catch (err) {
+        showPageError(err.message);
+      }
+    }
+
+    let rejectingCandId = null;
+    let rejectingItemId = null;
+    const rejectModalOverlay = document.getElementById('reject-modal-overlay');
+    const rejectForm = document.getElementById('reject-form');
+
+    function openRejectModal(candId, itemId) {
+      rejectingCandId = candId;
+      rejectingItemId = itemId;
+      rejectForm.reset();
+      document.getElementById('reject-form-error').style.display = 'none';
+      rejectModalOverlay.classList.add('open');
+    }
+    document.getElementById('reject-cancel-button').addEventListener('click', function () {
+      rejectModalOverlay.classList.remove('open');
+    });
+    rejectModalOverlay.addEventListener('click', function (e) { if (e.target === rejectModalOverlay) rejectModalOverlay.classList.remove('open'); });
+
+    rejectForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      try {
+        const response = await fetch(CANDIDATES_API_BASE + rejectingCandId + '/doc-checklist/' + rejectingItemId + '/reject/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: document.getElementById('reject-reason').value })
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not reject document.');
+        checklistCache[rejectingCandId] = await response.json();
+        rejectModalOverlay.classList.remove('open');
+        renderCandidates();
+      } catch (err) {
+        const errorEl = document.getElementById('reject-form-error');
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    });
+
+    async function handleSendLink(candId, phone) {
+      hidePageError();
+      try {
+        const response = await fetch(CANDIDATES_API_BASE + candId + '/send-doc-link/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not generate upload link.');
+        const data = await response.json();
+        const uploadUrl = window.location.origin + '/doc-upload.html?candidate=' + encodeURIComponent(candId) + '&token=' + encodeURIComponent(data.upload_token);
+        const message = 'Hi, please upload your joining documents using this secure link: ' + uploadUrl;
+        const digitsOnly = (phone || '').replace(/\D/g, '');
+        window.open('https://wa.me/' + digitsOnly + '?text=' + encodeURIComponent(message), '_blank');
+      } catch (err) {
+        showPageError(err.message);
+      }
+    }
+
+    const reviewModalOverlay = document.getElementById('review-modal-overlay');
+    let reviewingCandId = null;
+    let reviewingMoveAnywayNeeded = false;
+
+    function openReviewModal(candId, moveAnywayNeeded) {
+      reviewingCandId = candId;
+      reviewingMoveAnywayNeeded = moveAnywayNeeded;
+      const cand = allCandidates.find(function (c) { return c.id === candId; });
+      const checklist = checklistCache[candId];
+      document.getElementById('review-form-error').style.display = 'none';
+      document.getElementById('review-summary').innerHTML =
+        '<div class="step-row"><span>Name</span><strong>' + escapeHtml(cand.name) + '</strong></div>' +
+        '<div class="step-row"><span>Role</span><strong>' + escapeHtml(cand.requisition_role || '&mdash;') + '</strong></div>' +
+        '<div class="step-row"><span>Branch</span><strong>' + escapeHtml(cand.requisition_branch || '&mdash;') + '</strong></div>' +
+        '<div class="step-row"><span>Documents verified</span><strong>' + checklist.verified_count + '/' + checklist.total_count + '</strong></div>' +
+        (moveAnywayNeeded ? '<div class="call" style="background: var(--amber-bg); color: var(--amber); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 13px;">Not every document is verified yet. Confirming will use "Move Anyway".</div>' : '');
+      reviewModalOverlay.classList.add('open');
+    }
+    document.getElementById('review-cancel-button').addEventListener('click', function () {
+      reviewModalOverlay.classList.remove('open');
+    });
+    reviewModalOverlay.addEventListener('click', function (e) { if (e.target === reviewModalOverlay) reviewModalOverlay.classList.remove('open'); });
+
+    document.getElementById('review-confirm-button').addEventListener('click', async function () {
+      try {
+        const response = await fetch(CANDIDATES_API_BASE + reviewingCandId + '/create-employee/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ move_anyway: reviewingMoveAnywayNeeded })
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not create employee.');
+        }
+        reviewModalOverlay.classList.remove('open');
+        loadCandidates();
+      } catch (err) {
+        const errorEl = document.getElementById('review-form-error');
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    });
+  </script>
+
+</body>
+</html>

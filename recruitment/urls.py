@@ -6,6 +6,7 @@ from recruitment.views import (
     CandidateListCreateView,
     CandidateStepDoneView,
     CandidateStepUndoView,
+    CandidateUnfreezeView,
     RequisitionApproveView,
     RequisitionDetailView,
     RequisitionListCreateView,
@@ -49,5 +50,10 @@ urlpatterns = [
         "candidates/<str:cand_id>/create-employee/",
         CandidateCreateEmployeeView.as_view(),
         name="candidate-create-employee",
+    ),
+    path(
+        "candidates/<str:cand_id>/unfreeze/",
+        CandidateUnfreezeView.as_view(),
+        name="candidate-unfreeze",
     ),
 ]

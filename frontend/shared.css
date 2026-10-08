@@ -301,6 +301,82 @@ body {
   transform: rotate(180deg);
 }
 
+.nav-bell-toggle {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.nav-bell-toggle:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.nav-bell-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 2px rgba(10, 8, 30, 0.9);
+}
+
+.top-nav.collapsed .nav-bell-toggle {
+  display: none;
+}
+
+.nav-bell-panel {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0 4px 10px;
+  padding: 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nav-bell-panel.open {
+  display: flex;
+}
+
+.nav-bell-item {
+  padding: 7px 8px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12.5px;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-bell-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.nav-bell-empty {
+  padding: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .nav-search {
   display: flex;
   align-items: center;

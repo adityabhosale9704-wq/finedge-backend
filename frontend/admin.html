@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=2">
-<script src="shared.js?v=2"></script>
+<link rel="stylesheet" href="shared.css?v=5">
+<script src="shared.js?v=5"></script>
 </head>
 <body>
 
@@ -55,6 +55,49 @@
     </div>
     <div class="form-actions">
       <button type="button" class="btn-secondary" id="add-step-button">+ Add Step</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <h2 style="margin-bottom: 0;">Policies</h2>
+      <button type="button" class="btn-primary" id="add-policy-button">+ Add Policy</button>
+    </div>
+    <div id="policy-acceptance-stat" class="message" style="padding: 8px 0; text-align: left;"></div>
+    <div id="policy-page-error" class="form-error"></div>
+    <div id="policies-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading policies...</div></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Letter Templates</h2>
+    <p style="color: var(--mut); margin-top: -8px; font-size: 13px;">Wording used by Letter Studio. Use <code>{{name}}</code>, <code>{{designation}}</code>, <code>{{department}}</code>, <code>{{branch}}</code>, <code>{{doj}}</code>, <code>{{ctc}}</code>, <code>{{probation}}</code> as placeholders &mdash; they are filled in automatically per employee.</p>
+    <div class="tabs" id="letter-template-tabs" style="margin: 12px 0 16px;"></div>
+    <div id="letter-template-page-error" class="form-error"></div>
+    <div id="letter-template-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading templates...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="policy-modal-overlay">
+    <div class="modal-card">
+      <h2 id="policy-modal-title">Add Policy</h2>
+      <div id="policy-form-error" class="form-error"></div>
+      <form id="policy-form">
+        <div class="field">
+          <label for="policy-title">Title</label>
+          <input type="text" id="policy-title" required>
+        </div>
+        <div class="field">
+          <label for="policy-body">Policy Text</label>
+          <textarea id="policy-body" rows="6"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="policy-submit-button">Add</button>
+          <button type="button" class="btn-secondary" id="policy-cancel-button">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -106,12 +149,25 @@
       <div id="branch-form-error" class="form-error"></div>
       <form id="branch-form">
         <div class="field">
+          <label for="branch-code">Branch Code</label>
+          <input type="text" id="branch-code" placeholder="e.g. PUN-HO" required>
+          <div class="small" id="branch-code-hint" style="color: var(--mut); font-size: 12px; margin-top: 4px; display: none;">Permanent once saved &mdash; cannot be changed later.</div>
+        </div>
+        <div class="field">
           <label for="branch-name">Name</label>
           <input type="text" id="branch-name" required>
         </div>
         <div class="field">
           <label for="branch-city">City</label>
           <input type="text" id="branch-city" required>
+        </div>
+        <div class="field">
+          <label for="branch-state">State</label>
+          <input type="text" id="branch-state" placeholder="e.g. Maharashtra">
+        </div>
+        <div class="field">
+          <label for="branch-manager">Branch Manager</label>
+          <input type="text" id="branch-manager" placeholder="e.g. Rohan Sharma">
         </div>
         <div class="field">
           <label for="branch-se-number">Shops &amp; Establishments No.</label>
@@ -163,6 +219,9 @@
     const BRANCHES_API_BASE = API_BASE + '/branches/';
     const ROLES_API_BASE = API_BASE + '/roles/';
     const WORKFLOW_TEMPLATES_API_BASE = API_BASE + '/workflow-templates/';
+    const POLICIES_API_BASE = API_BASE + '/policies/';
+    const POLICY_STATS_API_BASE = API_BASE + '/policies-acceptance-stats/';
+    const LETTER_TEMPLATES_API_BASE = API_BASE + '/letter-templates/';
 
     if (!token) {
       window.location.href = 'login.html';
@@ -170,6 +229,9 @@
       loadDepartments();
       loadBranches();
       loadWorkflowSteps();
+      loadPolicies();
+      loadPolicyStats();
+      loadLetterTemplates();
     }
 
 
@@ -434,8 +496,10 @@
 
       const rows = allBranches.map(function (branch) {
         return '<tr>' +
+          '<td>' + escapeHtml(branch.code) + '</td>' +
           '<td>' + escapeHtml(branch.name) + '</td>' +
-          '<td>' + escapeHtml(branch.city) + '</td>' +
+          '<td>' + escapeHtml(branch.city) + (branch.state ? ', ' + escapeHtml(branch.state) : '') + '</td>' +
+          '<td>' + (branch.manager_name ? escapeHtml(branch.manager_name) : '&mdash;') + '</td>' +
           '<td>' +
           '<button type="button" class="btn-edit btn-row edit-branch-btn" data-id="' + escapeHtml(branch.id) + '">Edit</button>' +
           '<button type="button" class="btn-delete btn-row delete-branch-btn" data-id="' + escapeHtml(branch.id) + '">Delete</button>' +
@@ -444,7 +508,7 @@
       }).join('');
 
       content.innerHTML =
-        '<table><thead><tr><th>Name</th><th>City</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+        '<table><thead><tr><th>Code</th><th>Name</th><th>City / State</th><th>Manager</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
 
       content.querySelectorAll('.edit-branch-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -484,10 +548,17 @@
 
     function openBranchModal(mode, branch) {
       editingBranchId = mode === 'edit' && branch ? branch.id : null;
-      branchModalTitle.textContent = mode === 'edit' ? 'Edit Branch' : 'Add Branch';
-      branchSubmitButton.textContent = mode === 'edit' ? 'Update' : 'Add';
+      const isEditing = mode === 'edit';
+      branchModalTitle.textContent = isEditing ? 'Edit Branch' : 'Add Branch';
+      branchSubmitButton.textContent = isEditing ? 'Update' : 'Add';
+      const codeInput = document.getElementById('branch-code');
+      codeInput.value = branch ? (branch.code || '') : '';
+      codeInput.disabled = isEditing;
+      document.getElementById('branch-code-hint').style.display = isEditing ? 'block' : 'none';
       document.getElementById('branch-name').value = branch ? (branch.name || '') : '';
       document.getElementById('branch-city').value = branch ? (branch.city || '') : '';
+      document.getElementById('branch-state').value = branch ? (branch.state || '') : '';
+      document.getElementById('branch-manager').value = branch ? (branch.manager_name || '') : '';
       document.getElementById('branch-se-number').value = branch ? (branch.s_and_e_number || '') : '';
       branchFormError.style.display = 'none';
       branchModalOverlay.classList.add('open');
@@ -496,6 +567,7 @@
     function closeBranchModal() {
       branchModalOverlay.classList.remove('open');
       branchForm.reset();
+      document.getElementById('branch-code').disabled = false;
       editingBranchId = null;
     }
 
@@ -504,12 +576,17 @@
       branchSubmitButton.disabled = true;
       branchFormError.style.display = 'none';
 
+      const isEditing = editingBranchId !== null;
       const payload = {
         name: document.getElementById('branch-name').value,
         city: document.getElementById('branch-city').value,
+        state: document.getElementById('branch-state').value,
+        manager_name: document.getElementById('branch-manager').value,
         s_and_e_number: document.getElementById('branch-se-number').value
       };
-      const isEditing = editingBranchId !== null;
+      if (!isEditing) {
+        payload.code = document.getElementById('branch-code').value;
+      }
       const url = isEditing ? BRANCHES_API_BASE + editingBranchId + '/' : BRANCHES_API_BASE;
       const method = isEditing ? 'PATCH' : 'POST';
 
@@ -1000,6 +1077,194 @@
         stepFormError.style.display = 'block';
       } finally {
         stepSubmitButton.disabled = false;
+      }
+    }
+
+    // ---------- Policies ----------
+
+    let allPolicies = [];
+
+    async function loadPolicies() {
+      const content = document.getElementById('policies-content');
+      try {
+        const response = await fetch(POLICIES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load policies.');
+        allPolicies = await response.json();
+        renderPolicies();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-policies-button">Retry</button></div>';
+        document.getElementById('retry-policies-button').addEventListener('click', loadPolicies);
+      }
+    }
+
+    async function loadPolicyStats() {
+      const el = document.getElementById('policy-acceptance-stat');
+      try {
+        const response = await fetch(POLICY_STATS_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('failed');
+        const stats = await response.json();
+        el.textContent = stats.accepted + ' of ' + stats.total + ' active employees have accepted current policies (' + stats.percentage + '%).';
+      } catch (err) {
+        el.textContent = '';
+      }
+    }
+
+    function renderPolicies() {
+      const content = document.getElementById('policies-content');
+      if (allPolicies.length === 0) {
+        content.innerHTML = '<div class="message">No policies added yet.</div>';
+        return;
+      }
+      content.innerHTML = allPolicies.map(function (p) {
+        return '<div class="step-row" style="align-items: flex-start;">' +
+          '<div class="step-info">' +
+          '<div class="step-name">' + escapeHtml(p.title) + '</div>' +
+          '<div class="step-meta">' + escapeHtml(p.body).slice(0, 160) + (p.body.length > 160 ? '…' : '') + '</div>' +
+          '</div>' +
+          '<button type="button" class="btn-edit btn-row edit-policy-btn" data-id="' + escapeHtml(p.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-policy-btn" data-id="' + escapeHtml(p.id) + '">Delete</button>' +
+          '</div>';
+      }).join('');
+
+      content.querySelectorAll('.edit-policy-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const policy = allPolicies.find(function (p) { return p.id === btn.getAttribute('data-id'); });
+          if (policy) openPolicyModal('edit', policy);
+        });
+      });
+      content.querySelectorAll('.delete-policy-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleDeletePolicy(btn.getAttribute('data-id')); });
+      });
+    }
+
+    async function handleDeletePolicy(id) {
+      if (!confirm('Delete this policy?')) return;
+      const response = await fetch(POLICIES_API_BASE + id + '/', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+      if (handleUnauthorized(response)) return;
+      loadPolicies();
+    }
+
+    const policyModalOverlay = document.getElementById('policy-modal-overlay');
+    const policyForm = document.getElementById('policy-form');
+    let editingPolicyId = null;
+
+    document.getElementById('add-policy-button').addEventListener('click', function () { openPolicyModal('add', null); });
+    document.getElementById('policy-cancel-button').addEventListener('click', closePolicyModal);
+    policyModalOverlay.addEventListener('click', function (e) { if (e.target === policyModalOverlay) closePolicyModal(); });
+    policyForm.addEventListener('submit', handlePolicySubmit);
+
+    function openPolicyModal(mode, policy) {
+      editingPolicyId = mode === 'edit' && policy ? policy.id : null;
+      document.getElementById('policy-modal-title').textContent = mode === 'edit' ? 'Edit Policy' : 'Add Policy';
+      document.getElementById('policy-submit-button').textContent = mode === 'edit' ? 'Update' : 'Add';
+      document.getElementById('policy-title').value = policy ? (policy.title || '') : '';
+      document.getElementById('policy-body').value = policy ? (policy.body || '') : '';
+      document.getElementById('policy-form-error').style.display = 'none';
+      policyModalOverlay.classList.add('open');
+    }
+    function closePolicyModal() {
+      policyModalOverlay.classList.remove('open');
+      policyForm.reset();
+      editingPolicyId = null;
+    }
+    async function handlePolicySubmit(event) {
+      event.preventDefault();
+      const payload = {
+        title: document.getElementById('policy-title').value,
+        body: document.getElementById('policy-body').value
+      };
+      const isEditing = editingPolicyId !== null;
+      const url = isEditing ? POLICIES_API_BASE + editingPolicyId + '/' : POLICIES_API_BASE;
+      try {
+        const response = await fetch(url, {
+          method: isEditing ? 'PATCH' : 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not save policy.');
+        closePolicyModal();
+        loadPolicies();
+      } catch (err) {
+        const errorEl = document.getElementById('policy-form-error');
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    }
+
+    // ---------- Letter Templates ----------
+
+    let allLetterTemplates = [];
+    let currentLetterTemplateType = null;
+
+    async function loadLetterTemplates() {
+      const content = document.getElementById('letter-template-content');
+      try {
+        const response = await fetch(LETTER_TEMPLATES_API_BASE, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Failed to load letter templates.');
+        allLetterTemplates = await response.json();
+        if (!currentLetterTemplateType && allLetterTemplates.length) {
+          currentLetterTemplateType = allLetterTemplates[0].letter_type;
+        }
+        renderLetterTemplateTabs();
+        renderLetterTemplateEditor();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div><button type="button" class="btn-secondary" id="retry-templates-button">Retry</button></div>';
+        document.getElementById('retry-templates-button').addEventListener('click', loadLetterTemplates);
+      }
+    }
+
+    function renderLetterTemplateTabs() {
+      const tabsEl = document.getElementById('letter-template-tabs');
+      tabsEl.innerHTML = allLetterTemplates.map(function (t) {
+        return '<button type="button" class="tab' + (t.letter_type === currentLetterTemplateType ? ' active' : '') + '" data-type="' + escapeHtml(t.letter_type) + '">' + escapeHtml(t.letter_type) + '</button>';
+      }).join('');
+      tabsEl.querySelectorAll('.tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          currentLetterTemplateType = tab.getAttribute('data-type');
+          renderLetterTemplateTabs();
+          renderLetterTemplateEditor();
+        });
+      });
+    }
+
+    function renderLetterTemplateEditor() {
+      const content = document.getElementById('letter-template-content');
+      const template = allLetterTemplates.find(function (t) { return t.letter_type === currentLetterTemplateType; });
+      if (!template) {
+        content.innerHTML = '<div class="message">No template selected.</div>';
+        return;
+      }
+      content.innerHTML =
+        '<div class="field"><label for="template-subject">Subject</label><input type="text" id="template-subject" value="' + escapeHtml(template.subject) + '"></div>' +
+        '<div class="field"><label for="template-body">Body</label><textarea id="template-body" rows="10">' + escapeHtml(template.body) + '</textarea></div>' +
+        '<div class="form-actions"><button type="button" class="btn-primary" id="save-template-button">Save Template</button></div>';
+
+      document.getElementById('save-template-button').addEventListener('click', handleSaveLetterTemplate);
+    }
+
+    async function handleSaveLetterTemplate() {
+      const payload = {
+        subject: document.getElementById('template-subject').value,
+        body: document.getElementById('template-body').value
+      };
+      const errorEl = document.getElementById('letter-template-page-error');
+      errorEl.style.display = 'none';
+      try {
+        const response = await fetch(LETTER_TEMPLATES_API_BASE + encodeURIComponent(currentLetterTemplateType) + '/', {
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (handleUnauthorized(response)) return;
+        if (!response.ok) throw new Error('Could not save template.');
+        await loadLetterTemplates();
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
       }
     }
   </script>

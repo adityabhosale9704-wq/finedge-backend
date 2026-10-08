@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.utils import timezone
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -29,6 +31,21 @@ def serialize(doc):
     for key in ("period_start", "period_end"):
         if key in doc and hasattr(doc[key], "isoformat"):
             doc[key] = doc[key].isoformat()
+    return doc
+
+
+def serialize_suggestion(doc):
+    doc = serialize(doc)
+    submitted_at = doc.get("submitted_at")
+    if submitted_at:
+        response_due_at = timezone.datetime.fromisoformat(submitted_at) + timedelta(hours=48)
+        doc["response_due_at"] = response_due_at.isoformat()
+        doc["response_overdue"] = (
+            doc.get("status") != "Actioned" and timezone.now() > response_due_at
+        )
+    else:
+        doc["response_due_at"] = None
+        doc["response_overdue"] = False
     return doc
 
 
@@ -88,7 +105,7 @@ class SuggestionListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response([serialize(s) for s in get_suggestions_collection().find()])
+        return Response([serialize_suggestion(s) for s in get_suggestions_collection().find()])
 
     def post(self, request):
         serializer = SuggestionSerializer(data=request.data)
@@ -98,7 +115,7 @@ class SuggestionListCreateView(APIView):
 
         result = get_suggestions_collection().insert_one(data)
         created = get_suggestions_collection().find_one({"_id": result.inserted_id})
-        return Response(serialize(created), status=status.HTTP_201_CREATED)
+        return Response(serialize_suggestion(created), status=status.HTTP_201_CREATED)
 
 
 class SuggestionDetailView(APIView):
@@ -122,7 +139,7 @@ class SuggestionDetailView(APIView):
             )
 
         updated = get_suggestions_collection().find_one({"_id": suggestion["_id"]})
-        return Response(serialize(updated))
+        return Response(serialize_suggestion(updated))
 
     def delete(self, request, pk):
         suggestion = get_by_pk(get_suggestions_collection(), pk)

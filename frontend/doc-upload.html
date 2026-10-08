@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Upload</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
+<link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+<link rel="stylesheet" href="shared.css?v=5">
+<style>
+  body { padding-left: 16px !important; }
+  .upload-shell { max-width: 620px; margin: 24px auto; }
+  .doc-category-title { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 13px; color: var(--navy); margin: 16px 0 6px; }
+  .doc-upload-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line-2); font-size: 14px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+  <div class="upload-shell">
+    <div class="container" id="main-container">
+      <div class="loading-state"><div class="spinner"></div><div>Loading your checklist...</div></div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const candidateId = params.get('candidate');
+    const uploadToken = params.get('token');
+    // This page is public (no login) so it doesn't load shared.js — keep this
+    // in sync with the API_BASE value at the top of shared.js by hand.
+    const API_BASE_PUBLIC = 'http://16.170.98.44/api/v1';
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    let checklist = null;
+
+    async function loadChecklist() {
+      const container = document.getElementById('main-container');
+      if (!candidateId || !uploadToken) {
+        container.innerHTML = '<div class="error-state"><div>This link is missing information. Please ask HR to resend it.</div></div>';
+        return;
+      }
+      try {
+        const response = await fetch(API_BASE_PUBLIC + '/candidates/' + encodeURIComponent(candidateId) + '/public-checklist/?token=' + encodeURIComponent(uploadToken));
+        if (!response.ok) {
+          throw new Error('This link is invalid or has expired. Please ask HR to resend it.');
+        }
+        checklist = await response.json();
+        render();
+      } catch (err) {
+        container.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message) + '</div></div>';
+      }
+    }
+
+    function render() {
+      const container = document.getElementById('main-container');
+      const categories = {};
+      checklist.doc_checklist.forEach(function (item) {
+        categories[item.category] = categories[item.category] || [];
+        categories[item.category].push(item);
+      });
+
+      const categoriesHtml = Object.keys(categories).map(function (cat) {
+        const itemsHtml = categories[cat].map(function (item) {
+          const statusLabel = item.status === 'Verified' ? '<span class="chip chip-green">Verified</span>'
+            : item.status === 'Rejected' ? '<span class="chip chip-red">Rejected &mdash; re-upload</span>'
+            : (item.file_url ? '<span class="chip chip-amber">Uploaded, awaiting review</span>' : '<span class="chip chip-gray">Not uploaded</span>');
+          return '<div class="doc-upload-row">' +
+            '<span>' + escapeHtml(item.doc_name) + '</span>' +
+            '<span style="display:flex; align-items:center; gap:8px;">' + statusLabel +
+            '<input type="file" class="doc-file-input" data-item-id="' + escapeHtml(item.id) + '" style="max-width: 160px; font-size: 12px;"></span>' +
+            '</div>';
+        }).join('');
+        return '<div class="doc-category-title">' + escapeHtml(cat) + '</div>' + itemsHtml;
+      }).join('');
+
+      const additional = checklist.additional_docs;
+      const maritalOptions = ['', 'Married', 'Unmarried'].map(function (opt) {
+        return '<option value="' + opt + '"' + (additional.marital_status === opt ? ' selected' : '') + '>' + (opt || 'Select') + '</option>';
+      }).join('');
+
+      const nomineeDocNames = additional.marital_status === 'Married'
+        ? ['Spouse Aadhaar', 'Spouse PAN', 'Children Aadhaar', 'Children PAN']
+        : additional.marital_status === 'Unmarried'
+        ? ["Mother's Aadhaar", "Mother's PAN", "Father's Aadhaar", "Father's PAN"]
+        : [];
+
+      const nomineeHtml = nomineeDocNames.map(function (docName) {
+        const existing = (additional.nominee_docs || []).find(function (n) { return n.doc_name === docName; });
+        const statusLabel = existing && existing.file_url ? '<span class="chip chip-green">Uploaded</span>' : '<span class="chip chip-gray">Not uploaded</span>';
+        return '<div class="doc-upload-row">' +
+          '<span>' + escapeHtml(docName) + '</span>' +
+          '<span style="display:flex; align-items:center; gap:8px;">' + statusLabel +
+          '<input type="file" class="nominee-file-input" data-doc-name="' + escapeHtml(docName) + '" style="max-width: 160px; font-size: 12px;"></span>' +
+          '</div>';
+      }).join('');
+
+      container.innerHTML =
+        '<h1>Document Upload</h1>' +
+        '<p style="color: var(--mut); margin-top: -8px;">Hi ' + escapeHtml(checklist.candidate_name) + ', please upload the documents below.</p>' +
+        '<div id="upload-message" class="success-message"></div>' +
+        categoriesHtml +
+        '<div class="doc-category-title">Additional Information</div>' +
+        '<div class="field"><label for="uan-input">UAN Number</label><input type="text" id="uan-input" value="' + escapeHtml(additional.uan_number || '') + '"></div>' +
+        '<div class="field"><label for="marital-select">Marital Status</label><select id="marital-select">' + maritalOptions + '</select></div>' +
+        '<div class="form-actions"><button type="button" class="btn-secondary" id="save-info-button">Save Info</button></div>' +
+        (nomineeDocNames.length ? '<div class="doc-category-title">Nominee Documents</div>' + nomineeHtml : '');
+
+      container.querySelectorAll('.doc-file-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+          if (input.files[0]) uploadFile(input.files[0], { item_id: input.getAttribute('data-item-id') });
+        });
+      });
+      container.querySelectorAll('.nominee-file-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+          if (input.files[0]) uploadFile(input.files[0], { nominee_doc_name: input.getAttribute('data-doc-name') });
+        });
+      });
+      document.getElementById('save-info-button').addEventListener('click', saveAdditionalInfo);
+    }
+
+    async function uploadFile(file, extraFields) {
+      const formData = new FormData();
+      formData.append('file', file);
+      Object.keys(extraFields).forEach(function (key) { formData.append(key, extraFields[key]); });
+
+      try {
+        const response = await fetch(API_BASE_PUBLIC + '/candidates/' + encodeURIComponent(candidateId) + '/public-upload/?token=' + encodeURIComponent(uploadToken), {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) throw new Error('Upload failed. Please try again.');
+        checklist = await response.json();
+        render();
+        const msg = document.getElementById('upload-message');
+        if (msg) { msg.textContent = 'Uploaded successfully.'; msg.style.display = 'block'; }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function saveAdditionalInfo() {
+      const payload = {
+        uan_number: document.getElementById('uan-input').value,
+        marital_status: document.getElementById('marital-select').value
+      };
+      try {
+        const response = await fetch(API_BASE_PUBLIC + '/candidates/' + encodeURIComponent(candidateId) + '/public-additional-info/?token=' + encodeURIComponent(uploadToken), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error('Could not save. Please try again.');
+        checklist = await response.json();
+        render();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    loadChecklist();
+  </script>
+
+</body>
+</html>

@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.authentication import JWTAuthentication
+from recruitment.mongo import get_candidates_collection
 from recruitment.views import get_candidate_by_id
 from reference_checks.mongo import get_reference_checks_collection
 from reference_checks.serializers import (
@@ -69,6 +70,12 @@ class ReferenceCheckDetailView(APIView):
 
         if data:
             get_reference_checks_collection().update_one({"_id": check["_id"]}, {"$set": data})
+
+        if data.get("status") == "Discrepancy":
+            get_candidates_collection().update_one(
+                {"id": check["candidate_id"]},
+                {"$set": {"frozen": True, "frozen_reason": "Reference check discrepancy"}},
+            )
 
         updated = get_reference_checks_collection().find_one({"_id": check["_id"]})
         return Response(serialize(updated))
