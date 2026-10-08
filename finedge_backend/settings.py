@@ -89,6 +89,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # First in the list = wraps every other middleware + the view itself,
+    # so its timer covers the full request (perf/speed-up diagnostics).
+    'finedge_backend.timing_middleware.RequestTimingMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -180,5 +183,26 @@ MEDIA_ROOT = BASE_DIR / 'media'
 MAILERS = {
     'default': {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+    },
+}
+
+
+# Logging — only adds the perf/speed-up timing logger to stdout, which
+# systemd/journalctl already captures from Gunicorn. Everything else keeps
+# Django's own defaults (disable_existing_loggers=False).
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'finedge.timing': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
