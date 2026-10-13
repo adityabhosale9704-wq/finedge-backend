@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=13">
-<script src="shared.js?v=13"></script>
+<link rel="stylesheet" href="shared.css?v=14">
+<script src="shared.js?v=14"></script>
 <style>
   .doc-category-title {
     font-family: 'Archivo', sans-serif;
@@ -149,14 +149,19 @@
       }
     }
 
+    const checklistErrors = {};
+
     async function loadChecklistFor(candId) {
+      delete checklistErrors[candId];
       try {
         const response = await fetch(CANDIDATES_API_BASE + candId + '/doc-checklist/', { headers: { 'Authorization': 'Bearer ' + token } });
         if (response.ok) {
           checklistCache[candId] = await response.json();
+        } else {
+          checklistErrors[candId] = 'The document checklist could not be loaded (server returned ' + response.status + ').';
         }
       } catch (err) {
-        // Non-fatal — that card just won't show its checklist.
+        checklistErrors[candId] = 'The document checklist could not be loaded. Check your connection and try again.';
       }
     }
 
@@ -170,9 +175,10 @@
       content.innerHTML = allCandidates.map(function (cand) {
         const checklist = checklistCache[cand.id];
         const isExpanded = expandedIds.has(cand.id);
-        const verifiedCount = checklist ? checklist.required_uploaded_count : 0;
-        const totalCount = checklist ? checklist.required_total_count : 0;
-        const allVerified = checklist ? checklist.all_uploaded : false;
+        const requiredItems = checklist ? (checklist.doc_checklist || []).filter(function (i) { return i.required !== false; }) : [];
+        const totalCount = requiredItems.length;
+        const verifiedCount = requiredItems.filter(function (i) { return i.file_url && i.status !== 'Rejected'; }).length;
+        const allVerified = totalCount > 0 && verifiedCount === totalCount;
 
         let bodyHtml = '';
         if (isExpanded && checklist) {
@@ -223,12 +229,18 @@
             (nomineeHtml || '<div class="message" style="padding: 8px 0;">No nominee documents submitted yet.</div>') +
             '<div class="form-actions" style="margin-top: 14px;">' +
             '<button type="button" class="btn-secondary send-link-btn" data-cand-id="' + escapeHtml(cand.id) + '" data-phone="' + escapeHtml(cand.phone || '') + '">Send Link</button>' +
-            '<button type="button" class="btn-primary extract-review-btn" data-cand-id="' + escapeHtml(cand.id) + '"' + (checklist.ready_for_onboarding ? '' : ' disabled') + '>Move to Onboarding &rarr;</button>' +
+            '<button type="button" class="btn-primary extract-review-btn" data-cand-id="' + escapeHtml(cand.id) + '"' + (checklist.ready_for_onboarding === true ? '' : ' disabled') + '>Move to Onboarding &rarr;</button>' +
             '</div>' +
-            (checklist.ready_for_onboarding ? '' : '<div class="step-meta" style="margin-top: 8px;">' + escapeHtml(checklist.onboarding_blocked_reason || '') + '</div>') +
+            (checklist.ready_for_onboarding === true ? '' : '<div class="step-meta" style="margin-top: 8px;">' + escapeHtml(checklist.onboarding_blocked_reason || (checklist.ready_for_onboarding === undefined ? 'The server needs to be updated to the latest backend before candidates can be moved to Onboarding.' : '')) + '</div>') +
             '</div>';
+        } else if (isExpanded) {
+          bodyHtml = '<div class="form-error" style="display: block; margin-top: 12px;">' +
+            escapeHtml(checklistErrors[cand.id] || 'No document checklist was found for this candidate.') +
+            ' <button type="button" class="btn-secondary btn-row retry-checklist-btn" data-cand-id="' + escapeHtml(cand.id) + '" style="margin-left: 8px;">Retry</button></div>';
         } else {
-          bodyHtml = '<div class="progress-label" style="margin-top: 8px;">' + verifiedCount + '/' + totalCount + ' required documents uploaded &mdash; click to expand</div>';
+          bodyHtml = '<div class="progress-label" style="margin-top: 8px;">' + verifiedCount + '/' + totalCount + ' required documents uploaded</div>' +
+            '<div class="form-actions" style="margin-top: 10px;">' +
+            '<button type="button" class="btn-primary open-docs-btn" data-cand-id="' + escapeHtml(cand.id) + '">Upload Documents</button></div>';
         }
 
         return '<div class="candidate-dp-card">' +
@@ -252,6 +264,22 @@
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
           handleVerifyDoc(btn.getAttribute('data-cand-id'), btn.getAttribute('data-item-id'));
+        });
+      });
+
+      content.querySelectorAll('.open-docs-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          expandedIds.add(btn.getAttribute('data-cand-id'));
+          renderCandidates();
+        });
+      });
+
+      content.querySelectorAll('.retry-checklist-btn').forEach(function (btn) {
+        btn.addEventListener('click', async function (e) {
+          e.stopPropagation();
+          await loadChecklistFor(btn.getAttribute('data-cand-id'));
+          renderCandidates();
         });
       });
 
