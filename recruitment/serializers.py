@@ -60,3 +60,16 @@ class CandidateUpdateSerializer(serializers.Serializer):
     source = serializers.CharField(required=False, allow_blank=True)
     experience = serializers.CharField(required=False, allow_blank=True)
     stage = serializers.ChoiceField(choices=CANDIDATE_STAGE_CHOICES, required=False)
+
+
+CANDIDATE_OUTCOME_CHOICES = ["Selected", "Rejected", "Withdrawn"]
+STEP_STATUS_CHOICES = ["Pending", "In Progress", "Completed"]
+
+
+class CandidateOutcomeSerializer(serializers.Serializer):
+    outcome = serializers.ChoiceField(choices=CANDIDATE_OUTCOME_CHOICES)
+
+
+class StepStatusSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=STEP_STATUS_CHOICES)
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)

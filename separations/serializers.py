@@ -10,6 +10,26 @@ class SeparationCreateSerializer(serializers.Serializer):
     notice_period_days = serializers.IntegerField(required=False, default=30, min_value=0)
     reason = serializers.CharField(required=False, allow_blank=True, default="")
 
+    def validate(self, attrs):
+        if attrs["last_working_day"] < attrs["resignation_date"]:
+            raise serializers.ValidationError(
+                {"last_working_day": "Last working day cannot be before the resignation date."}
+            )
+        return attrs
+
+
+class InitiateExitSerializer(serializers.Serializer):
+    resignation_date = serializers.DateField()
+    last_working_day = serializers.DateField()
+    reason = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        if attrs["last_working_day"] < attrs["resignation_date"]:
+            raise serializers.ValidationError(
+                {"last_working_day": "Last working day cannot be before the resignation date."}
+            )
+        return attrs
+
 
 class SeparationUpdateSerializer(serializers.Serializer):
     relieving_letter_status = serializers.ChoiceField(

@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=5">
-<script src="shared.js?v=5"></script>
+<link rel="stylesheet" href="shared.css?v=13">
+<script src="shared.js?v=13"></script>
 <style>
   #list-view h1 {
     margin-bottom: 20px;
@@ -230,8 +230,11 @@
 
   <div class="top-nav" id="app-sidebar"></div>
 
-  <div class="container">
-    <h2 id="form-title">Add Employee</h2>
+  <div class="container" id="form-view" style="display: none;">
+    <div class="section-heading-row">
+      <h2 id="form-title" style="margin-bottom: 0;">Add Employee</h2>
+      <button type="button" class="btn-secondary" id="form-back-button">&larr; Back</button>
+    </div>
     <div id="form-error" class="form-error"></div>
     <form id="employee-form">
       <div class="form-grid">
@@ -340,7 +343,10 @@
     <div class="container">
       <div class="page-header-row">
         <h1 style="margin-bottom: 0;">Employees</h1>
-        <div id="global-branch-filter-container"></div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="global-branch-filter-container"></div>
+          <button type="button" class="btn-primary" id="add-employee-button">+ Add Employee</button>
+        </div>
       </div>
       <div class="toolbar">
         <div class="tabs">
@@ -368,6 +374,8 @@
         <button type="button" class="btn-secondary" id="profile-back-button">&larr; Back</button>
         <button type="button" class="btn-secondary" id="profile-print-button">&#128424; Print</button>
         <button type="button" class="btn-secondary" id="profile-edit-button">&#9998; Edit</button>
+        <button type="button" class="btn-secondary" id="profile-exit-button">Initiate Exit Process</button>
+        <button type="button" class="btn-delete" id="profile-delete-button">Delete</button>
       </div>
     </div>
 
@@ -401,9 +409,37 @@
       <button type="button" class="tab" id="ptab-statutory" data-ptab="statutory">Statutory &amp; Bank</button>
       <button type="button" class="tab" id="ptab-facilities" data-ptab="facilities">Facilities &amp; Assets</button>
       <button type="button" class="tab" id="ptab-letters" data-ptab="letters">Letters</button>
+      <button type="button" class="tab" id="ptab-history" data-ptab="history">History</button>
     </div>
 
     <div id="profile-tab-content"></div>
+  </div>
+
+  <div class="modal-overlay" id="exit-modal-overlay">
+    <div class="modal-card">
+      <h2>Initiate Exit Process</h2>
+      <p id="exit-modal-employee" style="font-size: 14px; margin: 0 0 12px;"></p>
+      <div id="exit-form-error" class="form-error"></div>
+      <form id="exit-form">
+        <div class="field">
+          <label for="exit-resignation-date">Resignation Date</label>
+          <input type="date" id="exit-resignation-date" required>
+        </div>
+        <div class="field">
+          <label for="exit-last-working-day">Proposed Last Working Day</label>
+          <input type="date" id="exit-last-working-day" required>
+        </div>
+        <div class="field">
+          <label for="exit-reason">Reason</label>
+          <input type="text" id="exit-reason" placeholder="e.g. Personal, Better opportunity">
+        </div>
+        <p style="font-size: 12.5px; color: var(--mut);">The employee stays in the Employee List and keeps access. They become a Leaver only when every required exit step is completed in Exit &amp; Separation.</p>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="exit-submit-button">Confirm Exit</button>
+          <button type="button" class="btn-secondary" id="exit-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <div class="modal-overlay" id="family-modal-overlay">
@@ -515,9 +551,14 @@
     if (!token) {
       window.location.href = 'login.html';
     } else {
-      loadEmployees();
-      loadDepartmentAndBranchOptions();
-      initGlobalBranchFilter('global-branch-filter-container', function () { loadEmployees(); });
+      // Start loading only after the whole script has been evaluated: the loaders use
+      // consts declared further down (error banners, state), which would otherwise be
+      // in their temporal dead zone and throw before anything renders.
+      document.addEventListener('DOMContentLoaded', function () {
+        loadEmployees();
+        loadDepartmentAndBranchOptions();
+        initGlobalBranchFilter('global-branch-filter-container', function () { loadEmployees(); });
+      });
     }
 
 
@@ -563,6 +604,20 @@
 
     const listView = document.getElementById('list-view');
     const profileView = document.getElementById('profile-view');
+    const formView = document.getElementById('form-view');
+
+    function showView(name) {
+      listView.style.display = name === 'list' ? 'block' : 'none';
+      profileView.style.display = name === 'profile' ? 'block' : 'none';
+      formView.style.display = name === 'form' ? 'block' : 'none';
+    }
+
+    document.getElementById('add-employee-button').addEventListener('click', function () {
+      exitEditMode();
+      showView('form');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('form-back-button').addEventListener('click', exitEditMode);
 
     let editingId = null;
     let allEmployees = [];
@@ -664,24 +719,18 @@
           ? 'status-active'
           : (String(emp.status || '').toLowerCase() === 'inactive' ? 'status-inactive' : 'status-other');
 
-        const bloodGroup = emp.blood_group ? escapeHtml(emp.blood_group) : '&mdash;';
-        const docsCount = emp.docs_count !== undefined && emp.docs_count !== null ? emp.docs_count : 0;
-        const kraHtml = (emp.kra_score !== undefined && emp.kra_score !== null)
-          ? '<span class="badge badge-kra">' + escapeHtml(emp.kra_score) + '/100</span>'
-          : '<span class="badge badge-new">New</span>';
-
         return '<tr class="clickable-row" data-row-id="' + escapeHtml(emp.id) + '">' +
           '<td>' + escapeHtml(emp.name) + '</td>' +
           '<td>' + escapeHtml(emp.department) + '</td>' +
           '<td>' + escapeHtml(emp.designation) + '</td>' +
           '<td>' + escapeHtml(emp.branch) + '</td>' +
           '<td><span class="status ' + statusClass + '">' + escapeHtml(emp.status) + '</span></td>' +
-          '<td>' + bloodGroup + '</td>' +
-          '<td><span class="badge badge-docs">' + escapeHtml(docsCount) + '</span></td>' +
-          '<td>' + kraHtml + '</td>' +
           '<td>' +
+          '<button type="button" class="btn-view btn-row view-btn" data-id="' + escapeHtml(emp.id) + '">View Details</button>' +
           '<button type="button" class="btn-edit btn-row" data-id="' + escapeHtml(emp.id) + '">Edit</button>' +
-          '<button type="button" class="btn-delete btn-row" data-id="' + escapeHtml(emp.id) + '">Delete</button>' +
+          (isActiveStatus(emp.status)
+            ? '<button type="button" class="btn-delete btn-row exit-btn" data-id="' + escapeHtml(emp.id) + '">Initiate Exit Process</button>'
+            : '') +
           '</td>' +
           '</tr>';
       }).join('');
@@ -690,7 +739,7 @@
         '<table>' +
         '<thead><tr>' +
         '<th>Name</th><th>Department</th><th>Designation</th><th>Branch</th><th>Status</th>' +
-        '<th>Blood Group</th><th>Docs</th><th>KRA</th><th>Actions</th>' +
+        '<th>Actions</th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
         '</table>';
@@ -702,10 +751,17 @@
         });
       });
 
-      content.querySelectorAll('.btn-delete').forEach(function (btn) {
+      content.querySelectorAll('.view-btn').forEach(function (btn) {
         btn.addEventListener('click', function (event) {
           event.stopPropagation();
-          handleDelete(btn.getAttribute('data-id'));
+          openProfile(btn.getAttribute('data-id'));
+        });
+      });
+
+      content.querySelectorAll('.exit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          openExitModal(btn.getAttribute('data-id'));
         });
       });
 
@@ -755,6 +811,7 @@
       cancelEditButton.style.display = 'inline-block';
 
       fillEmployeeForm(employee);
+      showView('form');
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -766,6 +823,7 @@
       cancelEditButton.style.display = 'none';
       form.reset();
       hideFormError();
+      showView(currentProfileEmployee ? 'profile' : 'list');
     }
 
     async function handleSubmit(event) {
@@ -895,6 +953,87 @@
       return div.innerHTML;
     }
 
+    // ---------- Initiate exit ----------
+
+    const exitModalOverlay = document.getElementById('exit-modal-overlay');
+    const exitForm = document.getElementById('exit-form');
+    const exitFormError = document.getElementById('exit-form-error');
+    const exitSubmitButton = document.getElementById('exit-submit-button');
+    let exitEmployeeId = null;
+
+    document.getElementById('exit-cancel-button').addEventListener('click', closeExitModal);
+    exitModalOverlay.addEventListener('click', function (event) {
+      if (event.target === exitModalOverlay) {
+        closeExitModal();
+      }
+    });
+    exitForm.addEventListener('submit', handleExitSubmit);
+
+    function openExitModal(id) {
+      const employee = allEmployees.find(function (e) { return e.id === id; })
+        || (currentProfileEmployee && currentProfileEmployee.id === id ? currentProfileEmployee : null);
+      if (!employee) {
+        return;
+      }
+      exitEmployeeId = id;
+      document.getElementById('exit-modal-employee').textContent = employee.name + ' · ' + (employee.designation || '');
+      exitForm.reset();
+      document.getElementById('exit-resignation-date').value = new Date().toISOString().slice(0, 10);
+      exitFormError.style.display = 'none';
+      exitModalOverlay.classList.add('open');
+    }
+
+    function closeExitModal() {
+      exitModalOverlay.classList.remove('open');
+      exitEmployeeId = null;
+    }
+
+    async function handleExitSubmit(event) {
+      event.preventDefault();
+      exitFormError.style.display = 'none';
+
+      const resignationDate = document.getElementById('exit-resignation-date').value;
+      const lastWorkingDay = document.getElementById('exit-last-working-day').value;
+      if (lastWorkingDay < resignationDate) {
+        exitFormError.textContent = 'The last working day cannot be before the resignation date.';
+        exitFormError.style.display = 'block';
+        return;
+      }
+
+      exitSubmitButton.disabled = true;
+      try {
+        const response = await fetch(EMPLOYEES_API_BASE + exitEmployeeId + '/initiate-exit/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            resignation_date: resignationDate,
+            last_working_day: lastWorkingDay,
+            reason: document.getElementById('exit-reason').value
+          })
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const data = await response.json().catch(function () { return {}; });
+        if (!response.ok) {
+          const detail = data.detail || Object.keys(data).map(function (k) { return k + ': ' + [].concat(data[k]).join(' '); }).join(' | ');
+          throw new Error(detail || 'Could not initiate the exit process.');
+        }
+
+        closeExitModal();
+        showToast(data.message || 'Exit process initiated successfully.', 'success');
+      } catch (err) {
+        exitFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        exitFormError.style.display = 'block';
+      } finally {
+        exitSubmitButton.disabled = false;
+      }
+    }
+
     // ---------- Profile view ----------
 
     let currentProfileEmployee = null;
@@ -908,6 +1047,16 @@
     profileBackButton.addEventListener('click', closeProfile);
     profilePrintButton.addEventListener('click', function () {
       window.print();
+    });
+    document.getElementById('profile-exit-button').addEventListener('click', function () {
+      if (currentProfileEmployee) {
+        openExitModal(currentProfileEmployee.id);
+      }
+    });
+    document.getElementById('profile-delete-button').addEventListener('click', function () {
+      if (currentProfileEmployee) {
+        handleDelete(currentProfileEmployee.id);
+      }
     });
     profileEditButton.addEventListener('click', function () {
       if (currentProfileEmployee) {
@@ -1064,6 +1213,12 @@
     function renderProfileTabContent() {
       const container = document.getElementById('profile-tab-content');
       if (!currentProfileEmployee) {
+        return;
+      }
+
+      if (currentProfileTab === 'history') {
+        container.innerHTML = '<div class="audit-box" id="employee-audit-box" style="margin-top: 0;"></div>';
+        renderAuditHistory(document.getElementById('employee-audit-box'), 'employee', currentProfileEmployee.id);
         return;
       }
 

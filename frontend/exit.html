@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=5">
-<script src="shared.js?v=5"></script>
+<link rel="stylesheet" href="shared.css?v=13">
+<script src="shared.js?v=13"></script>
 <style>
   .sep-card {
     border: 1px solid var(--line);
@@ -120,8 +120,13 @@
     if (!token) {
       window.location.href = 'login.html';
     } else {
-      loadSeparations();
-      initGlobalBranchFilter('global-branch-filter-container', function () { loadSeparations(); });
+      // Start loading only after the whole script has been evaluated: the loaders use
+      // consts declared further down (error banners, state), which would otherwise be
+      // in their temporal dead zone and throw before anything renders.
+      document.addEventListener('DOMContentLoaded', function () {
+        loadSeparations();
+        initGlobalBranchFilter('global-branch-filter-container', function () { loadSeparations(); });
+      });
     }
 
     let allSeparations = [];
@@ -189,24 +194,28 @@
       const steps = sep.steps || [];
       const doneCount = sep.steps_done_count || 0;
       const totalCount = sep.steps_total_count || steps.length;
-      const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+      const pct = (sep.progress_pct !== undefined) ? sep.progress_pct : (totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0);
 
-      const stepsHtml = steps.map(function (step) {
-        const toggleBtn = step.done
-          ? '<button type="button" class="btn-undo btn-row sep-step-toggle" data-sep-id="' + escapeHtml(sep.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="undo">Undo</button>'
-          : '<button type="button" class="btn-done btn-row sep-step-toggle" data-sep-id="' + escapeHtml(sep.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="done">Done</button>';
-        return '<div class="step-row">' +
-          '<div class="step-info">' +
-          '<div class="step-name' + (step.done ? ' step-done' : '') + '">' + escapeHtml(step.step_name) + '</div>' +
-          '<div class="step-meta">' + (step.who ? escapeHtml(step.who) : 'Unassigned') + ' &middot; TAT ' + escapeHtml(step.tat_days) + 'd' + (step.done_date ? ' &middot; done ' + escapeHtml(step.done_date) : '') + '</div>' +
-          '</div>' +
-          (sep.is_complete ? '' : toggleBtn) +
-          '</div>';
+      const rows = steps.map(function (step) {
+        const options = ['Pending', 'In Progress', 'Completed'].map(function (st) {
+          return '<option value="' + st + '"' + (step.status === st ? ' selected' : '') + '>' + st + '</option>';
+        }).join('');
+        const statusCell = sep.is_complete
+          ? '<span class="chip ' + (step.status === 'Completed' ? 'chip-green' : 'chip-amber') + '">' + escapeHtml(step.status) + '</span>'
+          : '<select class="sep-step-status" data-sep-id="' + escapeHtml(sep.id) + '" data-step-id="' + escapeHtml(step.id) + '">' + options + '</select>';
+        return '<tr>' +
+          '<td>' + escapeHtml(step.step_no) + '</td>' +
+          '<td>' + escapeHtml(step.who) + '</td>' +
+          '<td>' + escapeHtml(step.when) + '</td>' +
+          '<td>' + escapeHtml(step.how || step.step_name) + (step.required === false ? ' <span class="chip chip-navy">Optional</span>' : '') + '</td>' +
+          '<td>' + statusCell + '</td>' +
+          '<td>' + (step.completed_at ? escapeHtml(String(step.completed_at).slice(0, 10)) : '&mdash;') + '</td>' +
+          '</tr>';
       }).join('');
 
       return '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
         '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '%</div>' +
-        stepsHtml;
+        '<table style="min-width: 0; margin-top: 10px;"><thead><tr><th>#</th><th>Who</th><th>When</th><th>How</th><th>Status</th><th>Completed</th></tr></thead><tbody>' + rows + '</tbody></table>';
     }
 
     function renderSeparations() {
@@ -245,21 +254,25 @@
             '<textarea class="fnf-note-input" data-sep-id="' + escapeHtml(sep.id) + '" rows="3">' + escapeHtml(sep.full_final_settlement_note) + '</textarea>' +
             '<button type="button" class="btn-secondary save-fnf-btn" data-sep-id="' + escapeHtml(sep.id) + '" style="margin-top: 6px;">Save Note</button>' +
             '</div>' +
-            '<button type="button" class="btn-delete delete-sep-btn" data-sep-id="' + escapeHtml(sep.id) + '" style="margin-top: 6px;">Delete Separation</button>' +
+            '<div class="audit-box" data-entity="separation" data-entity-id="' + escapeHtml(sep.id) + '"></div>' +
+            '<button type="button" class="btn-delete delete-sep-btn" data-sep-id="' + escapeHtml(sep.id) + '" style="margin-top: 10px;">Delete Separation</button>' +
             '</div>';
         } else {
-          const doneCount = sep.steps_done_count || 0;
-          const totalCount = sep.steps_total_count || 0;
-          bodyHtml = '<div class="progress-label" style="margin-top: 8px;">' + doneCount + '/' + totalCount + ' steps &mdash; click to expand</div>';
+          const pct = sep.progress_pct || 0;
+          const cur = sep.current_step ? (sep.current_step.step_no + '. ' + sep.current_step.how) : (sep.is_complete ? 'All steps completed' : '');
+          const pending = (sep.pending_tasks || []).length;
+          bodyHtml = '<div class="progress-track" style="margin-top: 10px;"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="progress-label">' + pct + '% &middot; Current: ' + escapeHtml(cur) + ' &middot; ' + pending + ' pending task(s) &mdash; click to expand</div>';
         }
 
         return '<div class="sep-card">' +
           '<div class="sep-header sep-toggle" data-sep-id="' + escapeHtml(sep.id) + '">' +
           '<span>' +
           '<div class="sep-name">' + escapeHtml(sep.employee_name || sep.employee_id) + '</div>' +
-          '<div class="sep-meta">' + escapeHtml(sep.id) + ' &middot; Last day: ' + escapeHtml(sep.last_working_day) + (sep.reason ? ' &middot; ' + escapeHtml(sep.reason) : '') + '</div>' +
+          '<div class="sep-meta">' + (sep.employee_code ? escapeHtml(sep.employee_code) + ' &middot; ' : '') + escapeHtml(sep.designation) + (sep.department ? ' &middot; ' + escapeHtml(sep.department) : '') + '</div>' +
+          '<div class="sep-meta">' + escapeHtml(sep.id) + ' &middot; Resigned: ' + escapeHtml(sep.resignation_date) + ' &middot; Last day: ' + escapeHtml(sep.last_working_day) + (sep.reason ? ' &middot; ' + escapeHtml(sep.reason) : '') + '</div>' +
           '</span>' +
-          '<span class="chip ' + relievingChipClass + '">' + escapeHtml(sep.relieving_letter_status) + '</span>' +
+          '<span class="chip ' + (sep.is_complete ? 'chip-green' : 'chip-amber') + '">' + escapeHtml(sep.status) + '</span>' +
           '</div>' +
           bodyHtml +
           '</div>';
@@ -277,11 +290,15 @@
         });
       });
 
-      content.querySelectorAll('.sep-step-toggle').forEach(function (btn) {
-        btn.addEventListener('click', function (event) {
-          event.stopPropagation();
-          handleStepToggle(btn.getAttribute('data-sep-id'), btn.getAttribute('data-step-id'), btn.getAttribute('data-action'));
+      content.querySelectorAll('.sep-step-status').forEach(function (select) {
+        select.addEventListener('click', function (event) { event.stopPropagation(); });
+        select.addEventListener('change', function () {
+          handleStepStatus(select.getAttribute('data-sep-id'), select.getAttribute('data-step-id'), select.value);
         });
+      });
+
+      content.querySelectorAll('.audit-box').forEach(function (box) {
+        renderAuditHistory(box, box.getAttribute('data-entity'), box.getAttribute('data-entity-id'));
       });
 
       content.querySelectorAll('.relieving-status-select').forEach(function (select) {
@@ -335,14 +352,15 @@
       }
     }
 
-    async function handleStepToggle(sepId, stepId, action) {
+    async function handleStepStatus(sepId, stepId, newStatus) {
       hidePageError();
       try {
         const response = await fetch(
-          SEPARATIONS_API_BASE + sepId + '/steps/' + stepId + '/' + action + '/',
+          SEPARATIONS_API_BASE + sepId + '/steps/' + stepId + '/status/',
           {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token }
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
           }
         );
 
@@ -350,14 +368,19 @@
           return;
         }
 
+        const data = await response.json().catch(function () { return {}; });
         if (!response.ok) {
-          throw new Error('Could not update step.');
+          throw new Error(data.detail || 'Could not update step.');
         }
 
+        if (data.transition && data.transition.moved) {
+          showToast(data.transition.message, 'success');
+        }
         expandedIds.add(sepId);
         loadSeparations();
       } catch (err) {
-        showPageError(err.message || 'Something went wrong. Please try again.');
+        showToast(err.message || 'Something went wrong. Please try again.', 'error');
+        loadSeparations();
       }
     }
 
@@ -480,7 +503,9 @@
           throw new Error(data.detail || 'Could not create separation.');
         }
 
+        const created = await response.json().catch(function () { return {}; });
         closeSeparationModal();
+        showToast(created.message || 'Exit process initiated successfully.', 'success');
         loadSeparations();
       } catch (err) {
         separationFormError.textContent = err.message || 'Something went wrong. Please try again.';

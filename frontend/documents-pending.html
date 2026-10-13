@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=5">
-<script src="shared.js?v=5"></script>
+<link rel="stylesheet" href="shared.css?v=13">
+<script src="shared.js?v=13"></script>
 <style>
   .doc-category-title {
     font-family: 'Archivo', sans-serif;
@@ -50,7 +50,7 @@
 
   <div class="container">
     <h1>Documents Pending</h1>
-    <p style="color: var(--mut); margin-top: -8px;">Candidates whose Recruitment checklist is complete, awaiting document verification before Create Employee.</p>
+    <p style="color: var(--mut); margin-top: -8px;">Candidates whose recruitment steps are complete. Upload each required document (or send the candidate a link). Once every required document is uploaded and the outcome is Selected, move them to Onboarding. Uploaded files are stored in the Docs tab.</p>
     <div id="page-error" class="form-error"></div>
     <div id="candidates-content">
       <div class="loading-state"><div class="spinner"></div><div>Loading...</div></div>
@@ -59,11 +59,11 @@
 
   <div class="modal-overlay" id="review-modal-overlay">
     <div class="modal-card">
-      <h2>Extract &amp; Review</h2>
+      <h2>Move to Onboarding</h2>
       <div id="review-form-error" class="form-error"></div>
       <div id="review-summary"></div>
       <div class="form-actions" style="margin-top: 16px;">
-        <button type="button" class="btn-primary" id="review-confirm-button">Confirm &amp; Create Employee</button>
+        <button type="button" class="btn-primary" id="review-confirm-button">Confirm &amp; Move to Onboarding</button>
         <button type="button" class="btn-secondary" id="review-cancel-button">Cancel</button>
       </div>
     </div>
@@ -93,7 +93,12 @@
     if (!token) {
       window.location.href = 'login.html';
     } else {
-      loadCandidates();
+      // Start loading only after the whole script has been evaluated: the loaders use
+      // consts declared further down (error banners, state), which would otherwise be
+      // in their temporal dead zone and throw before anything renders.
+      document.addEventListener('DOMContentLoaded', function () {
+        loadCandidates();
+      });
     }
 
     let allCandidates = [];
@@ -165,9 +170,9 @@
       content.innerHTML = allCandidates.map(function (cand) {
         const checklist = checklistCache[cand.id];
         const isExpanded = expandedIds.has(cand.id);
-        const verifiedCount = checklist ? checklist.verified_count : 0;
-        const totalCount = checklist ? checklist.total_count : 0;
-        const allVerified = checklist ? checklist.all_verified : false;
+        const verifiedCount = checklist ? checklist.required_uploaded_count : 0;
+        const totalCount = checklist ? checklist.required_total_count : 0;
+        const allVerified = checklist ? checklist.all_uploaded : false;
 
         let bodyHtml = '';
         if (isExpanded && checklist) {
@@ -179,15 +184,23 @@
 
           const categoriesHtml = Object.keys(categories).map(function (cat) {
             const itemsHtml = categories[cat].map(function (item) {
-              const statusChip = item.status === 'Verified' ? 'chip-green' : (item.status === 'Rejected' ? 'chip-red' : 'chip-amber');
+              const hasFile = !!item.file_url;
+              const statusLabel = !hasFile ? 'Not uploaded' : (item.status === 'Pending' ? 'Uploaded' : item.status);
+              const statusChip = item.status === 'Verified' ? 'chip-green' : (item.status === 'Rejected' ? 'chip-red' : (hasFile ? 'chip-navy' : 'chip-amber'));
+              const uploadBtn = '<label class="btn-secondary btn-row upload-label" style="cursor: pointer; display: inline-block;">' +
+                (hasFile ? 'Replace' : 'Upload') +
+                '<input type="file" class="doc-upload-input" style="display: none;" data-cand-id="' + escapeHtml(cand.id) + '" data-item-id="' + escapeHtml(item.id) + '"></label>';
+              const reviewBtns = hasFile
+                ? '<button type="button" class="btn-done btn-row verify-doc-btn" data-cand-id="' + escapeHtml(cand.id) + '" data-item-id="' + escapeHtml(item.id) + '">Verify</button>' +
+                  '<button type="button" class="btn-delete btn-row reject-doc-btn" data-cand-id="' + escapeHtml(cand.id) + '" data-item-id="' + escapeHtml(item.id) + '">Reject</button>'
+                : '';
               return '<div class="doc-item-row">' +
                 '<span>' + escapeHtml(item.doc_name) +
                 (item.file_url ? ' &middot; <a href="' + escapeHtml(item.file_url) + '" target="_blank">View file</a>' : ' &middot; <span style="color: var(--mut);">not uploaded</span>') +
                 (item.rejection_reason ? '<div class="step-meta">Rejected: ' + escapeHtml(item.rejection_reason) + '</div>' : '') +
                 '</span>' +
-                '<span><span class="chip ' + statusChip + '" style="margin-right: 8px;">' + escapeHtml(item.status) + '</span>' +
-                '<button type="button" class="btn-done btn-row verify-doc-btn" data-cand-id="' + escapeHtml(cand.id) + '" data-item-id="' + escapeHtml(item.id) + '">Verify</button>' +
-                '<button type="button" class="btn-delete btn-row reject-doc-btn" data-cand-id="' + escapeHtml(cand.id) + '" data-item-id="' + escapeHtml(item.id) + '">Reject</button></span>' +
+                '<span><span class="chip ' + statusChip + '" style="margin-right: 8px;">' + escapeHtml(statusLabel) + '</span>' +
+                uploadBtn + reviewBtns + '</span>' +
                 '</div>';
             }).join('');
             return '<div class="doc-category-title">' + escapeHtml(cat) + '</div>' + itemsHtml;
@@ -202,7 +215,7 @@
 
           bodyHtml = '<div style="margin-top: 12px;">' +
             '<div class="progress-track"><div class="progress-fill" style="width:' + (totalCount ? Math.round(verifiedCount / totalCount * 100) : 0) + '%"></div></div>' +
-            '<div class="progress-label">' + verifiedCount + '/' + totalCount + ' verified</div>' +
+            '<div class="progress-label">' + verifiedCount + '/' + totalCount + ' required documents uploaded</div>' +
             categoriesHtml +
             '<div class="doc-category-title">Additional Documents</div>' +
             '<div class="doc-item-row"><span>UAN Number</span><span>' + (additional.uan_number ? escapeHtml(additional.uan_number) : '&mdash;') + '</span></div>' +
@@ -210,17 +223,18 @@
             (nomineeHtml || '<div class="message" style="padding: 8px 0;">No nominee documents submitted yet.</div>') +
             '<div class="form-actions" style="margin-top: 14px;">' +
             '<button type="button" class="btn-secondary send-link-btn" data-cand-id="' + escapeHtml(cand.id) + '" data-phone="' + escapeHtml(cand.phone || '') + '">Send Link</button>' +
-            '<button type="button" class="btn-primary extract-review-btn" data-cand-id="' + escapeHtml(cand.id) + '" ' + (allVerified ? '' : 'data-move-anyway-needed="1"') + '>Extract &amp; Review &rarr; Create Employee</button>' +
+            '<button type="button" class="btn-primary extract-review-btn" data-cand-id="' + escapeHtml(cand.id) + '"' + (checklist.ready_for_onboarding ? '' : ' disabled') + '>Move to Onboarding &rarr;</button>' +
             '</div>' +
+            (checklist.ready_for_onboarding ? '' : '<div class="step-meta" style="margin-top: 8px;">' + escapeHtml(checklist.onboarding_blocked_reason || '') + '</div>') +
             '</div>';
         } else {
-          bodyHtml = '<div class="progress-label" style="margin-top: 8px;">' + verifiedCount + '/' + totalCount + ' documents verified &mdash; click to expand</div>';
+          bodyHtml = '<div class="progress-label" style="margin-top: 8px;">' + verifiedCount + '/' + totalCount + ' required documents uploaded &mdash; click to expand</div>';
         }
 
         return '<div class="candidate-dp-card">' +
           '<div class="candidate-dp-header dp-toggle" data-cand-id="' + escapeHtml(cand.id) + '">' +
           '<span><strong>' + escapeHtml(cand.name) + '</strong><div class="step-meta">' + escapeHtml(cand.id) + (cand.requisition_role ? ' &middot; ' + escapeHtml(cand.requisition_role) : '') + '</div></span>' +
-          '<span class="chip ' + (allVerified ? 'chip-green' : 'chip-amber') + '">' + verifiedCount + '/' + totalCount + '</span>' +
+          '<span class="chip ' + (allVerified ? 'chip-green' : 'chip-amber') + '">' + verifiedCount + '/' + totalCount + ' uploaded</span>' +
           '</div>' +
           bodyHtml +
           '</div>';
@@ -241,6 +255,18 @@
         });
       });
 
+      content.querySelectorAll('.upload-label').forEach(function (label) {
+        label.addEventListener('click', function (e) { e.stopPropagation(); });
+      });
+
+      content.querySelectorAll('.doc-upload-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+          if (input.files && input.files[0]) {
+            handleUploadDoc(input.getAttribute('data-cand-id'), input.getAttribute('data-item-id'), input.files[0]);
+          }
+        });
+      });
+
       content.querySelectorAll('.reject-doc-btn').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -258,9 +284,30 @@
       content.querySelectorAll('.extract-review-btn').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
-          openReviewModal(btn.getAttribute('data-cand-id'), btn.hasAttribute('data-move-anyway-needed'));
+          openReviewModal(btn.getAttribute('data-cand-id'), false);
         });
       });
+    }
+
+    async function handleUploadDoc(candId, itemId, file) {
+      hidePageError();
+      const body = new FormData();
+      body.append('file', file);
+      try {
+        const response = await fetch(CANDIDATES_API_BASE + candId + '/doc-checklist/' + itemId + '/upload/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: body
+        });
+        if (handleUnauthorized(response)) return;
+        const data = await response.json().catch(function () { return {}; });
+        if (!response.ok) throw new Error(data.detail || 'Could not upload the document.');
+        checklistCache[candId] = data;
+        showToast('Document uploaded. It is stored in the Docs tab.', 'success');
+        renderCandidates();
+      } catch (err) {
+        showToast(err.message || 'Upload failed.', 'error');
+      }
     }
 
     async function handleVerifyDoc(candId, itemId) {
@@ -349,8 +396,8 @@
         '<div class="step-row"><span>Name</span><strong>' + escapeHtml(cand.name) + '</strong></div>' +
         '<div class="step-row"><span>Role</span><strong>' + escapeHtml(cand.requisition_role || '&mdash;') + '</strong></div>' +
         '<div class="step-row"><span>Branch</span><strong>' + escapeHtml(cand.requisition_branch || '&mdash;') + '</strong></div>' +
-        '<div class="step-row"><span>Documents verified</span><strong>' + checklist.verified_count + '/' + checklist.total_count + '</strong></div>' +
-        (moveAnywayNeeded ? '<div class="call" style="background: var(--amber-bg); color: var(--amber); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 13px;">Not every document is verified yet. Confirming will use "Move Anyway".</div>' : '');
+        '<div class="step-row"><span>Required documents uploaded</span><strong>' + checklist.required_uploaded_count + '/' + checklist.required_total_count + '</strong></div>' +
+        '<div class="step-row"><span>Outcome</span><strong>' + escapeHtml(checklist.outcome || '') + '</strong></div>';
       reviewModalOverlay.classList.add('open');
     }
     document.getElementById('review-cancel-button').addEventListener('click', function () {
@@ -363,14 +410,16 @@
         const response = await fetch(CANDIDATES_API_BASE + reviewingCandId + '/create-employee/', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ move_anyway: reviewingMoveAnywayNeeded })
+          body: JSON.stringify({})
         });
         if (handleUnauthorized(response)) return;
         if (!response.ok) {
           const data = await response.json().catch(function () { return {}; });
           throw new Error(data.detail || 'Could not create employee.');
         }
+        const created = await response.json().catch(function () { return {}; });
         reviewModalOverlay.classList.remove('open');
+        showToast(created.message || 'Candidate successfully moved to Onboarding.', 'success');
         loadCandidates();
       } catch (err) {
         const errorEl = document.getElementById('review-form-error');

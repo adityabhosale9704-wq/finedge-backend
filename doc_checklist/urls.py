@@ -4,6 +4,7 @@ from doc_checklist.views import (
     AdditionalDocsUpdateView,
     CandidateDocChecklistView,
     DocChecklistItemRejectView,
+    DocChecklistItemUploadView,
     DocChecklistItemVerifyView,
     PublicAdditionalInfoView,
     PublicDocChecklistView,
@@ -21,6 +22,11 @@ urlpatterns = [
         "candidates/<str:cand_id>/doc-checklist/<str:item_id>/verify/",
         DocChecklistItemVerifyView.as_view(),
         name="doc-checklist-item-verify",
+    ),
+    path(
+        "candidates/<str:cand_id>/doc-checklist/<str:item_id>/upload/",
+        DocChecklistItemUploadView.as_view(),
+        name="doc-checklist-item-upload",
     ),
     path(
         "candidates/<str:cand_id>/doc-checklist/<str:item_id>/reject/",

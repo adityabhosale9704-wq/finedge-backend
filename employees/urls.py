@@ -1,5 +1,7 @@
 from django.urls import path
 
+from separations.views import InitiateExitView
+
 from employees.views import (
     EmployeeCompleteOnboardingView,
     EmployeeDetailView,
@@ -12,6 +14,7 @@ from employees.views import (
     EmployeeListCreateView,
     EmployeeOnboardingListView,
     EmployeeOnboardingStepDoneView,
+    EmployeeOnboardingStepStatusView,
     EmployeeOnboardingStepUndoView,
 )
 
@@ -62,6 +65,16 @@ urlpatterns = [
         "<str:pk>/onboarding-steps/<str:step_id>/undo/",
         EmployeeOnboardingStepUndoView.as_view(),
         name="employee-onboarding-step-undo",
+    ),
+    path(
+        "<str:pk>/onboarding-steps/<str:step_id>/status/",
+        EmployeeOnboardingStepStatusView.as_view(),
+        name="employee-onboarding-step-status",
+    ),
+    path(
+        "<str:pk>/initiate-exit/",
+        InitiateExitView.as_view(),
+        name="employee-initiate-exit",
     ),
     path(
         "<str:pk>/complete-onboarding/",

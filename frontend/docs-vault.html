@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=5">
-<script src="shared.js?v=5"></script>
+<link rel="stylesheet" href="shared.css?v=13">
+<script src="shared.js?v=13"></script>
 <style>
   .docs-panel { display: none; }
   .docs-panel.active { display: block; }
@@ -64,8 +64,13 @@
     if (!token) {
       window.location.href = 'login.html';
     } else {
-      loadEmployees();
-      loadCandidates();
+      // Start loading only after the whole script has been evaluated: the loaders use
+      // consts declared further down (error banners, state), which would otherwise be
+      // in their temporal dead zone and throw before anything renders.
+      document.addEventListener('DOMContentLoaded', function () {
+        loadEmployees();
+        loadCandidates();
+      });
     }
 
     let allEmployees = [];
@@ -176,7 +181,7 @@
         return '<div class="doc-vault-row-wrap">' +
           '<div class="doc-vault-row" data-row-id="' + escapeHtml(rowId) + '">' +
           '<span><strong>' + escapeHtml(person.name) + '</strong></span>' +
-          '<span class="chip chip-navy">' + docs.length + ' document(s)</span>' +
+          '<span class="chip chip-navy">' + (idPrefix === 'cand-' ? docs.filter(function (d) { return !!d.file_url; }).length + '/' + docs.length + ' uploaded' : docs.length + ' document(s)') + '</span>' +
           '</div>' +
           detailHtml +
           '</div>';
@@ -219,7 +224,9 @@
 
     function renderCandidatesPanel() {
       const inPipeline = allCandidates.filter(function (c) {
-        return ['Joined', 'Rejected', 'Withdrawn'].indexOf(c.stage) === -1;
+        // Joined candidates stay listed: their joining documents remain on file here
+        // after they move to Onboarding.
+        return ['Rejected', 'Withdrawn'].indexOf(c.stage) === -1 && (c.doc_checklist || []).length > 0;
       });
       renderPersonList('candidates-list', inPipeline, 'cand-', function (c) { return c.doc_checklist || []; });
     }

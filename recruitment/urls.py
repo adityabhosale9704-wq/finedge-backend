@@ -4,6 +4,8 @@ from recruitment.views import (
     CandidateCreateEmployeeView,
     CandidateDetailView,
     CandidateListCreateView,
+    CandidateOutcomeView,
+    CandidateStepStatusView,
     CandidateStepDoneView,
     CandidateStepUndoView,
     CandidateUnfreezeView,
@@ -45,6 +47,16 @@ urlpatterns = [
         "candidates/<str:cand_id>/steps/<str:step_id>/undo/",
         CandidateStepUndoView.as_view(),
         name="candidate-step-undo",
+    ),
+    path(
+        "candidates/<str:cand_id>/steps/<str:step_id>/status/",
+        CandidateStepStatusView.as_view(),
+        name="candidate-step-status",
+    ),
+    path(
+        "candidates/<str:cand_id>/outcome/",
+        CandidateOutcomeView.as_view(),
+        name="candidate-outcome",
     ),
     path(
         "candidates/<str:cand_id>/create-employee/",

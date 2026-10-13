@@ -61,7 +61,7 @@ function getCurrentTheme() {
   if (explicit === 'dark' || explicit === 'light') {
     return explicit;
   }
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'light';
 }
 
 /* ---------- Language switch (EN/HI) ----------
@@ -167,10 +167,74 @@ var NAV_CONFIG = [
     icon: 'fa-gear',
     items: [
       { href: 'admin.html', icon: 'fa-building', label: 'Admin Studio' },
+      { href: 'sop-config.html', icon: 'fa-list-ol', label: 'SOP Configuration' },
       { href: 'workindia.html', icon: 'fa-file-import', label: 'WorkIndia Import' }
     ]
   }
 ];
+
+/* ---------- Toast notifications (any page: showToast('Saved', 'success')) ---------- */
+
+function showToast(message, type) {
+  var host = document.getElementById('toast-host');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'toast-host';
+    host.setAttribute('aria-live', 'polite');
+    document.body.appendChild(host);
+  }
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + (type || 'success');
+  toast.textContent = message;
+  host.appendChild(toast);
+  setTimeout(function () {
+    toast.classList.add('toast-out');
+    setTimeout(function () { toast.remove(); }, 300);
+  }, 3500);
+}
+window.showToast = showToast;
+
+/* ---------- Audit history (candidate / employee / separation / sop) ---------- */
+
+function renderAuditHistory(container, entityType, entityId) {
+  if (!container) {
+    return;
+  }
+  container.innerHTML = '<div class="audit-title"><i class="fa-solid fa-clock-rotate-left"></i> History</div><div class="audit-empty">Loading history...</div>';
+  var token = localStorage.getItem('authToken');
+  fetch(window.API_BASE + '/audit/' + encodeURIComponent(entityType) + '/' + encodeURIComponent(entityId) + '/', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+    .then(function (response) {
+      if (!response.ok) { throw new Error('Could not load history.'); }
+      return response.json();
+    })
+    .then(function (entries) {
+      var title = '<div class="audit-title"><i class="fa-solid fa-clock-rotate-left"></i> History</div>';
+      if (!entries.length) {
+        container.innerHTML = title + '<div class="audit-empty">No activity recorded yet.</div>';
+        return;
+      }
+      var esc = function (v) {
+        var d = document.createElement('div');
+        d.textContent = v === null || v === undefined ? '' : String(v);
+        return d.innerHTML;
+      };
+      container.innerHTML = title + '<ul class="audit-list">' + entries.map(function (e) {
+        var label = String(e.action || '').replace(/_/g, ' ');
+        label = label.charAt(0).toUpperCase() + label.slice(1);
+        var change = (e.from || e.to) ? ': ' + esc(e.from || '—') + ' &rarr; ' + esc(e.to || '—') : '';
+        var detail = e.extra && e.extra.step ? ' (' + esc(e.extra.step) + ')' : '';
+        var when = e.at ? new Date(e.at).toLocaleString() : '';
+        return '<li><span class="audit-what">' + esc(label) + change + detail + '</span>' +
+          '<span class="audit-meta">' + esc(e.performed_by) + ' &middot; ' + esc(when) + '</span></li>';
+      }).join('') + '</ul>';
+    })
+    .catch(function () {
+      container.innerHTML = '<div class="audit-title"><i class="fa-solid fa-clock-rotate-left"></i> History</div><div class="audit-empty">History is unavailable right now.</div>';
+    });
+}
+window.renderAuditHistory = renderAuditHistory;
 
 function buildSidebarHtml(currentPage) {
   var openGroups = {};
@@ -488,4 +552,18 @@ function initSharedNav() {
   renderSidebarContent();
 }
 
-document.addEventListener('DOMContentLoaded', initSharedNav);
+function initBackgroundOrbs() {
+  if (document.querySelector('.bg-orbs')) {
+    return;
+  }
+  var wrap = document.createElement('div');
+  wrap.className = 'bg-orbs';
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.innerHTML = '<span class="bg-orb bg-orb-1"></span><span class="bg-orb bg-orb-2"></span><span class="bg-orb bg-orb-3"></span><span class="bg-orb bg-orb-4"></span>';
+  document.body.insertBefore(wrap, document.body.firstChild);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  initBackgroundOrbs();
+  initSharedNav();
+});

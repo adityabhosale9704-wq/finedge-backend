@@ -86,6 +86,8 @@ INSTALLED_APPS = [
     'letter_templates',
     'doc_checklist',
     'notifications',
+    'sop',
+    'lifecycle',
 ]
 
 MIDDLEWARE = [

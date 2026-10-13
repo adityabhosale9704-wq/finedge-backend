@@ -9,8 +9,8 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-<link rel="stylesheet" href="shared.css?v=5">
-<script src="shared.js?v=5"></script>
+<link rel="stylesheet" href="shared.css?v=13">
+<script src="shared.js?v=13"></script>
 <style>
   .header-actions {
     display: flex;
@@ -299,8 +299,13 @@
     if (!token) {
       window.location.href = 'login.html';
     } else {
-      loadAll();
-      loadBranchOptions();
+      // Start loading only after the whole script has been evaluated: the loaders use
+      // consts declared further down (error banners, state), which would otherwise be
+      // in their temporal dead zone and throw before anything renders.
+      document.addEventListener('DOMContentLoaded', function () {
+        loadAll();
+        loadBranchOptions();
+      });
     }
 
 
@@ -335,14 +340,17 @@
       return match ? (match.job_description || '') : '';
     }
 
-    const pageError = document.getElementById('page-error');
-
+    // Looked up on demand (not a top-level const): loadAll() is invoked near the top of
+    // this script, before this point is reached, and would otherwise hit a
+    // "Cannot access before initialization" error and never render anything.
     function showPageError(message) {
+      const pageError = document.getElementById('page-error');
       pageError.textContent = message;
       pageError.style.display = 'block';
     }
 
     function hidePageError() {
+      const pageError = document.getElementById('page-error');
       pageError.textContent = '';
       pageError.style.display = 'none';
     }
@@ -401,14 +409,16 @@
           return;
         }
 
-        if (!reqResponse.ok || !candResponse.ok || !refResponse.ok || !rolesResponse.ok) {
+        // Roles are only used for an optional job-description lookup, so a missing /roles/
+        // endpoint (e.g. an older deployed backend) must not block the whole page.
+        if (!reqResponse.ok || !candResponse.ok || !refResponse.ok) {
           throw new Error('Failed to load recruitment data.');
         }
 
         allRequisitions = await reqResponse.json();
         allCandidates = await candResponse.json();
         allReferenceChecks = await refResponse.json();
-        allRoles = await rolesResponse.json();
+        allRoles = rolesResponse.ok ? await rolesResponse.json() : [];
         await loadAppointmentLetterEligibility();
         renderAll();
       } catch (err) {
@@ -508,7 +518,8 @@
           '<td>' + escapeHtml(req.stage) + '</td>' +
           '<td>' + approvalCell + '</td>' +
           '<td>' + escapeHtml(req.budget) + '</td>' +
-          '<td><button type="button" class="btn-edit btn-row edit-req-btn" data-id="' + escapeHtml(req.id) + '">Edit</button></td>' +
+          '<td><button type="button" class="btn-edit btn-row edit-req-btn" data-id="' + escapeHtml(req.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-req-btn" data-id="' + escapeHtml(req.id) + '">Delete</button></td>' +
           '</tr>';
       }).join('');
 
@@ -524,6 +535,12 @@
         });
       });
 
+      content.querySelectorAll('.delete-req-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          handleRequisitionDelete(btn.getAttribute('data-id'));
+        });
+      });
+
       content.querySelectorAll('.edit-req-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
           const req = allRequisitions.find(function (r) { return r.id === btn.getAttribute('data-id'); });
@@ -532,6 +549,40 @@
           }
         });
       });
+    }
+
+    async function handleRequisitionDelete(reqId) {
+      const linked = allCandidates.filter(function (c) { return c.requisition_id === reqId; }).length;
+      const message = linked > 0
+        ? 'Requisition ' + reqId + ' has ' + linked + ' candidate(s) linked to it, so it cannot be deleted. Move or remove those candidates first.'
+        : 'Delete requisition ' + reqId + '? This cannot be undone.';
+      if (linked > 0) {
+        alert(message);
+        return;
+      }
+      if (!confirm(message)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(REQUISITIONS_API_BASE + reqId + '/', {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (handleUnauthorized(response)) {
+          return;
+        }
+
+        if (!response.ok && response.status !== 204) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.detail || 'Could not delete requisition.');
+        }
+
+        loadAll();
+      } catch (err) {
+        showPageError(err.message || 'Something went wrong. Please try again.');
+      }
     }
 
     function stageChipClass(stage) {
@@ -566,39 +617,53 @@
         const steps = cand.steps || [];
         const doneCount = cand.steps_done_count || 0;
         const totalCount = cand.steps_total_count || steps.length;
-        const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+        const pct = (cand.progress_pct !== undefined) ? cand.progress_pct : (totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0);
+        const currentStepLabel = cand.current_step ? ('Current: ' + escapeHtml(cand.current_step.step_no) + '. ' + escapeHtml(cand.current_step.how)) : (totalCount > 0 ? 'All steps completed' : '');
         const isExpanded = expandedCandidateIds.has(cand.id);
         const isClosed = CLOSED_CANDIDATE_STAGES.indexOf(cand.stage) !== -1;
 
+        const lockSteps = isClosed || cand.frozen || !!cand.onboarding_employee_id;
         const stepsHtml = steps.map(function (step) {
-          const toggleBtn = step.done
-            ? '<button type="button" class="btn-undo btn-row cand-step-toggle" data-cand-id="' + escapeHtml(cand.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="undo">Undo</button>'
-            : '<button type="button" class="btn-done btn-row cand-step-toggle" data-cand-id="' + escapeHtml(cand.id) + '" data-step-id="' + escapeHtml(step.id) + '" data-action="done">Done</button>';
+          const options = ['Pending', 'In Progress', 'Completed'].map(function (st) {
+            return '<option value="' + st + '"' + (step.status === st ? ' selected' : '') + '>' + st + '</option>';
+          }).join('');
+          const statusSelect = '<select class="cand-step-status" data-cand-id="' + escapeHtml(cand.id) + '" data-step-id="' + escapeHtml(step.id) + '"' + (lockSteps ? ' disabled' : '') + '>' + options + '</select>';
           return '<div class="step-row">' +
             '<div class="step-info">' +
-            '<div class="step-name' + (step.done ? ' step-done' : '') + '">' + escapeHtml(step.step_name) + '</div>' +
-            '<div class="step-meta">' + (step.who ? escapeHtml(step.who) : 'Unassigned') + ' &middot; TAT ' + escapeHtml(step.tat_days) + 'd' + (step.done_date ? ' &middot; done ' + escapeHtml(step.done_date) : '') + '</div>' +
+            '<div class="step-name' + (step.done ? ' step-done' : '') + '">' + escapeHtml(step.step_no) + '. ' + escapeHtml(step.how || step.step_name) +
+            (step.required === false ? ' <span class="chip chip-navy">Optional</span>' : '') + '</div>' +
+            '<div class="step-meta"><b>Who:</b> ' + (step.who ? escapeHtml(step.who) : 'Unassigned') +
+            (step.when ? ' &middot; <b>When:</b> ' + escapeHtml(step.when) : '') +
+            (step.completed_at ? ' &middot; completed ' + escapeHtml(String(step.completed_at).slice(0, 10)) + (step.completed_by ? ' by ' + escapeHtml(step.completed_by) : '') : '') + '</div>' +
             '</div>' +
-            toggleBtn +
+            statusSelect +
             '</div>';
         }).join('');
 
         const checklistBlock = isExpanded
           ? '<div class="candidate-checklist" style="margin-top: 10px;">' +
             '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
-            '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '%</div>' +
+            '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '% &middot; ' + currentStepLabel + '</div>' +
             (steps.length === 0 ? '<div class="message" style="padding: 12px 0;">No SOP steps configured.</div>' : stepsHtml) +
+            '<div class="audit-box" data-entity="candidate" data-entity-id="' + escapeHtml(cand.id) + '"></div>' +
             '</div>'
           : '<div class="progress-track" style="margin-top: 10px;"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
-            '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '% &mdash; click card to expand</div>';
+            '<div class="progress-label">' + doneCount + '/' + totalCount + ' steps &middot; ' + pct + '% &middot; ' + currentStepLabel + ' &mdash; click card to expand</div>';
 
-        const manualActions = isClosed
-          ? ''
-          : '<button type="button" class="btn-secondary btn-row cand-reject-btn" data-id="' + escapeHtml(cand.id) + '">Reject</button>' +
-            '<button type="button" class="btn-secondary btn-row cand-withdraw-btn" data-id="' + escapeHtml(cand.id) + '">Withdraw</button>';
+        const outcomeLocked = !!cand.onboarding_employee_id || cand.outcome === 'Rejected' || cand.outcome === 'Withdrawn';
+        const outcomeOptions = [['', 'Outcome: pending'], ['Selected', 'Selected'], ['Rejected', 'Rejected'], ['Withdrawn', 'Withdrawn']].map(function (o) {
+          return '<option value="' + o[0] + '"' + ((cand.outcome || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+        }).join('');
+        const manualActions = '<select class="cand-outcome" data-id="' + escapeHtml(cand.id) + '"' + (outcomeLocked ? ' disabled' : '') + ' title="Final outcome of this candidate">' + outcomeOptions + '</select>';
+
+        const lifecycleNote = cand.onboarding_employee_id
+          ? '<div class="candidate-meta"><span class="chip chip-green">Moved to Onboarding</span></div>'
+          : ((cand.outcome === 'Selected' && !cand.ready_for_onboarding && cand.onboarding_blocked_reason)
+            ? '<div class="candidate-meta"><span class="chip chip-amber">Waiting: ' + escapeHtml(cand.onboarding_blocked_reason) + '</span></div>'
+            : '');
 
         const createEmployeeBtn = cand.stage === 'Documents Pending'
-          ? '<a href="documents-pending.html" class="btn-view">Review Documents &amp; Create Employee</a>'
+          ? '<a href="documents-pending.html" class="btn-view">Upload Documents &amp; Move to Onboarding</a>'
           : '';
 
         const jobDescription = findJobDescriptionForRole(cand.requisition_role);
@@ -640,6 +705,7 @@
           '<div class="candidate-meta">Experience: ' + (cand.experience ? escapeHtml(cand.experience) : '&mdash;') + '</div>' +
           '<div class="candidate-meta">References: ' + positiveRefCount + ' positive</div>' +
           appointmentLetterBadge +
+          lifecycleNote +
           checklistBlock +
           '<div class="candidate-actions" style="margin-top: 10px; flex-wrap: wrap;">' +
           createEmployeeBtn +
@@ -706,26 +772,24 @@
         });
       });
 
-      content.querySelectorAll('.cand-step-toggle').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          handleCandidateStepToggle(
-            btn.getAttribute('data-cand-id'),
-            btn.getAttribute('data-step-id'),
-            btn.getAttribute('data-action')
+      content.querySelectorAll('.cand-step-status').forEach(function (select) {
+        select.addEventListener('change', function () {
+          handleCandidateStepStatus(
+            select.getAttribute('data-cand-id'),
+            select.getAttribute('data-step-id'),
+            select.value
           );
         });
       });
 
-      content.querySelectorAll('.cand-reject-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          handleCandidateManualStage(btn.getAttribute('data-id'), 'Rejected');
+      content.querySelectorAll('.cand-outcome').forEach(function (select) {
+        select.addEventListener('change', function () {
+          handleCandidateOutcome(select.getAttribute('data-id'), select.value);
         });
       });
 
-      content.querySelectorAll('.cand-withdraw-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          handleCandidateManualStage(btn.getAttribute('data-id'), 'Withdrawn');
-        });
+      content.querySelectorAll('.audit-box').forEach(function (box) {
+        renderAuditHistory(box, box.getAttribute('data-entity'), box.getAttribute('data-entity-id'));
       });
 
       content.querySelectorAll('.edit-cand-btn').forEach(function (btn) {
@@ -1019,14 +1083,21 @@
       }
     }
 
-    async function handleCandidateStepToggle(candId, stepId, action) {
+    function announceTransition(data) {
+      if (data && data.transition && data.transition.moved && data.transition.message) {
+        showToast(data.transition.message, 'success');
+      }
+    }
+
+    async function handleCandidateStepStatus(candId, stepId, newStatus) {
       hidePageError();
       try {
         const response = await fetch(
-          CANDIDATES_API_BASE + candId + '/steps/' + stepId + '/' + action + '/',
+          CANDIDATES_API_BASE + candId + '/steps/' + stepId + '/status/',
           {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token }
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
           }
         );
 
@@ -1034,47 +1105,53 @@
           return;
         }
 
+        const data = await response.json().catch(function () { return {}; });
         if (!response.ok) {
-          const data = await response.json().catch(function () { return {}; });
           throw new Error(data.detail || 'Could not update step.');
         }
 
+        announceTransition(data);
         expandedCandidateIds.add(candId);
         loadAll();
       } catch (err) {
-        showPageError(err.message || 'Something went wrong. Please try again.');
+        showToast(err.message || 'Something went wrong. Please try again.', 'error');
+        loadAll();
       }
     }
 
-    async function handleCandidateManualStage(candId, newStage) {
-      const label = newStage.toLowerCase();
-      const confirmed = confirm('Mark this candidate as ' + label + '?');
-      if (!confirmed) {
+    async function handleCandidateOutcome(candId, outcome) {
+      if (!outcome) {
+        loadAll();
+        return;
+      }
+      if (outcome !== 'Selected' && !confirm('Mark this candidate as ' + outcome.toLowerCase() + '? This cannot be undone.')) {
+        loadAll();
         return;
       }
 
       hidePageError();
       try {
-        const response = await fetch(CANDIDATES_API_BASE + candId + '/', {
-          method: 'PATCH',
-          headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ stage: newStage })
+        const response = await fetch(CANDIDATES_API_BASE + candId + '/outcome/', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ outcome: outcome })
         });
 
         if (handleUnauthorized(response)) {
           return;
         }
 
+        const data = await response.json().catch(function () { return {}; });
         if (!response.ok) {
-          throw new Error('Could not update candidate stage.');
+          throw new Error(data.detail || 'Could not update the outcome.');
         }
 
+        announceTransition(data);
+        showToast('Outcome set to ' + outcome + '.', 'success');
         loadAll();
       } catch (err) {
-        showPageError(err.message || 'Something went wrong. Please try again.');
+        showToast(err.message || 'Something went wrong. Please try again.', 'error');
+        loadAll();
       }
     }
 

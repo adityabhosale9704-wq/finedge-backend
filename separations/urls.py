@@ -4,6 +4,7 @@ from separations.views import (
     SeparationDetailView,
     SeparationListCreateView,
     SeparationStepDoneView,
+    SeparationStepStatusView,
     SeparationStepUndoView,
 )
 
@@ -16,6 +17,11 @@ urlpatterns = [
         "separations/<str:sep_id>/steps/<str:step_id>/done/",
         SeparationStepDoneView.as_view(),
         name="separation-step-done",
+    ),
+    path(
+        "separations/<str:sep_id>/steps/<str:step_id>/status/",
+        SeparationStepStatusView.as_view(),
+        name="separation-step-status",
     ),
     path(
         "separations/<str:sep_id>/steps/<str:step_id>/undo/",

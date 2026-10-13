@@ -41,6 +41,8 @@ urlpatterns = [
     path('api/v1/', include('letter_templates.urls')),
     path('api/v1/', include('doc_checklist.urls')),
     path('api/v1/', include('notifications.urls')),
+    path('api/v1/sop/', include('sop.urls')),
+    path('api/v1/audit/', include('lifecycle.urls')),
 ]
 
 if settings.DEBUG:

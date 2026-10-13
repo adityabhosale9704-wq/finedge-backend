@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SOP Configuration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
+<link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+<link rel="stylesheet" href="shared.css?v=13">
+<script src="shared.js?v=13"></script>
+<style>
+  .sop-intro {
+    font-size: 13.5px;
+    color: var(--mut);
+    margin: 4px 0 0;
+    max-width: 640px;
+  }
+
+  .sop-table td.sop-no {
+    font-family: 'Archivo', 'IBM Plex Sans', sans-serif;
+    font-weight: 800;
+    color: var(--navy);
+    width: 56px;
+  }
+
+  .sop-table td.sop-how {
+    min-width: 260px;
+  }
+
+  .sop-table tr.inactive td {
+    opacity: 0.55;
+  }
+
+  .sop-actions {
+    white-space: nowrap;
+  }
+
+  .sop-actions button {
+    margin-right: 4px;
+  }
+
+  .field-hint {
+    font-size: 12px;
+    color: var(--mut);
+    margin-top: 4px;
+  }
+
+  .check-row {
+    display: flex;
+    gap: 22px;
+    margin: 6px 0 14px;
+    flex-wrap: wrap;
+  }
+
+  .check-row label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .modal-card.wide {
+    max-width: 520px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-nav" id="app-sidebar"></div>
+
+  <div class="container">
+    <div class="page-header-row">
+      <div>
+        <h1 style="margin-bottom: 0;">SOP Configuration</h1>
+        <p class="sop-intro">Define who does what, when and how for every stage. New candidates, onboardings and exits copy these steps when they start; changing a step here never alters records already in progress.</p>
+      </div>
+      <button type="button" class="btn-primary" id="add-step-button">+ Add Step</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="toolbar">
+      <div class="tabs" id="sop-tabs">
+        <button type="button" class="tab active" data-type="recruitment">Recruitment</button>
+        <button type="button" class="tab" data-type="onboarding">Onboarding</button>
+        <button type="button" class="tab" data-type="exit">Exit &amp; Separation</button>
+      </div>
+    </div>
+    <div id="sop-content">
+      <div class="loading-state"><div class="spinner"></div><div>Loading steps...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="step-modal-overlay">
+    <div class="modal-card wide">
+      <h2 id="step-modal-title">Add Step</h2>
+      <div id="step-form-error" class="form-error"></div>
+      <form id="step-form" novalidate>
+        <div class="field">
+          <label for="step-who">Who</label>
+          <input type="text" id="step-who" maxlength="200" placeholder="e.g. HR Manager, IT Team, Employee">
+          <div class="field-hint">Informational only. It does not restrict who can update the step.</div>
+        </div>
+        <div class="field">
+          <label for="step-when">When</label>
+          <input type="text" id="step-when" maxlength="500" placeholder="e.g. Within 2 days of application">
+        </div>
+        <div class="field">
+          <label for="step-how">How</label>
+          <textarea id="step-how" rows="3" maxlength="2000" placeholder="What exactly needs to be done?"></textarea>
+        </div>
+        <div class="field">
+          <label for="step-tat">TAT (days)</label>
+          <input type="number" id="step-tat" min="0" value="1">
+          <div class="field-hint">Used for turnaround tracking.</div>
+        </div>
+        <div class="check-row">
+          <label><input type="checkbox" id="step-required" checked> Required</label>
+          <label><input type="checkbox" id="step-active" checked> Active</label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="step-submit-button">Add Step</button>
+          <button type="button" class="btn-secondary" id="step-cancel-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="delete-modal-overlay">
+    <div class="modal-card">
+      <h2>Delete step?</h2>
+      <p id="delete-modal-text" style="font-size: 14px; color: var(--txt);"></p>
+      <p style="font-size: 13px; color: var(--mut);">Steps already copied to candidates, onboardings or exits are not affected. Remaining steps are renumbered automatically.</p>
+      <div class="form-actions">
+        <button type="button" class="btn-delete" id="delete-confirm-button">Delete</button>
+        <button type="button" class="btn-secondary" id="delete-cancel-button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('authToken');
+    const SOP_API_BASE = API_BASE + '/sop/';
+
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+
+    let currentType = 'recruitment';
+    let steps = [];
+    let editingId = null;
+    let deletingId = null;
+    let busy = false;
+
+    const content = document.getElementById('sop-content');
+    const stepModal = document.getElementById('step-modal-overlay');
+    const deleteModal = document.getElementById('delete-modal-overlay');
+    const stepForm = document.getElementById('step-form');
+    const stepFormError = document.getElementById('step-form-error');
+    const stepSubmitButton = document.getElementById('step-submit-button');
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const div = document.createElement('div');
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    async function api(path, options) {
+      const response = await fetch(SOP_API_BASE + path, Object.assign({
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        }
+      }, options || {}));
+
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+        throw new Error('Session expired.');
+      }
+
+      const data = await response.json().catch(function () { return null; });
+      if (!response.ok) {
+        throw new Error(describeError(data) || 'Request failed (' + response.status + ').');
+      }
+      return data;
+    }
+
+    function describeError(data) {
+      if (!data) {
+        return '';
+      }
+      if (data.detail) {
+        return data.detail;
+      }
+      const parts = Object.keys(data).map(function (field) {
+        const messages = Array.isArray(data[field]) ? data[field].join(' ') : String(data[field]);
+        return field + ': ' + messages;
+      });
+      return parts.join(' | ');
+    }
+
+    async function loadSteps() {
+      content.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Loading steps...</div></div>';
+      try {
+        steps = await api(currentType + '/steps/');
+        render();
+      } catch (err) {
+        content.innerHTML = '<div class="error-state"><div>' + escapeHtml(err.message || 'Could not load steps.') +
+          '</div><button type="button" class="btn-secondary" id="retry-button">Retry</button></div>';
+        document.getElementById('retry-button').addEventListener('click', loadSteps);
+      }
+    }
+
+    function render() {
+      if (steps.length === 0) {
+        content.innerHTML = '<div class="message">No steps defined for this process yet. Use "+ Add Step" to create the first one.</div>';
+        return;
+      }
+
+      const rows = steps.map(function (step, index) {
+        const required = step.required
+          ? '<span class="chip chip-green">Required</span>'
+          : '<span class="chip chip-navy">Optional</span>';
+        const active = step.active
+          ? '<span class="chip chip-green">Active</span>'
+          : '<span class="chip chip-red">Inactive</span>';
+        const isFirst = index === 0;
+        const isLast = index === steps.length - 1;
+
+        return '<tr class="' + (step.active ? '' : 'inactive') + '">' +
+          '<td class="sop-no">' + escapeHtml(step.step_no) + '</td>' +
+          '<td>' + escapeHtml(step.who) + '</td>' +
+          '<td>' + escapeHtml(step.when) + '</td>' +
+          '<td class="sop-how">' + escapeHtml(step.how) + '</td>' +
+          '<td>' + required + '</td>' +
+          '<td>' + active + '</td>' +
+          '<td class="sop-actions">' +
+          '<button type="button" class="icon-btn move-btn" data-dir="up" data-id="' + escapeHtml(step.id) + '" title="Move up"' + (isFirst ? ' disabled' : '') + '>&#9650;</button>' +
+          '<button type="button" class="icon-btn move-btn" data-dir="down" data-id="' + escapeHtml(step.id) + '" title="Move down"' + (isLast ? ' disabled' : '') + '>&#9660;</button>' +
+          '<button type="button" class="btn-edit btn-row edit-btn" data-id="' + escapeHtml(step.id) + '">Edit</button>' +
+          '<button type="button" class="btn-delete btn-row delete-btn" data-id="' + escapeHtml(step.id) + '">Delete</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
+
+      content.innerHTML =
+        '<table class="sop-table">' +
+        '<thead><tr><th>#</th><th>Who</th><th>When</th><th>How</th><th>Required</th><th>Status</th><th>Actions</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>';
+
+      content.querySelectorAll('.edit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { openStepModal(btn.getAttribute('data-id')); });
+      });
+      content.querySelectorAll('.delete-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { openDeleteModal(btn.getAttribute('data-id')); });
+      });
+      content.querySelectorAll('.move-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          moveStep(btn.getAttribute('data-id'), btn.getAttribute('data-dir'));
+        });
+      });
+    }
+
+    // ---------- Tabs ----------
+
+    document.querySelectorAll('#sop-tabs .tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        currentType = tab.getAttribute('data-type');
+        document.querySelectorAll('#sop-tabs .tab').forEach(function (t) {
+          t.classList.toggle('active', t === tab);
+        });
+        loadSteps();
+      });
+    });
+
+    // ---------- Add / edit ----------
+
+    document.getElementById('add-step-button').addEventListener('click', function () { openStepModal(null); });
+    document.getElementById('step-cancel-button').addEventListener('click', closeStepModal);
+    stepModal.addEventListener('click', function (event) {
+      if (event.target === stepModal) { closeStepModal(); }
+    });
+
+    function openStepModal(id) {
+      editingId = id;
+      const step = id ? steps.find(function (s) { return s.id === id; }) : null;
+      document.getElementById('step-modal-title').textContent = step ? 'Edit Step ' + step.step_no : 'Add Step';
+      stepSubmitButton.textContent = step ? 'Save Changes' : 'Add Step';
+      document.getElementById('step-who').value = step ? step.who : '';
+      document.getElementById('step-when').value = step ? step.when : '';
+      document.getElementById('step-how').value = step ? step.how : '';
+      document.getElementById('step-tat').value = step ? step.tat_days : 1;
+      document.getElementById('step-required').checked = step ? step.required : true;
+      document.getElementById('step-active').checked = step ? step.active : true;
+      stepFormError.style.display = 'none';
+      stepModal.classList.add('open');
+      document.getElementById('step-who').focus();
+    }
+
+    function closeStepModal() {
+      stepModal.classList.remove('open');
+      editingId = null;
+    }
+
+    stepForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const payload = {
+        who: document.getElementById('step-who').value.trim(),
+        when: document.getElementById('step-when').value.trim(),
+        how: document.getElementById('step-how').value.trim(),
+        tat_days: parseInt(document.getElementById('step-tat').value, 10),
+        required: document.getElementById('step-required').checked,
+        active: document.getElementById('step-active').checked
+      };
+
+      const missing = ['who', 'when', 'how'].filter(function (field) { return !payload[field]; });
+      if (missing.length > 0) {
+        stepFormError.textContent = 'Please fill in: ' + missing.join(', ') + '.';
+        stepFormError.style.display = 'block';
+        return;
+      }
+      if (isNaN(payload.tat_days) || payload.tat_days < 0) {
+        payload.tat_days = 1;
+      }
+
+      stepSubmitButton.disabled = true;
+      try {
+        if (editingId) {
+          steps = await api('steps/' + editingId + '/', { method: 'PATCH', body: JSON.stringify(payload) });
+          showToast('Step updated.', 'success');
+        } else {
+          steps = await api(currentType + '/steps/', { method: 'POST', body: JSON.stringify(payload) });
+          showToast('Step added.', 'success');
+        }
+        closeStepModal();
+        render();
+      } catch (err) {
+        stepFormError.textContent = err.message || 'Something went wrong. Please try again.';
+        stepFormError.style.display = 'block';
+      } finally {
+        stepSubmitButton.disabled = false;
+      }
+    });
+
+    // ---------- Delete ----------
+
+    document.getElementById('delete-cancel-button').addEventListener('click', closeDeleteModal);
+    deleteModal.addEventListener('click', function (event) {
+      if (event.target === deleteModal) { closeDeleteModal(); }
+    });
+
+    function openDeleteModal(id) {
+      const step = steps.find(function (s) { return s.id === id; });
+      if (!step) { return; }
+      deletingId = id;
+      document.getElementById('delete-modal-text').textContent =
+        'Delete step ' + step.step_no + ' (' + step.who + ': ' + step.how + ')?';
+      deleteModal.classList.add('open');
+    }
+
+    function closeDeleteModal() {
+      deleteModal.classList.remove('open');
+      deletingId = null;
+    }
+
+    document.getElementById('delete-confirm-button').addEventListener('click', async function () {
+      if (!deletingId) { return; }
+      const button = this;
+      button.disabled = true;
+      try {
+        steps = await api('steps/' + deletingId + '/', { method: 'DELETE' });
+        closeDeleteModal();
+        render();
+        showToast('Step deleted. Remaining steps renumbered.', 'success');
+      } catch (err) {
+        showToast(err.message || 'Could not delete the step.', 'error');
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    // ---------- Reorder ----------
+
+    async function moveStep(id, direction) {
+      if (busy) { return; }
+      const index = steps.findIndex(function (s) { return s.id === id; });
+      const target = direction === 'up' ? index - 1 : index + 1;
+      if (index < 0 || target < 0 || target >= steps.length) { return; }
+
+      const ids = steps.map(function (s) { return s.id; });
+      const moved = ids.splice(index, 1)[0];
+      ids.splice(target, 0, moved);
+
+      busy = true;
+      content.style.opacity = '0.6';
+      try {
+        steps = await api(currentType + '/steps/reorder/', {
+          method: 'POST',
+          body: JSON.stringify({ ordered_ids: ids })
+        });
+        render();
+      } catch (err) {
+        showToast(err.message || 'Could not reorder the steps.', 'error');
+        loadSteps();
+      } finally {
+        busy = false;
+        content.style.opacity = '';
+      }
+    }
+
+    if (token) {
+      loadSteps();
+    }
+  </script>
+</body>
+</html>

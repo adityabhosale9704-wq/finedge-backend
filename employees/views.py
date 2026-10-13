@@ -15,6 +15,8 @@ from rest_framework.views import APIView
 
 from accounts.authentication import JWTAuthentication
 from employees.mongo import get_employees_collection
+from lifecycle.audit import user_label, write_audit
+from lifecycle.steps import compute_progress, normalize_steps, set_step_status
 from employees.serializers import (
     DocumentUpdateSerializer,
     DocumentUploadSerializer,
@@ -58,7 +60,12 @@ def serialize_employee(doc, request=None):
     doc.setdefault("facilities", [])
     doc.setdefault("position_id", None)
     doc.setdefault("source_candidate_id", None)
-    doc.setdefault("onboarding_steps", [])
+    doc["onboarding_steps"] = normalize_steps(doc.get("onboarding_steps", []))
+    progress = compute_progress(doc["onboarding_steps"])
+    doc["onboarding_progress_pct"] = progress["progress_pct"]
+    doc["onboarding_current_step"] = progress["current_step"]
+    doc["onboarding_all_required_completed"] = progress["all_required_completed"]
+    doc.setdefault("lifecycle_stage", doc.get("status", ""))
 
     docs_list = doc.get("docs", [])
     doc["docs"] = [
@@ -92,6 +99,12 @@ class EmployeeListCreateView(APIView):
         branch = request.query_params.get("branch")
         if branch:
             query["branch"] = branch
+
+        # An employee in onboarding is not an employee yet: keep them out of the
+        # main Employee List until activation. Onboarding screens use their own
+        # endpoint; pass ?include_onboarding=1 to see everyone.
+        if request.query_params.get("include_onboarding") != "1":
+            query["status"] = {"$ne": "Onboarding"}
 
         employees = get_employees_collection().find(query)
         return Response([serialize_employee(e, request) for e in employees])
@@ -139,8 +152,18 @@ class EmployeeDetailView(APIView):
                 {"_id": employee["_id"]}, {"$set": data}
             )
 
+        transition = None
+        if data.get("policy_accepted") and not employee.get("policy_accepted"):
+            # Accepting the policy can be the last missing onboarding condition.
+            from lifecycle.transitions import evaluate_onboarding_completion
+
+            transition = evaluate_onboarding_completion(str(employee["_id"]), request)
+
         updated = get_employees_collection().find_one({"_id": employee["_id"]})
-        return Response(serialize_employee(updated, request))
+        payload = serialize_employee(updated, request)
+        if transition:
+            payload["transition"] = transition
+        return Response(payload)
 
     def delete(self, request, pk):
         employee = get_employee_by_pk(pk)
@@ -451,28 +474,53 @@ class EmployeeOnboardingListView(APIView):
         return Response([serialize_employee(e, request) for e in employees])
 
 
-def _toggle_onboarding_step(pk, step_id, done):
+def _apply_onboarding_step_status(request, pk, step_id, new_status, notes=None):
+    from lifecycle.transitions import evaluate_onboarding_completion
+
     employee = get_employee_by_pk(pk)
     if not employee:
-        return None, Response(
+        return None, None, Response(
             {"detail": "Employee not found."}, status=status.HTTP_404_NOT_FOUND
         )
 
-    steps = employee.get("onboarding_steps", [])
+    if employee.get("status") != "Onboarding":
+        return None, None, Response(
+            {"detail": "Onboarding is already complete for this employee; its history is read-only."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    steps = normalize_steps(employee.get("onboarding_steps", []))
     step = next((s for s in steps if s.get("id") == step_id), None)
     if not step:
-        return None, Response(
+        return None, None, Response(
             {"detail": "Onboarding step not found."}, status=status.HTTP_404_NOT_FOUND
         )
 
-    step["done"] = done
-    step["done_date"] = date.today().isoformat() if done else None
-
+    previous = set_step_status(step, new_status, user_label(request), notes)
     get_employees_collection().update_one(
         {"_id": employee["_id"]}, {"$set": {"onboarding_steps": steps}}
     )
+    if previous != new_status:
+        write_audit(
+            "employee", str(employee["_id"]), "onboarding_step_status_changed",
+            previous, new_status, request,
+            {"step_no": step.get("step_no"), "step": step.get("how") or step.get("step_name", "")},
+        )
+
+    transition = evaluate_onboarding_completion(str(employee["_id"]), request)
     updated = get_employees_collection().find_one({"_id": employee["_id"]})
-    return updated, None
+    return updated, transition, None
+
+
+def _onboarding_step_response(request, pk, step_id, new_status, notes=None):
+    updated, transition, error = _apply_onboarding_step_status(
+        request, pk, step_id, new_status, notes
+    )
+    if error:
+        return error
+    payload = serialize_employee(updated, request)
+    payload["transition"] = transition
+    return Response(payload)
 
 
 class EmployeeOnboardingStepDoneView(APIView):
@@ -480,10 +528,7 @@ class EmployeeOnboardingStepDoneView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk, step_id):
-        updated, error = _toggle_onboarding_step(pk, step_id, True)
-        if error:
-            return error
-        return Response(serialize_employee(updated, request))
+        return _onboarding_step_response(request, pk, step_id, "Completed")
 
 
 class EmployeeOnboardingStepUndoView(APIView):
@@ -491,38 +536,48 @@ class EmployeeOnboardingStepUndoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk, step_id):
-        updated, error = _toggle_onboarding_step(pk, step_id, False)
-        if error:
-            return error
-        return Response(serialize_employee(updated, request))
+        return _onboarding_step_response(request, pk, step_id, "Pending")
+
+
+class EmployeeOnboardingStepStatusView(APIView):
+    """POST {status: Pending | In Progress | Completed, notes?}"""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk, step_id):
+        from recruitment.serializers import StepStatusSerializer
+
+        serializer = StepStatusSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        return _onboarding_step_response(request, pk, step_id, data["status"], data.get("notes"))
 
 
 class EmployeeCompleteOnboardingView(APIView):
+    """Manual trigger kept for older screens. Onboarding now completes
+    automatically; this endpoint just re-runs the same validated engine."""
+
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
+        from lifecycle.transitions import evaluate_onboarding_completion
+
         employee = get_employee_by_pk(pk)
         if not employee:
             return Response(
                 {"detail": "Employee not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        steps = employee.get("onboarding_steps", [])
-        if not steps or not all(s.get("done") for s in steps):
+        transition = evaluate_onboarding_completion(pk, request)
+        if not transition.get("moved"):
             return Response(
-                {"detail": "All onboarding steps must be completed first."},
+                {"detail": transition.get("reason", "Onboarding cannot be completed yet.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not employee.get("policy_accepted"):
-            return Response(
-                {"detail": "The policy handbook must be accepted first."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        get_employees_collection().update_one(
-            {"_id": employee["_id"]}, {"$set": {"status": "Active"}}
-        )
         updated = get_employees_collection().find_one({"_id": employee["_id"]})
-        return Response(serialize_employee(updated, request))
+        payload = serialize_employee(updated, request)
+        payload["transition"] = transition
+        return Response(payload)

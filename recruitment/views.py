@@ -12,12 +12,21 @@ from employees.mongo import get_employees_collection
 from positions.views import assign_employee_to_position, find_or_create_vacant_position
 from recruitment.mongo import get_candidates_collection, get_requisitions_collection
 from reference_checks.mongo import get_reference_checks_collection
+from lifecycle.audit import user_label, write_audit
+from lifecycle.steps import compute_progress, normalize_steps, set_step_status
+from lifecycle.transitions import (
+    candidate_transition_status,
+    evaluate_candidate_transition,
+    move_candidate_to_onboarding,
+)
 from recruitment.serializers import (
     CandidateCreateSerializer,
+    CandidateOutcomeSerializer,
     CandidateUpdateSerializer,
     RequisitionApproveSerializer,
     RequisitionCreateSerializer,
     RequisitionUpdateSerializer,
+    StepStatusSerializer,
 )
 from workflows.views import snapshot_steps_for_instance
 
@@ -67,7 +76,7 @@ def build_requisition_lookup(requisition_ids):
     return {r["id"]: r for r in requisitions}
 
 
-def serialize_candidate(doc, requisition_lookup=None):
+def serialize_candidate(doc, requisition_lookup=None, transition=None):
     requisition_id = doc.get("requisition_id")
     requisition_role = None
     requisition_branch = None
@@ -80,14 +89,25 @@ def serialize_candidate(doc, requisition_lookup=None):
             requisition_role = requisition.get("role")
             requisition_branch = requisition.get("branch")
 
-    steps = doc.get("steps", [])
-    done_count = len([s for s in steps if s.get("done")])
+    steps = normalize_steps(doc.get("steps", []))
+    progress = compute_progress(steps)
+    done_count = progress["steps_done_count"]
+    ready, blocked_reason = candidate_transition_status(doc)
 
     return {
         "id": doc["id"],
         "name": doc.get("name", ""),
         "phone": doc.get("phone", ""),
         "email": doc.get("email", ""),
+        "outcome": doc.get("outcome"),
+        "progress_pct": progress["progress_pct"],
+        "current_step": progress["current_step"],
+        "all_required_completed": progress["all_required_completed"],
+        "ready_for_onboarding": ready,
+        "onboarding_blocked_reason": "" if ready else blocked_reason,
+        "onboarding_employee_id": doc.get("onboarding_employee_id"),
+        "lifecycle_status": doc.get("lifecycle_status", ""),
+        "transition": transition,
         "requisition_id": requisition_id,
         "requisition_role": requisition_role,
         "requisition_branch": requisition_branch,
@@ -162,6 +182,18 @@ class RequisitionDetailView(APIView):
         if not requisition:
             return Response(
                 {"detail": "Requisition not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        linked_count = get_candidates_collection().count_documents(
+            {"requisition_id": req_id}
+        )
+        if linked_count:
+            return Response(
+                {
+                    "detail": f"This requisition has {linked_count} candidate(s) linked "
+                    "to it. Move or remove them before deleting the requisition."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         get_requisitions_collection().delete_one({"id": req_id})
@@ -249,6 +281,11 @@ class CandidateListCreateView(APIView):
             "steps": snapshot_steps_for_instance("Recruitment"),
         }
         get_candidates_collection().insert_one(candidate_doc)
+        write_audit(
+            "candidate", candidate_doc["id"], "candidate_created",
+            None, candidate_doc["stage"], request,
+            {"sop_steps_snapshotted": len(candidate_doc["steps"])},
+        )
         return Response(
             serialize_candidate(candidate_doc), status=status.HTTP_201_CREATED
         )
@@ -275,6 +312,25 @@ class CandidateDetailView(APIView):
                 {"detail": "Requisition not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
+        new_stage = data.get("stage")
+        if new_stage and new_stage != candidate.get("stage"):
+            if candidate.get("stage") == "Joined" or candidate.get("outcome") in ("Rejected", "Withdrawn"):
+                return Response(
+                    {"detail": "This candidate's recruitment is closed; the stage can no longer be changed."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if new_stage == "Joined":
+                return Response(
+                    {"detail": "A candidate moves to Onboarding automatically once recruitment is complete and the outcome is Selected."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if new_stage in ("Rejected", "Withdrawn"):
+                data["outcome"] = new_stage
+            write_audit(
+                "candidate", cand_id, "stage_changed",
+                candidate.get("stage"), new_stage, request,
+            )
+
         if data:
             get_candidates_collection().update_one({"id": cand_id}, {"$set": data})
 
@@ -293,15 +349,17 @@ class CandidateDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def _toggle_candidate_step(cand_id, step_id, done):
+def _apply_candidate_step_status(request, cand_id, step_id, new_status, notes=None):
+    """Single place every candidate step change goes through, so validation,
+    progress, audit and the automatic onboarding move can never diverge."""
     candidate = get_candidate_by_id(cand_id)
     if not candidate:
-        return None, Response(
+        return None, None, Response(
             {"detail": "Candidate not found."}, status=status.HTTP_404_NOT_FOUND
         )
 
     if candidate.get("frozen"):
-        return None, Response(
+        return None, None, Response(
             {
                 "detail": "This candidate's file is frozen pending a reference check "
                 "discrepancy review. Resolve it and unfreeze before continuing."
@@ -309,27 +367,60 @@ def _toggle_candidate_step(cand_id, step_id, done):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    steps = candidate.get("steps", [])
+    if candidate.get("outcome") in ("Rejected", "Withdrawn") or candidate.get("stage") in (
+        "Rejected",
+        "Withdrawn",
+    ):
+        return None, None, Response(
+            {"detail": "This candidate's recruitment is closed (Rejected / Withdrawn)."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if candidate.get("onboarding_employee_id"):
+        return None, None, Response(
+            {"detail": "This candidate has already moved to Onboarding. Recruitment history is read-only."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    steps = normalize_steps(candidate.get("steps", []))
     step = next((s for s in steps if s.get("id") == step_id), None)
     if not step:
-        return None, Response(
+        return None, None, Response(
             {"detail": "Step not found."}, status=status.HTTP_404_NOT_FOUND
         )
 
-    step["done"] = done
-    step["done_date"] = date.today().isoformat() if done else None
+    previous = set_step_status(step, new_status, user_label(request), notes)
 
     update = {"steps": steps}
-    if done and all(s.get("done") for s in steps):
+    progress = compute_progress(steps)
+    if progress["all_required_completed"] and candidate.get("stage") != "Documents Pending":
         update["stage"] = "Documents Pending"
 
     get_candidates_collection().update_one({"id": cand_id}, {"$set": update})
 
-    if update.get("stage") == "Documents Pending":
+    if previous != new_status:
+        write_audit(
+            "candidate", cand_id, "step_status_changed", previous, new_status, request,
+            {"step_no": step.get("step_no"), "step": step.get("how") or step.get("step_name", "")},
+        )
+    if update.get("stage"):
+        write_audit(
+            "candidate", cand_id, "stage_changed",
+            candidate.get("stage"), update["stage"], request,
+        )
         snapshot_doc_checklist_for_candidate(cand_id)
 
-    updated = get_candidate_by_id(cand_id)
-    return updated, None
+    transition = evaluate_candidate_transition(cand_id, request)
+    return get_candidate_by_id(cand_id), transition, None
+
+
+def _step_response(request, cand_id, step_id, new_status, notes=None):
+    updated, transition, error = _apply_candidate_step_status(
+        request, cand_id, step_id, new_status, notes
+    )
+    if error:
+        return error
+    return Response(serialize_candidate(updated, transition=transition))
 
 
 class CandidateStepDoneView(APIView):
@@ -337,10 +428,7 @@ class CandidateStepDoneView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, cand_id, step_id):
-        updated, error = _toggle_candidate_step(cand_id, step_id, True)
-        if error:
-            return error
-        return Response(serialize_candidate(updated))
+        return _step_response(request, cand_id, step_id, "Completed")
 
 
 class CandidateStepUndoView(APIView):
@@ -348,10 +436,69 @@ class CandidateStepUndoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, cand_id, step_id):
-        updated, error = _toggle_candidate_step(cand_id, step_id, False)
-        if error:
-            return error
-        return Response(serialize_candidate(updated))
+        return _step_response(request, cand_id, step_id, "Pending")
+
+
+class CandidateStepStatusView(APIView):
+    """POST {status: Pending | In Progress | Completed, notes?}"""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, cand_id, step_id):
+        serializer = StepStatusSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        return _step_response(request, cand_id, step_id, data["status"], data.get("notes"))
+
+
+class CandidateOutcomeView(APIView):
+    """POST {outcome: Selected | Rejected | Withdrawn}"""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, cand_id):
+        candidate = get_candidate_by_id(cand_id)
+        if not candidate:
+            return Response(
+                {"detail": "Candidate not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = CandidateOutcomeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        outcome = serializer.validated_data["outcome"]
+        previous = candidate.get("outcome")
+
+        if candidate.get("onboarding_employee_id"):
+            return Response(
+                {"detail": "This candidate has already moved to Onboarding; the outcome can no longer change."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if previous in ("Rejected", "Withdrawn") and previous != outcome:
+            return Response(
+                {"detail": "A Rejected / Withdrawn candidate cannot be reopened."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        update = {"outcome": outcome}
+        if outcome in ("Rejected", "Withdrawn"):
+            update["stage"] = outcome
+        get_candidates_collection().update_one({"id": cand_id}, {"$set": update})
+
+        if previous != outcome:
+            write_audit("candidate", cand_id, "outcome_changed", previous, outcome, request)
+        if update.get("stage") and update["stage"] != candidate.get("stage"):
+            write_audit(
+                "candidate", cand_id, "stage_changed",
+                candidate.get("stage"), update["stage"], request,
+            )
+
+        transition = None
+        if outcome == "Selected":
+            transition = evaluate_candidate_transition(cand_id, request)
+
+        return Response(serialize_candidate(get_candidate_by_id(cand_id), transition=transition))
 
 
 class CandidateUnfreezeView(APIView):
@@ -368,11 +515,20 @@ class CandidateUnfreezeView(APIView):
         get_candidates_collection().update_one(
             {"id": cand_id}, {"$set": {"frozen": False, "frozen_reason": ""}}
         )
+        write_audit("candidate", cand_id, "unfrozen", True, False, request)
+        transition = evaluate_candidate_transition(cand_id, request)
         updated = get_candidate_by_id(cand_id)
-        return Response(serialize_candidate(updated))
+        return Response(serialize_candidate(updated, transition=transition))
 
 
 class CandidateCreateEmployeeView(APIView):
+    """HR clicks "Move to Onboarding". Kept at the original URL (create-employee/).
+
+    Allowed only when the backend confirms ALL of: required recruitment steps
+    completed, outcome Selected, not frozen, stage Documents Pending, and every
+    required document uploaded. Atomic and idempotent (see lifecycle.transitions).
+    """
+
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -383,72 +539,22 @@ class CandidateCreateEmployeeView(APIView):
                 {"detail": "Candidate not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        if candidate.get("stage") != "Documents Pending":
+        ready, reason = candidate_transition_status(candidate)
+        if not ready:
+            return Response({"detail": reason}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = move_candidate_to_onboarding(candidate, request)
+        if not result.get("moved"):
             return Response(
-                {
-                    "detail": "Employee records can only be created for candidates "
-                    "whose stage is 'Documents Pending'."
-                },
+                {"detail": result.get("reason", "Could not move the candidate to onboarding.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        if candidate.get("frozen"):
-            return Response(
-                {
-                    "detail": "This candidate's file is frozen pending a reference check "
-                    "discrepancy review. Resolve it and unfreeze before continuing."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        move_anyway = bool(request.data.get("move_anyway"))
-        doc_checklist = candidate.get("doc_checklist", [])
-        all_verified = len(doc_checklist) > 0 and all(
-            d.get("status") == "Verified" for d in doc_checklist
-        )
-        if doc_checklist and not all_verified and not move_anyway:
-            return Response(
-                {
-                    "detail": "Not every document has been verified yet. "
-                    "Verify them all, or explicitly confirm 'Move Anyway'."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        requisition = None
-        requisition_id = candidate.get("requisition_id")
-        if requisition_id:
-            requisition = get_requisition_by_id(requisition_id)
-
-        designation = requisition.get("role", "") if requisition else ""
-        branch = requisition.get("branch", "") if requisition else ""
-        department = ""
-
-        employee_doc = {
-            "name": candidate.get("name", ""),
-            "email": candidate.get("email", ""),
-            "phone": candidate.get("phone", ""),
-            "department": department,
-            "designation": designation,
-            "branch": branch,
-            "date_of_joining": date.today().isoformat(),
-            "ctc": 0,
-            "status": "Onboarding",
-            "family": [],
-            "onboarding_steps": snapshot_steps_for_instance("Onboarding"),
-            "source_candidate_id": cand_id,
-        }
-        result = get_employees_collection().insert_one(employee_doc)
-        employee_doc["_id"] = result.inserted_id
-
-        position = find_or_create_vacant_position(designation, department, branch)
-        assign_employee_to_position(position, employee_doc)
-
-        get_candidates_collection().update_one(
-            {"id": cand_id}, {"$set": {"stage": "Joined"}}
-        )
 
         return Response(
-            {"employee_id": str(employee_doc["_id"]), "position_id": position["id"]},
+            {
+                "employee_id": result["employee_id"],
+                "position_id": result["position_id"],
+                "message": result["message"],
+            },
             status=status.HTTP_201_CREATED,
         )
