@@ -6,3 +6,10 @@ __pycache__/
 
 # Personal files (resume, interview prep, etc.) - never part of the project
 Claude outputs/
+
+# Runtime data and credentials stay local, outside the three source layers.
+.env.*
+!.env.example
+media/
+*.sqlite3
+*.sqlite3-*

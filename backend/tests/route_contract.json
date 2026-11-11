@@ -1,0 +1,166 @@
+{
+  "accounts": [
+    "path('login/', LoginView.as_view(), name='login')",
+    "path('me/', MeView.as_view(), name='me')"
+  ],
+  "admin_studio": [
+    "path('roles/', AllRolesListView.as_view(), name='role-list-all')",
+    "path('departments/', DepartmentListCreateView.as_view(), name='department-list-create')",
+    "path('departments/<str:pk>/', DepartmentDetailView.as_view(), name='department-detail')",
+    "path('departments/<str:department_id>/roles/', RoleListCreateView.as_view(), name='role-list-create')",
+    "path('roles/<str:pk>/', RoleDetailView.as_view(), name='role-detail')",
+    "path('branches/', BranchListCreateView.as_view(), name='branch-list-create')",
+    "path('branches/<str:pk>/', BranchDetailView.as_view(), name='branch-detail')"
+  ],
+  "compensation": [
+    "path('salary-structure/', SalaryStructureView.as_view(), name='salary-structure')",
+    "path('salary-revisions/', SalaryRevisionListCreateView.as_view(), name='salary-revision-list-create')",
+    "path('salary-revisions/<str:rev_id>/approve/', SalaryRevisionApproveView.as_view(), name='salary-revision-approve')",
+    "path('salary-revisions/<str:rev_id>/reject/', SalaryRevisionRejectView.as_view(), name='salary-revision-reject')"
+  ],
+  "compliance": [
+    "path('compliance/', ComplianceItemListCreateView.as_view(), name='compliance-list-create')",
+    "path('compliance/<str:pk>/', ComplianceItemDetailView.as_view(), name='compliance-detail')"
+  ],
+  "doc_checklist": [
+    "path('candidates/<str:cand_id>/doc-checklist/', CandidateDocChecklistView.as_view(), name='candidate-doc-checklist')",
+    "path('candidates/<str:cand_id>/doc-checklist/<str:item_id>/verify/', DocChecklistItemVerifyView.as_view(), name='doc-checklist-item-verify')",
+    "path('candidates/<str:cand_id>/doc-checklist/<str:item_id>/upload/', DocChecklistItemUploadView.as_view(), name='doc-checklist-item-upload')",
+    "path('candidates/<str:cand_id>/doc-checklist/<str:item_id>/reject/', DocChecklistItemRejectView.as_view(), name='doc-checklist-item-reject')",
+    "path('candidates/<str:cand_id>/additional-docs/', AdditionalDocsUpdateView.as_view(), name='additional-docs-update')",
+    "path('candidates/<str:cand_id>/send-doc-link/', SendDocLinkView.as_view(), name='send-doc-link')",
+    "path('candidates/<str:cand_id>/public-checklist/', PublicDocChecklistView.as_view(), name='public-doc-checklist')",
+    "path('candidates/<str:cand_id>/public-upload/', PublicDocUploadView.as_view(), name='public-doc-upload')",
+    "path('candidates/<str:cand_id>/public-additional-info/', PublicAdditionalInfoView.as_view(), name='public-additional-info')"
+  ],
+  "done_board": [
+    "path('done-board/', DoneBoardView.as_view(), name='done-board')"
+  ],
+  "employees": [
+    "path('', EmployeeListCreateView.as_view(), name='employee-list-create')",
+    "path('onboarding/', EmployeeOnboardingListView.as_view(), name='employee-onboarding-list')",
+    "path('<str:pk>/', EmployeeDetailView.as_view(), name='employee-detail')",
+    "path('<str:pk>/family/', EmployeeFamilyListCreateView.as_view(), name='employee-family-list-create')",
+    "path('<str:pk>/family/<str:family_id>/', EmployeeFamilyDetailView.as_view(), name='employee-family-detail')",
+    "path('<str:pk>/facilities/', EmployeeFacilityListCreateView.as_view(), name='employee-facility-list-create')",
+    "path('<str:pk>/facilities/<str:facility_id>/', EmployeeFacilityDetailView.as_view(), name='employee-facility-detail')",
+    "path('<str:pk>/documents/', EmployeeDocumentListCreateView.as_view(), name='employee-document-list-create')",
+    "path('<str:pk>/documents/<str:doc_id>/', EmployeeDocumentDetailView.as_view(), name='employee-document-detail')",
+    "path('<str:pk>/onboarding-steps/<str:step_id>/done/', EmployeeOnboardingStepDoneView.as_view(), name='employee-onboarding-step-done')",
+    "path('<str:pk>/onboarding-steps/<str:step_id>/undo/', EmployeeOnboardingStepUndoView.as_view(), name='employee-onboarding-step-undo')",
+    "path('<str:pk>/onboarding-steps/<str:step_id>/status/', EmployeeOnboardingStepStatusView.as_view(), name='employee-onboarding-step-status')",
+    "path('<str:pk>/initiate-exit/', InitiateExitView.as_view(), name='employee-initiate-exit')",
+    "path('<str:pk>/complete-onboarding/', EmployeeCompleteOnboardingView.as_view(), name='employee-complete-onboarding')"
+  ],
+  "engagement": [
+    "path('engagement/contests/', ContestListCreateView.as_view(), name='contest-list-create')",
+    "path('engagement/contests/<str:pk>/', ContestDetailView.as_view(), name='contest-detail')",
+    "path('engagement/suggestions/', SuggestionListCreateView.as_view(), name='suggestion-list-create')",
+    "path('engagement/suggestions/<str:pk>/', SuggestionDetailView.as_view(), name='suggestion-detail')",
+    "path('engagement/activities/', ActivityListCreateView.as_view(), name='activity-list-create')",
+    "path('engagement/activities/<str:pk>/', ActivityDetailView.as_view(), name='activity-detail')"
+  ],
+  "finedge_backend": [
+    "path('admin/', admin.site.urls)",
+    "path('api/v1/auth/', include('accounts.urls'))",
+    "path('api/v1/employees/', include('employees.urls'))",
+    "path('api/v1/positions/', include('positions.urls'))",
+    "path('api/v1/', include('recruitment.urls'))",
+    "path('api/v1/tasks/', include('tasks.urls'))",
+    "path('api/v1/', include('admin_studio.urls'))",
+    "path('api/v1/', include('workindia.urls'))",
+    "path('api/v1/', include('workflows.urls'))",
+    "path('api/v1/', include('compensation.urls'))",
+    "path('api/v1/', include('increments.urls'))",
+    "path('api/v1/', include('separations.urls'))",
+    "path('api/v1/', include('engagement.urls'))",
+    "path('api/v1/', include('compliance.urls'))",
+    "path('api/v1/', include('done_board.urls'))",
+    "path('api/v1/', include('interview_questions.urls'))",
+    "path('api/v1/', include('reference_checks.urls'))",
+    "path('api/v1/', include('policies.urls'))",
+    "path('api/v1/', include('letter_templates.urls'))",
+    "path('api/v1/', include('doc_checklist.urls'))",
+    "path('api/v1/', include('notifications.urls'))",
+    "path('api/v1/sop/', include('sop.urls'))",
+    "path('api/v1/audit/', include('lifecycle.urls'))"
+  ],
+  "increments": [
+    "path('incentive-structures/', IncentiveStructureListCreateView.as_view(), name='incentive-structure-list-create')",
+    "path('incentive-structures/<str:pk>/', IncentiveStructureDetailView.as_view(), name='incentive-structure-detail')"
+  ],
+  "interview_questions": [
+    "path('interview-questions/', InterviewQuestionListCreateView.as_view(), name='interview-question-list-create')",
+    "path('interview-questions/<str:pk>/', InterviewQuestionDetailView.as_view(), name='interview-question-detail')"
+  ],
+  "letter_templates": [
+    "path('letter-templates/', LetterTemplateListView.as_view(), name='letter-template-list')",
+    "path('letter-templates/<str:letter_type>/', LetterTemplateDetailView.as_view(), name='letter-template-detail')"
+  ],
+  "lifecycle": [
+    "path('<str:entity_type>/<str:entity_id>/', AuditHistoryView.as_view(), name='audit-history')"
+  ],
+  "notifications": [
+    "path('notifications/', NotificationsView.as_view(), name='notifications')"
+  ],
+  "policies": [
+    "path('policies/', PolicyListCreateView.as_view(), name='policy-list-create')",
+    "path('policies/<str:pk>/', PolicyDetailView.as_view(), name='policy-detail')",
+    "path('policies-acceptance-stats/', PolicyAcceptanceStatsView.as_view(), name='policy-acceptance-stats')"
+  ],
+  "positions": [
+    "path('', PositionListCreateView.as_view(), name='position-list-create')",
+    "path('<str:pos_id>/', PositionDetailView.as_view(), name='position-detail')",
+    "path('<str:pos_id>/history/', PositionHistoryView.as_view(), name='position-history')",
+    "path('<str:pos_id>/assign/', PositionAssignView.as_view(), name='position-assign')",
+    "path('<str:pos_id>/unassign/', PositionUnassignView.as_view(), name='position-unassign')"
+  ],
+  "recruitment": [
+    "path('requisitions/', RequisitionListCreateView.as_view(), name='requisition-list-create')",
+    "path('requisitions/<str:req_id>/', RequisitionDetailView.as_view(), name='requisition-detail')",
+    "path('requisitions/<str:req_id>/approve/', RequisitionApproveView.as_view(), name='requisition-approve')",
+    "path('candidates/', CandidateListCreateView.as_view(), name='candidate-list-create')",
+    "path('candidates/<str:cand_id>/', CandidateDetailView.as_view(), name='candidate-detail')",
+    "path('candidates/<str:cand_id>/steps/<str:step_id>/done/', CandidateStepDoneView.as_view(), name='candidate-step-done')",
+    "path('candidates/<str:cand_id>/steps/<str:step_id>/undo/', CandidateStepUndoView.as_view(), name='candidate-step-undo')",
+    "path('candidates/<str:cand_id>/steps/<str:step_id>/status/', CandidateStepStatusView.as_view(), name='candidate-step-status')",
+    "path('candidates/<str:cand_id>/outcome/', CandidateOutcomeView.as_view(), name='candidate-outcome')",
+    "path('candidates/<str:cand_id>/create-employee/', CandidateCreateEmployeeView.as_view(), name='candidate-create-employee')",
+    "path('candidates/<str:cand_id>/unfreeze/', CandidateUnfreezeView.as_view(), name='candidate-unfreeze')"
+  ],
+  "reference_checks": [
+    "path('reference-checks/', ReferenceCheckListCreateView.as_view(), name='reference-check-list-create')",
+    "path('reference-checks/<str:pk>/', ReferenceCheckDetailView.as_view(), name='reference-check-detail')",
+    "path('candidates/<str:cand_id>/can-issue-appointment-letter/', CandidateCanIssueAppointmentLetterView.as_view(), name='candidate-can-issue-appointment-letter')"
+  ],
+  "separations": [
+    "path('separations/', SeparationListCreateView.as_view(), name='separation-list-create')",
+    "path('separations/<str:sep_id>/', SeparationDetailView.as_view(), name='separation-detail')",
+    "path('separations/<str:sep_id>/steps/<str:step_id>/done/', SeparationStepDoneView.as_view(), name='separation-step-done')",
+    "path('separations/<str:sep_id>/steps/<str:step_id>/status/', SeparationStepStatusView.as_view(), name='separation-step-status')",
+    "path('separations/<str:sep_id>/steps/<str:step_id>/undo/', SeparationStepUndoView.as_view(), name='separation-step-undo')"
+  ],
+  "sop": [
+    "path('steps/<str:step_id>/', SopStepDetailView.as_view(), name='sop-step-detail')",
+    "path('<str:process_type>/steps/', SopStepListCreateView.as_view(), name='sop-step-list-create')",
+    "path('<str:process_type>/steps/reorder/', SopStepReorderView.as_view(), name='sop-step-reorder')"
+  ],
+  "tasks": [
+    "path('', TaskListCreateView.as_view(), name='task-list-create')",
+    "path('<str:task_id>/', TaskDetailView.as_view(), name='task-detail')",
+    "path('<str:task_id>/done/', TaskDoneView.as_view(), name='task-done')",
+    "path('<str:task_id>/undo/', TaskUndoView.as_view(), name='task-undo')"
+  ],
+  "workflows": [
+    "path('workflow-templates/<str:workflow_type>/steps/', WorkflowStepListCreateView.as_view(), name='workflow-step-list-create')",
+    "path('workflow-templates/<str:workflow_type>/steps/<str:step_id>/', WorkflowStepDetailView.as_view(), name='workflow-step-detail')"
+  ],
+  "workindia": [
+    "path('workindia/import/', WorkIndiaImportView.as_view(), name='workindia-import')",
+    "path('workindia/', WorkIndiaListView.as_view(), name='workindia-list')",
+    "path('workindia/<str:wi_id>/promote/', WorkIndiaPromoteView.as_view(), name='workindia-promote')",
+    "path('workindia/<str:wi_id>/select/', WorkIndiaSelectView.as_view(), name='workindia-select')",
+    "path('workindia/<str:wi_id>/log-call/', WorkIndiaLogCallView.as_view(), name='workindia-log-call')",
+    "path('workindia/<str:wi_id>/remove/', WorkIndiaRemoveView.as_view(), name='workindia-remove')"
+  ]
+}

@@ -3,14 +3,6 @@
    theme is applied before first paint, avoiding a flash of the
    wrong theme. */
 
-/* Single place every page's API_BASE-prefixed fetch calls point at.
-   Local dev (Django on your own machine): leave this as-is.
-   After hosting the backend on AWS: change ONLY this one line to your
-   server's address (e.g. 'https://api.yourdomain.com/api/v1' or
-   'http://<your-ec2-ip>:8000/api/v1') and every page picks it up —
-   no need to touch the 17 HTML files individually again. */
-window.API_BASE = 'http://16.170.98.44/api/v1';
-
 /* ---------- Global City/Branch filter ----------
    Per the user manual: narrows Dashboard, TAT Tracker, Employees and Exit
    down to one office; "All" (the default) shows everything. WorkIndia,

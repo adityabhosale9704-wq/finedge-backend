@@ -1,0 +1,1826 @@
+const token = getAuthToken();
+const EMPLOYEES_API_BASE = API_BASE + '/employees/';
+const DEPARTMENTS_API_BASE = API_BASE + '/departments/';
+const BRANCHES_API_BASE = API_BASE + '/branches/';
+
+if (!token) {
+  window.location.href = 'login.html';
+} else {
+  // Start loading only after the whole script has been evaluated: the loaders use
+  // consts declared further down (error banners, state), which would otherwise be
+  // in their temporal dead zone and throw before anything renders.
+  document.addEventListener('DOMContentLoaded', function () {
+    loadEmployees();
+    loadDepartmentAndBranchOptions();
+    initGlobalBranchFilter('global-branch-filter-container', function () { loadEmployees(); });
+  });
+}
+
+
+async function loadDepartmentAndBranchOptions() {
+  try {
+    const [deptResponse, branchResponse] = await Promise.all([
+      fetch(DEPARTMENTS_API_BASE, { headers: authHeaders(token) }),
+      fetch(BRANCHES_API_BASE, { headers: authHeaders(token) })
+    ]);
+
+    if (!deptResponse.ok || !branchResponse.ok) {
+      return;
+    }
+
+    const departments = await deptResponse.json();
+    const branches = await branchResponse.json();
+
+    const departmentSelect = document.getElementById('department');
+    const branchSelect = document.getElementById('branch');
+
+    departmentSelect.innerHTML = '<option value="" disabled selected>Select department</option>' +
+      departments.map(function (d) {
+        return '<option value="' + d.name.replace(/"/g, '&quot;') + '">' + d.name + '</option>';
+      }).join('');
+
+    branchSelect.innerHTML = '<option value="" disabled selected>Select branch</option>' +
+      branches.map(function (b) {
+        return '<option value="' + b.name.replace(/"/g, '&quot;') + '">' + b.name + '</option>';
+      }).join('');
+  } catch (err) {
+    // Leave the placeholder options in place if master data can't be loaded.
+  }
+}
+
+const form = document.getElementById('employee-form');
+const formTitle = document.getElementById('form-title');
+const formError = document.getElementById('form-error');
+const submitButton = document.getElementById('submit-button');
+const cancelEditButton = document.getElementById('cancel-edit-button');
+const searchInput = document.getElementById('search-input');
+const tabActive = document.getElementById('tab-active');
+const tabLeaver = document.getElementById('tab-leaver');
+
+const listView = document.getElementById('list-view');
+const profileView = document.getElementById('profile-view');
+const formView = document.getElementById('form-view');
+
+function showView(name) {
+  listView.style.display = name === 'list' ? 'block' : 'none';
+  profileView.style.display = name === 'profile' ? 'block' : 'none';
+  formView.style.display = name === 'form' ? 'block' : 'none';
+}
+
+document.getElementById('add-employee-button').addEventListener('click', function () {
+  exitEditMode();
+  showView('form');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+document.getElementById('form-back-button').addEventListener('click', exitEditMode);
+
+let editingId = null;
+let allEmployees = [];
+let currentTab = 'active';
+let searchTerm = '';
+
+form.addEventListener('submit', handleSubmit);
+cancelEditButton.addEventListener('click', exitEditMode);
+searchInput.addEventListener('input', function () {
+  searchTerm = searchInput.value.trim().toLowerCase();
+  renderEmployees();
+});
+tabActive.addEventListener('click', function () {
+  setTab('active');
+});
+tabLeaver.addEventListener('click', function () {
+  setTab('leaver');
+});
+
+function setTab(tab) {
+  currentTab = tab;
+  tabActive.classList.toggle('active', tab === 'active');
+  tabLeaver.classList.toggle('active', tab === 'leaver');
+  renderEmployees();
+}
+
+async function loadEmployees() {
+  const content = document.getElementById('content');
+
+  try {
+    const branchQuery = getGlobalBranchFilter() ? '?branch=' + encodeURIComponent(getGlobalBranchFilter()) : '';
+    const response = await fetch(EMPLOYEES_API_BASE + branchQuery, {
+      method: 'GET',
+      headers: authHeaders(token)
+    });
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error('Failed to load employees.');
+    }
+
+    allEmployees = await response.json();
+    renderEmployees();
+  } catch (err) {
+    content.innerHTML = '<div class="error-state"><div>' +
+      escapeHtml(err.message || 'Could not load employees.') +
+      '</div><button type="button" class="btn-secondary" id="retry-employees-button">Retry</button></div>';
+    document.getElementById('retry-employees-button').addEventListener('click', loadEmployees);
+  }
+}
+
+function isActiveStatus(status) {
+  return String(status || '').toLowerCase() === 'active';
+}
+
+function updateTabCounts() {
+  const activeCount = allEmployees.filter(function (e) { return isActiveStatus(e.status); }).length;
+  const leaverCount = allEmployees.length - activeCount;
+  tabActive.textContent = 'Active (' + activeCount + ')';
+  tabLeaver.textContent = 'Leaver (' + leaverCount + ')';
+}
+
+function getFilteredEmployees() {
+  let list = allEmployees.filter(function (e) {
+    return currentTab === 'active' ? isActiveStatus(e.status) : !isActiveStatus(e.status);
+  });
+
+  if (searchTerm) {
+    list = list.filter(function (e) {
+      return [e.name, e.department, e.designation, e.branch].some(function (field) {
+        return String(field || '').toLowerCase().indexOf(searchTerm) !== -1;
+      });
+    });
+  }
+
+  return list;
+}
+
+function renderEmployees() {
+  const content = document.getElementById('content');
+
+  updateTabCounts();
+  const employees = getFilteredEmployees();
+
+  if (!employees || employees.length === 0) {
+    content.innerHTML = '<div class="message">No employees found.</div>';
+    return;
+  }
+
+  const rows = employees.map(function (emp) {
+    const statusClass = isActiveStatus(emp.status)
+      ? 'status-active'
+      : (String(emp.status || '').toLowerCase() === 'inactive' ? 'status-inactive' : 'status-other');
+
+    return '<tr class="clickable-row" data-row-id="' + escapeHtml(emp.id) + '">' +
+      '<td>' + escapeHtml(emp.name) + '</td>' +
+      '<td>' + escapeHtml(emp.department) + '</td>' +
+      '<td>' + escapeHtml(emp.designation) + '</td>' +
+      '<td>' + escapeHtml(emp.branch) + '</td>' +
+      '<td><span class="status ' + statusClass + '">' + escapeHtml(emp.status) + '</span></td>' +
+      '<td>' +
+      '<button type="button" class="btn-view btn-row view-btn" data-id="' + escapeHtml(emp.id) + '">View Details</button>' +
+      '<button type="button" class="btn-edit btn-row" data-id="' + escapeHtml(emp.id) + '">Edit</button>' +
+      (isActiveStatus(emp.status)
+        ? '<button type="button" class="btn-delete btn-row exit-btn" data-id="' + escapeHtml(emp.id) + '">Initiate Exit Process</button>'
+        : '') +
+      '</td>' +
+      '</tr>';
+  }).join('');
+
+  content.innerHTML =
+    '<table>' +
+    '<thead><tr>' +
+    '<th>Name</th><th>Department</th><th>Designation</th><th>Branch</th><th>Status</th>' +
+    '<th>Actions</th>' +
+    '</tr></thead>' +
+    '<tbody>' + rows + '</tbody>' +
+    '</table>';
+
+  content.querySelectorAll('.btn-edit').forEach(function (btn) {
+    btn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      enterEditMode(btn.getAttribute('data-id'));
+    });
+  });
+
+  content.querySelectorAll('.view-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      openProfile(btn.getAttribute('data-id'));
+    });
+  });
+
+  content.querySelectorAll('.exit-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      openExitModal(btn.getAttribute('data-id'));
+    });
+  });
+
+  content.querySelectorAll('tr.clickable-row').forEach(function (row) {
+    row.addEventListener('click', function () {
+      openProfile(row.getAttribute('data-row-id'));
+    });
+  });
+}
+
+function fillEmployeeForm(employee) {
+  document.getElementById('name').value = employee.name || '';
+  document.getElementById('email').value = employee.email || '';
+  document.getElementById('phone').value = employee.phone || '';
+  document.getElementById('department').value = employee.department || '';
+  document.getElementById('designation').value = employee.designation || '';
+  document.getElementById('branch').value = employee.branch || '';
+  document.getElementById('date_of_joining').value = employee.date_of_joining || '';
+  document.getElementById('ctc').value = employee.ctc !== undefined ? employee.ctc : '';
+  document.getElementById('status').value = employee.status || 'active';
+  document.getElementById('blood_group').value = employee.blood_group || '';
+  document.getElementById('kra_score').value = (employee.kra_score !== undefined && employee.kra_score !== null)
+    ? employee.kra_score
+    : '';
+  document.getElementById('dob').value = employee.dob || '';
+  document.getElementById('marital_status').value = employee.marital_status || '';
+  document.getElementById('pan').value = employee.pan || '';
+  document.getElementById('aadhaar').value = employee.aadhaar || '';
+  document.getElementById('uan').value = employee.uan || '';
+  document.getElementById('esic').value = employee.esic || '';
+  document.getElementById('bank_account').value = employee.bank_account || '';
+  document.getElementById('pf_nomination_on_file').checked = !!employee.pf_nomination_on_file;
+  document.getElementById('gratuity_nomination_on_file').checked = !!employee.gratuity_nomination_on_file;
+  document.getElementById('policy_accepted').checked = !!employee.policy_accepted;
+}
+
+function enterEditMode(id) {
+  const employee = allEmployees.find(function (e) { return e.id === id; })
+    || (currentProfileEmployee && currentProfileEmployee.id === id ? currentProfileEmployee : null);
+  if (!employee) {
+    return;
+  }
+
+  editingId = id;
+  formTitle.textContent = 'Edit Employee';
+  submitButton.textContent = 'Update Employee';
+  cancelEditButton.style.display = 'inline-block';
+
+  fillEmployeeForm(employee);
+  showView('form');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function exitEditMode() {
+  editingId = null;
+  formTitle.textContent = 'Add Employee';
+  submitButton.textContent = 'Add Employee';
+  cancelEditButton.style.display = 'none';
+  form.reset();
+  hideFormError();
+  showView(currentProfileEmployee ? 'profile' : 'list');
+}
+
+async function handleSubmit(event) {
+  event.preventDefault();
+  hideFormError();
+  submitButton.disabled = true;
+
+  const kraValue = document.getElementById('kra_score').value;
+
+  const payload = {
+    name: document.getElementById('name').value,
+    email: document.getElementById('email').value,
+    phone: document.getElementById('phone').value,
+    department: document.getElementById('department').value,
+    designation: document.getElementById('designation').value,
+    branch: document.getElementById('branch').value,
+    date_of_joining: document.getElementById('date_of_joining').value,
+    ctc: parseFloat(document.getElementById('ctc').value),
+    status: document.getElementById('status').value,
+    blood_group: document.getElementById('blood_group').value,
+    kra_score: kraValue === '' ? null : parseInt(kraValue, 10),
+    dob: document.getElementById('dob').value || null,
+    marital_status: document.getElementById('marital_status').value,
+    pan: document.getElementById('pan').value,
+    aadhaar: document.getElementById('aadhaar').value,
+    uan: document.getElementById('uan').value,
+    esic: document.getElementById('esic').value,
+    bank_account: document.getElementById('bank_account').value,
+    pf_nomination_on_file: document.getElementById('pf_nomination_on_file').checked,
+    gratuity_nomination_on_file: document.getElementById('gratuity_nomination_on_file').checked,
+    policy_accepted: document.getElementById('policy_accepted').checked
+  };
+
+  const isEditing = editingId !== null;
+  const savedId = editingId;
+  const url = isEditing ? EMPLOYEES_API_BASE + editingId + '/' : EMPLOYEES_API_BASE;
+  const method = isEditing ? 'PATCH' : 'POST';
+
+  try {
+    const response = await fetch(url, {
+      method: method,
+      headers: authHeaders(token, true),
+      body: JSON.stringify(payload)
+    });
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(function () { return {}; });
+      throw new Error(describeApiError(data) || 'Could not save employee.');
+    }
+
+    exitEditMode();
+    await loadEmployees();
+
+    if (savedId && currentProfileEmployee && currentProfileEmployee.id === savedId) {
+      await refreshProfile();
+    }
+  } catch (err) {
+    showFormError(err.message || 'Something went wrong. Please try again.');
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+async function handleDelete(id) {
+  const confirmed = confirm('Are you sure you want to delete this employee?');
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const response = await fetch(EMPLOYEES_API_BASE + id + '/', {
+      method: 'DELETE',
+      headers: authHeaders(token)
+    });
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok && response.status !== 204) {
+      throw new Error('Could not delete employee.');
+    }
+
+    if (editingId === id) {
+      exitEditMode();
+    }
+
+    if (currentProfileEmployee && currentProfileEmployee.id === id) {
+      closeProfile();
+    }
+
+    loadEmployees();
+  } catch (err) {
+    showFormError(err.message || 'Something went wrong. Please try again.');
+  }
+}
+
+function showFormError(message) {
+  formError.textContent = message;
+  formError.style.display = 'block';
+}
+
+function hideFormError() {
+  formError.textContent = '';
+  formError.style.display = 'none';
+}
+
+function escapeHtml(value) {
+  if (value === undefined || value === null) {
+    return '';
+  }
+  const div = document.createElement('div');
+  div.textContent = String(value);
+  return div.innerHTML;
+}
+
+// ---------- Initiate exit ----------
+
+const exitModalOverlay = document.getElementById('exit-modal-overlay');
+const exitForm = document.getElementById('exit-form');
+const exitFormError = document.getElementById('exit-form-error');
+const exitSubmitButton = document.getElementById('exit-submit-button');
+let exitEmployeeId = null;
+
+document.getElementById('exit-cancel-button').addEventListener('click', closeExitModal);
+exitModalOverlay.addEventListener('click', function (event) {
+  if (event.target === exitModalOverlay) {
+    closeExitModal();
+  }
+});
+exitForm.addEventListener('submit', handleExitSubmit);
+
+function openExitModal(id) {
+  const employee = allEmployees.find(function (e) { return e.id === id; })
+    || (currentProfileEmployee && currentProfileEmployee.id === id ? currentProfileEmployee : null);
+  if (!employee) {
+    return;
+  }
+  exitEmployeeId = id;
+  document.getElementById('exit-modal-employee').textContent = employee.name + ' · ' + (employee.designation || '');
+  exitForm.reset();
+  document.getElementById('exit-resignation-date').value = new Date().toISOString().slice(0, 10);
+  exitFormError.style.display = 'none';
+  exitModalOverlay.classList.add('open');
+}
+
+function closeExitModal() {
+  exitModalOverlay.classList.remove('open');
+  exitEmployeeId = null;
+}
+
+async function handleExitSubmit(event) {
+  event.preventDefault();
+  exitFormError.style.display = 'none';
+
+  const resignationDate = document.getElementById('exit-resignation-date').value;
+  const lastWorkingDay = document.getElementById('exit-last-working-day').value;
+  if (lastWorkingDay < resignationDate) {
+    exitFormError.textContent = 'The last working day cannot be before the resignation date.';
+    exitFormError.style.display = 'block';
+    return;
+  }
+
+  exitSubmitButton.disabled = true;
+  try {
+    const response = await fetch(EMPLOYEES_API_BASE + exitEmployeeId + '/initiate-exit/', {
+      method: 'POST',
+      headers: authHeaders(token, true),
+      body: JSON.stringify({
+        resignation_date: resignationDate,
+        last_working_day: lastWorkingDay,
+        reason: document.getElementById('exit-reason').value
+      })
+    });
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    const data = await response.json().catch(function () { return {}; });
+    if (!response.ok) {
+      const detail = describeApiError(data) || Object.keys(data).map(function (k) { return k + ': ' + [].concat(data[k]).join(' '); }).join(' | ');
+      throw new Error(detail || 'Could not initiate the exit process.');
+    }
+
+    closeExitModal();
+    showToast(data.message || 'Exit process initiated successfully.', 'success');
+  } catch (err) {
+    exitFormError.textContent = err.message || 'Something went wrong. Please try again.';
+    exitFormError.style.display = 'block';
+  } finally {
+    exitSubmitButton.disabled = false;
+  }
+}
+
+// ---------- Profile view ----------
+
+let currentProfileEmployee = null;
+let currentProfileTab = 'personal';
+
+const profileBackButton = document.getElementById('profile-back-button');
+const profilePrintButton = document.getElementById('profile-print-button');
+const profileEditButton = document.getElementById('profile-edit-button');
+const profileTabButtons = document.querySelectorAll('[data-ptab]');
+
+profileBackButton.addEventListener('click', closeProfile);
+profilePrintButton.addEventListener('click', function () {
+  window.print();
+});
+document.getElementById('profile-exit-button').addEventListener('click', function () {
+  if (currentProfileEmployee) {
+    openExitModal(currentProfileEmployee.id);
+  }
+});
+document.getElementById('profile-delete-button').addEventListener('click', function () {
+  if (currentProfileEmployee) {
+    handleDelete(currentProfileEmployee.id);
+  }
+});
+profileEditButton.addEventListener('click', function () {
+  if (currentProfileEmployee) {
+    enterEditMode(currentProfileEmployee.id);
+  }
+});
+
+profileTabButtons.forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    setProfileTab(btn.getAttribute('data-ptab'));
+  });
+});
+
+function getInitials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return '?';
+  }
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+const AVATAR_PALETTE = ['#1b2a4a', '#a67f2c', '#2a5db0', '#1e7e34', '#8a3ab2', '#b7472a', '#0f766e'];
+
+function getAvatarColor(name) {
+  const str = String(name || '?');
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) % AVATAR_PALETTE.length;
+  }
+  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+}
+
+function formatCurrency(value) {
+  const number = Number(value);
+  if (isNaN(number)) {
+    return '&mdash;';
+  }
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(number);
+  } catch (err) {
+    return String(number);
+  }
+}
+
+async function fetchEmployee(id) {
+  const response = await fetch(EMPLOYEES_API_BASE + id + '/', {
+    method: 'GET',
+    headers: authHeaders(token)
+  });
+
+  if (response.status === 401) {
+    logout();
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error('Failed to load employee.');
+  }
+
+  return response.json();
+}
+
+async function openProfile(id) {
+  try {
+    const employee = await fetchEmployee(id);
+    if (!employee) {
+      return;
+    }
+    currentProfileEmployee = employee;
+    currentProfileTab = 'personal';
+    listView.style.display = 'none';
+    profileView.style.display = 'block';
+    renderProfile();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    window.location.href = 'login.html';
+  }
+}
+
+async function refreshProfile() {
+  if (!currentProfileEmployee) {
+    return;
+  }
+  try {
+    const employee = await fetchEmployee(currentProfileEmployee.id);
+    if (!employee) {
+      return;
+    }
+    currentProfileEmployee = employee;
+    renderProfile();
+  } catch (err) {
+    // If the employee can no longer be fetched, fall back to the list view.
+    closeProfile();
+  }
+}
+
+function closeProfile() {
+  currentProfileEmployee = null;
+  profileView.style.display = 'none';
+  listView.style.display = 'block';
+  loadEmployees();
+}
+
+function setProfileTab(tab) {
+  currentProfileTab = tab;
+  profileTabButtons.forEach(function (btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-ptab') === tab);
+  });
+  renderProfileTabContent();
+}
+
+function renderProfile() {
+  if (!currentProfileEmployee) {
+    return;
+  }
+  const emp = currentProfileEmployee;
+
+  const profileAvatarEl = document.getElementById('profile-avatar');
+  profileAvatarEl.textContent = getInitials(emp.name);
+  profileAvatarEl.style.background = getAvatarColor(emp.name);
+  document.getElementById('profile-name').textContent = emp.name || '';
+  document.getElementById('profile-subtitle').textContent =
+    [emp.designation, emp.department, emp.branch, emp.id].filter(Boolean).join(' · ');
+
+  document.getElementById('kpi-doj').textContent = emp.date_of_joining || '—';
+  document.getElementById('kpi-ctc').innerHTML = formatCurrency(emp.ctc);
+  document.getElementById('kpi-blood-group').textContent = emp.blood_group || '—';
+
+  if (emp.emergency_contact_name) {
+    document.getElementById('kpi-emergency-name').textContent = emp.emergency_contact_name;
+    document.getElementById('kpi-emergency-phone').textContent = emp.emergency_contact_phone || '';
+  } else {
+    document.getElementById('kpi-emergency-name').textContent = '—';
+    document.getElementById('kpi-emergency-phone').textContent = '';
+  }
+
+  profileTabButtons.forEach(function (btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-ptab') === currentProfileTab);
+  });
+
+  renderProfileTabContent();
+}
+
+function renderProfileTabContent() {
+  const container = document.getElementById('profile-tab-content');
+  if (!currentProfileEmployee) {
+    return;
+  }
+
+  if (currentProfileTab === 'history') {
+    container.innerHTML = '<div class="audit-box" id="employee-audit-box" style="margin-top: 0;"></div>';
+    renderAuditHistory(document.getElementById('employee-audit-box'), 'employee', currentProfileEmployee.id);
+    return;
+  }
+
+  if (currentProfileTab === 'statutory') {
+    renderStatutoryTab(container);
+    return;
+  }
+
+  if (currentProfileTab === 'facilities') {
+    renderFacilitiesTab(container);
+    return;
+  }
+
+  if (currentProfileTab === 'documents') {
+    renderDocumentsTab(container);
+    return;
+  }
+
+  if (currentProfileTab === 'letters') {
+    renderLettersTab(container);
+    return;
+  }
+
+  if (currentProfileTab !== 'personal') {
+    container.innerHTML = '<div class="message">Coming soon</div>';
+    return;
+  }
+
+  const emp = currentProfileEmployee;
+  const family = emp.family || [];
+
+  const familyRows = family.length === 0
+    ? '<tr><td colspan="4" class="message">No family members added yet.</td></tr>'
+    : family.map(function (member) {
+      return '<tr>' +
+        '<td>' + escapeHtml(member.relation) + '</td>' +
+        '<td>' + escapeHtml(member.name) + '</td>' +
+        '<td>' + (member.dob ? escapeHtml(member.dob) : '&mdash;') + '</td>' +
+        '<td>' +
+        '<button type="button" class="icon-btn icon-edit" data-family-id="' + escapeHtml(member.id) + '" title="Edit">&#9998;</button>' +
+        '<button type="button" class="icon-btn icon-delete" data-family-id="' + escapeHtml(member.id) + '" title="Delete">&#128465;</button>' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+
+  container.innerHTML =
+    '<div class="section-heading-row">' +
+    '<h3 style="margin-bottom: 0;">Personal details</h3>' +
+    '<button type="button" class="btn-secondary" id="edit-personal-button">&#9998; Edit personal details</button>' +
+    '</div>' +
+    '<div class="kv-grid">' +
+    '<div class="kv-item"><div class="kv-label">Date of birth</div><div class="kv-value">' + (emp.dob ? escapeHtml(emp.dob) : '&mdash;') + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">Marital status</div><div class="kv-value">' + (emp.marital_status ? escapeHtml(emp.marital_status) : '&mdash;') + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">Mobile</div><div class="kv-value">' + (emp.phone ? escapeHtml(emp.phone) : '&mdash;') + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">Official email</div><div class="kv-value">' + (emp.email ? escapeHtml(emp.email) : '&mdash;') + '</div></div>' +
+    '</div>' +
+    '<div class="section-heading-row">' +
+    '<h3 style="margin-bottom: 0;">Family members</h3>' +
+    '</div>' +
+    '<table>' +
+    '<thead><tr><th>Relation</th><th>Name</th><th>DOB</th><th>Actions</th></tr></thead>' +
+    '<tbody>' + familyRows + '</tbody>' +
+    '</table>' +
+    '<div class="form-actions">' +
+    '<button type="button" class="btn-secondary" id="add-family-button">+ Add family member</button>' +
+    '</div>';
+
+  document.getElementById('edit-personal-button').addEventListener('click', function () {
+    enterEditMode(emp.id);
+  });
+
+  document.getElementById('add-family-button').addEventListener('click', function () {
+    openFamilyModal('add', null);
+  });
+
+  container.querySelectorAll('.icon-edit').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const memberId = btn.getAttribute('data-family-id');
+      const member = family.find(function (m) { return m.id === memberId; });
+      if (member) {
+        openFamilyModal('edit', member);
+      }
+    });
+  });
+
+  container.querySelectorAll('.icon-delete').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      handleFamilyDelete(btn.getAttribute('data-family-id'));
+    });
+  });
+}
+
+function renderStatutoryTab(container) {
+  const emp = currentProfileEmployee;
+
+  const yesOrDash = function (value) {
+    return value ? '&#10003;' : '&mdash;';
+  };
+
+  const policyHtml = emp.policy_accepted
+    ? '<span style="color: #1e7e34;">&#10003; e-Signed</span>'
+    : '<span style="color: #a06400;">&#9888; Pending</span>';
+
+  container.innerHTML =
+    '<div class="section-heading-row">' +
+    '<h3 style="margin-bottom: 0;">Statutory &amp; bank details</h3>' +
+    '<button type="button" class="btn-secondary" id="edit-statutory-button">&#9998; Edit statutory &amp; bank details</button>' +
+    '</div>' +
+    '<div class="kv-grid">' +
+    '<div class="kv-item"><div class="kv-label">PAN</div><div class="kv-value">' + (emp.pan ? escapeHtml(emp.pan) : '&mdash;') + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">Aadhaar</div><div class="kv-value">' + (emp.aadhaar ? escapeHtml(emp.aadhaar) : '&mdash;') + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">UAN (PF)</div><div class="kv-value">' + (emp.uan ? escapeHtml(emp.uan) : '&mdash;') + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">ESIC IP No.</div><div class="kv-value">' + (emp.esic ? escapeHtml(emp.esic) : '&mdash;') + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">Salary Bank Account</div><div class="kv-value">' + (emp.bank_account ? escapeHtml(emp.bank_account) : '&mdash;') + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">PF Nomination</div><div class="kv-value">' + yesOrDash(emp.pf_nomination_on_file) + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">Gratuity Nomination</div><div class="kv-value">' + yesOrDash(emp.gratuity_nomination_on_file) + '</div></div>' +
+    '<div class="kv-item"><div class="kv-label">Policy Handbook</div><div class="kv-value">' + policyHtml + '</div></div>' +
+    '</div>';
+
+  document.getElementById('edit-statutory-button').addEventListener('click', function () {
+    enterEditMode(emp.id);
+  });
+}
+
+function renderFacilitiesTab(container) {
+  const emp = currentProfileEmployee;
+  const facilities = emp.facilities || [];
+
+  const facilityRows = facilities.length === 0
+    ? ''
+    : facilities.map(function (facility) {
+      return '<tr>' +
+        '<td>' + escapeHtml(facility.item) + '</td>' +
+        '<td>' + (facility.issued_date ? escapeHtml(facility.issued_date) : '&mdash;') + '</td>' +
+        '<td><span class="status status-active">Issued</span></td>' +
+        '<td>' +
+        '<button type="button" class="icon-btn icon-edit" data-facility-id="' + escapeHtml(facility.id) + '" title="Edit">&#9998;</button>' +
+        '<button type="button" class="icon-btn icon-delete" data-facility-id="' + escapeHtml(facility.id) + '" title="Delete">&#128465;</button>' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+
+  const tableOrEmpty = facilities.length === 0
+    ? '<div class="message">No facilities or assets issued yet.</div>'
+    : '<table>' +
+      '<thead><tr><th>Item</th><th>Issued Date</th><th>Status</th><th>Actions</th></tr></thead>' +
+      '<tbody>' + facilityRows + '</tbody>' +
+      '</table>';
+
+  container.innerHTML =
+    '<div class="section-heading-row">' +
+    '<h3 style="margin-bottom: 0;">Facilities &amp; assets</h3>' +
+    '</div>' +
+    tableOrEmpty +
+    '<div class="form-actions">' +
+    '<button type="button" class="btn-secondary" id="add-facility-button">+ Add facility/asset</button>' +
+    '</div>';
+
+  document.getElementById('add-facility-button').addEventListener('click', function () {
+    openFacilityModal('add', null);
+  });
+
+  container.querySelectorAll('.icon-edit').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const facilityId = btn.getAttribute('data-facility-id');
+      const facility = facilities.find(function (f) { return f.id === facilityId; });
+      if (facility) {
+        openFacilityModal('edit', facility);
+      }
+    });
+  });
+
+  container.querySelectorAll('.icon-delete').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      handleFacilityDelete(btn.getAttribute('data-facility-id'));
+    });
+  });
+}
+
+const DOCUMENT_CHECKLIST = [
+  { category: 'Personal Identification', items: ['Aadhaar Card', 'PAN Card'] },
+  { category: 'Address Proof', items: ['Utility Bill'] },
+  {
+    category: 'Education',
+    items: ['Graduation Degree Certificate', 'Post-Graduation Certificate (if applicable)']
+  },
+  {
+    category: 'Employment & Experience',
+    items: [
+      'Latest Resume',
+      'Previous Employment Offer Letter',
+      'Relieving Letter',
+      'Experience Certificate',
+      "Last 3 Months' Salary Slips",
+      "Last 6 Months' Bank Statement"
+    ]
+  },
+  {
+    category: 'Financial & Tax',
+    items: ['Cancelled Cheque / Passbook Copy', 'Passport-size Photograph', 'UAN Number (PF Account)']
+  }
+];
+
+function findDocByName(docs, itemName) {
+  return docs.find(function (d) {
+    return String(d.name || '').toLowerCase() === itemName.toLowerCase();
+  });
+}
+
+function renderDocStatusChip(docItem) {
+  if (!docItem) {
+    return '<span class="badge badge-not-uploaded">Not uploaded</span>';
+  }
+  const isPending = String(docItem.status || '').toLowerCase() === 'pending verification';
+  const chipClass = isPending ? 'badge-doc-pending' : 'badge-doc-ok';
+  return '<span class="badge ' + chipClass + '">' + escapeHtml(docItem.status) + '</span>';
+}
+
+function renderDocActions(docItem, itemName) {
+  if (!docItem) {
+    return '<button type="button" class="btn-secondary doc-upload-btn" data-name="' + escapeHtml(itemName) + '">+ Upload</button>';
+  }
+  return (
+    '<a href="' + escapeHtml(docItem.file_path) + '" target="_blank" rel="noopener noreferrer" class="btn-view">View</a>' +
+    '<button type="button" class="icon-btn icon-edit doc-edit-btn" data-doc-id="' + escapeHtml(docItem.id) + '" title="Edit">&#9998;</button>' +
+    '<button type="button" class="icon-btn icon-delete doc-delete-btn" data-doc-id="' + escapeHtml(docItem.id) + '" title="Delete">&#128465;</button>'
+  );
+}
+
+function renderDocTable(rows) {
+  return '<table>' +
+    '<thead><tr><th>Document</th><th>Status</th><th>Actions</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody>' +
+    '</table>';
+}
+
+function renderDocumentsTab(container) {
+  const emp = currentProfileEmployee;
+  const docs = emp.docs || [];
+
+  const allItemNames = DOCUMENT_CHECKLIST.reduce(function (acc, group) {
+    return acc.concat(group.items);
+  }, []);
+  const onFileCount = allItemNames.filter(function (name) {
+    return !!findDocByName(docs, name);
+  }).length;
+
+  const categoryBlocks = DOCUMENT_CHECKLIST.map(function (group) {
+    const rows = group.items.map(function (itemName) {
+      const docItem = findDocByName(docs, itemName);
+      return '<tr>' +
+        '<td>' + escapeHtml(itemName) + '</td>' +
+        '<td>' + renderDocStatusChip(docItem) + '</td>' +
+        '<td>' + renderDocActions(docItem, itemName) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    return '<h3>' + escapeHtml(group.category) + '</h3>' + renderDocTable(rows);
+  }).join('');
+
+  const matchedNamesLower = allItemNames.map(function (n) { return n.toLowerCase(); });
+  const extraDocs = docs.filter(function (d) {
+    return matchedNamesLower.indexOf(String(d.name || '').toLowerCase()) === -1;
+  });
+
+  const extraSection = extraDocs.length === 0
+    ? ''
+    : '<h3>Other documents</h3>' + renderDocTable(extraDocs.map(function (docItem) {
+      return '<tr>' +
+        '<td>' + escapeHtml(docItem.name) + '</td>' +
+        '<td>' + renderDocStatusChip(docItem) + '</td>' +
+        '<td>' + renderDocActions(docItem, docItem.name) + '</td>' +
+        '</tr>';
+    }).join(''));
+
+  container.innerHTML =
+    '<div class="section-heading-row">' +
+    '<h3 style="margin-bottom: 0;">Document Vault</h3>' +
+    '<div class="doc-summary">' + onFileCount + '/' + allItemNames.length + ' on file</div>' +
+    '</div>' +
+    categoryBlocks +
+    extraSection +
+    '<div class="form-actions">' +
+    '<button type="button" class="btn-secondary" id="upload-another-doc-button">+ Upload another document</button>' +
+    '</div>';
+
+  container.querySelectorAll('.doc-upload-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      openDocUploadModal(btn.getAttribute('data-name'));
+    });
+  });
+
+  document.getElementById('upload-another-doc-button').addEventListener('click', function () {
+    openDocUploadModal('');
+  });
+
+  container.querySelectorAll('.doc-edit-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const docId = btn.getAttribute('data-doc-id');
+      const docItem = docs.find(function (d) { return d.id === docId; });
+      if (docItem) {
+        openDocEditModal(docItem);
+      }
+    });
+  });
+
+  container.querySelectorAll('.doc-delete-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      handleDocDelete(btn.getAttribute('data-doc-id'));
+    });
+  });
+}
+
+const LETTER_TYPES = [
+  'Offer Letter',
+  'Appointment Letter',
+  'Confirmation Letter',
+  'Increment Letter',
+  'Relieving-cum-Experience Letter'
+];
+
+const LETTER_TYPE_CODES = {
+  'Offer Letter': 'OFFER',
+  'Appointment Letter': 'APPT',
+  'Confirmation Letter': 'CONF',
+  'Increment Letter': 'INCR',
+  'Relieving-cum-Experience Letter': 'REL'
+};
+
+// Fallback wording if the backend's Letter Templates (Admin Studio) can't be
+// reached — kept in sync with letter_templates/views.py::DEFAULT_BODIES.
+const DEFAULT_TEMPLATE_BODIES = {
+  'Offer Letter': 'Dear {{name}},\n\nWe are pleased to offer you the position of {{designation}} in the {{department}} department at our {{branch}} location, effective {{doj}}. Your annual CTC will be {{ctc}}, as detailed in the salary annexure below.\n\nThis offer is subject to a probation period of {{probation}} from your date of joining, during which your performance and conduct will be reviewed.\n\nWe look forward to welcoming you to the team. Please sign and return a copy of this letter to confirm your acceptance.',
+  'Appointment Letter': 'Dear {{name}},\n\nFurther to your offer of employment, we are pleased to confirm your appointment as {{designation}} in the {{department}} department at our {{branch}} location, with effect from {{doj}}.\n\nYour annual CTC has been fixed at {{ctc}}, as per the salary annexure enclosed with this letter. Your appointment is subject to a probation period of {{probation}}.\n\nWe trust you will find your role challenging and rewarding, and we look forward to a long and successful association.',
+  'Confirmation Letter': 'Dear {{name}},\n\nWe are pleased to inform you that, based on a satisfactory review of your performance and conduct during your probation period, your employment as {{designation}} in the {{department}} department at our {{branch}} location stands confirmed with effect from today.\n\nYour annual CTC continues at {{ctc}}, as per the enclosed salary annexure. All other terms of your employment remain unchanged.\n\nWe congratulate you on your confirmation and look forward to your continued contribution to the organization.',
+  'Increment Letter': 'Dear {{name}},\n\nWe are pleased to inform you that, in recognition of your performance and contribution as {{designation}} in the {{department}} department at our {{branch}} location, your annual CTC has been revised to {{ctc}}, effective from today.\n\nThe revised salary annexure is enclosed below for your reference.\n\nWe appreciate your continued dedication and look forward to your ongoing success with the organization.',
+  'Relieving-cum-Experience Letter': 'Dear {{name}},\n\nThis is to certify that you were employed with us as {{designation}} in the {{department}} department at our {{branch}} location from {{doj}} until your last working day.\n\nDuring your tenure, your annual CTC was {{ctc}}. We found your conduct and performance to be satisfactory during your association with us.\n\nWe wish you the very best in your future endeavors.'
+};
+
+let letterTemplatesCache = null;
+
+async function fetchLetterTemplates() {
+  if (letterTemplatesCache) {
+    return letterTemplatesCache;
+  }
+  letterTemplatesCache = {};
+  try {
+    const response = await fetch(API_BASE + '/letter-templates/', {
+      headers: authHeaders(token)
+    });
+    if (response.ok) {
+      const templates = await response.json();
+      templates.forEach(function (t) { letterTemplatesCache[t.letter_type] = t.body; });
+    }
+  } catch (err) {
+    // Fall through to defaults below if templates can't be loaded.
+  }
+  return letterTemplatesCache;
+}
+
+function renderLetterParagraphs(letterType, f) {
+  const body = (letterTemplatesCache && letterTemplatesCache[letterType]) || DEFAULT_TEMPLATE_BODIES[letterType];
+  const tokenValues = {
+    name: f.name, designation: f.designation, department: f.department,
+    branch: f.branch, doj: f.doj, ctc: f.ctcFormatted, probation: f.probation
+  };
+  return body.split('\n\n').map(function (paragraph) {
+    return paragraph.replace(/\{\{(\w+)\}\}/g, function (match, key) {
+      return tokenValues[key] !== undefined ? tokenValues[key] : match;
+    });
+  });
+}
+
+let salaryStructureCache = null;
+
+async function fetchSalaryStructure() {
+  if (salaryStructureCache) {
+    return salaryStructureCache;
+  }
+  try {
+    const response = await fetch(API_BASE + '/salary-structure/', {
+      headers: authHeaders(token)
+    });
+    if (response.ok) {
+      salaryStructureCache = await response.json();
+    }
+  } catch (err) {
+    // Fall through to defaults below if the structure can't be loaded.
+  }
+  if (!salaryStructureCache) {
+    salaryStructureCache = {
+      basic_pct: 50,
+      hra_pct_metro: 50,
+      hra_pct_nonmetro: 40,
+      pf_cap_monthly: 1800,
+      gratuity_pct: 4.81,
+      esi_limit_monthly: 21000,
+      professional_tax_monthly: 200
+    };
+  }
+  return salaryStructureCache;
+}
+
+function computeSalaryBreakup(ctc, isMetro) {
+  const structure = salaryStructureCache || {
+    basic_pct: 50,
+    hra_pct_metro: 50,
+    hra_pct_nonmetro: 40,
+    pf_cap_monthly: 1800,
+    gratuity_pct: 4.81,
+    esi_limit_monthly: 21000,
+    professional_tax_monthly: 200
+  };
+
+  const annualCtc = Number(ctc) || 0;
+  const monthlyGross = annualCtc / 12;
+  const basic = (structure.basic_pct / 100) * monthlyGross;
+  const hraPct = isMetro ? structure.hra_pct_metro : structure.hra_pct_nonmetro;
+  const hra = (hraPct / 100) * basic;
+  const employerPf = Math.min(0.12 * basic, structure.pf_cap_monthly);
+  const gratuity = (structure.gratuity_pct / 100) * basic;
+  const esi = monthlyGross <= structure.esi_limit_monthly ? monthlyGross * 0.0325 : 0;
+  const professionalTax = structure.professional_tax_monthly;
+  const netMonthly = monthlyGross - employerPf - professionalTax - esi;
+  return { monthlyGross, basic, hra, employerPf, gratuity, esi, professionalTax, netMonthly };
+}
+
+function formatMoney(value) {
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(value);
+  } catch (err) {
+    return String(Math.round(value));
+  }
+}
+
+function buildLetterReferenceNumber(letterType) {
+  const code = LETTER_TYPE_CODES[letterType] || 'GEN';
+  const year = new Date().getFullYear();
+  const random = Math.floor(100 + Math.random() * 900);
+  return 'SFPL/HR/' + code + '/' + year + '/' + random;
+}
+
+function buildLetterHtml(fields) {
+  const paragraphs = renderLetterParagraphs(fields.letterType, fields);
+  const breakup = computeSalaryBreakup(fields.ctc, fields.isMetro);
+  const todayStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  const salaryRow = function (label, monthly) {
+    return '<tr><td>' + label + '</td><td>' + formatMoney(monthly) + '</td><td>' + formatMoney(monthly * 12) + '</td></tr>';
+  };
+
+  return (
+    '<div class="letterhead"><h2>Sellon Finserv Pvt. Ltd.</h2></div>' +
+    '<div class="letter-meta-row"><span>Ref: ' + fields.refNumber + '</span><span>Date: ' + todayStr + '</span></div>' +
+    '<h3 class="letter-title">' + escapeHtml(fields.letterType) + '</h3>' +
+    '<div class="letter-body">' +
+    paragraphs.map(function (p) { return '<p>' + escapeHtml(p) + '</p>'; }).join('') +
+    '</div>' +
+    '<h3>Salary Annexure (' + (fields.isMetro ? 'Metro' : 'Non-metro') + ')</h3>' +
+    '<table>' +
+    '<thead><tr><th>Component</th><th>Monthly</th><th>Annual</th></tr></thead>' +
+    '<tbody>' +
+    salaryRow('Basic', breakup.basic) +
+    salaryRow('HRA', breakup.hra) +
+    salaryRow('Employer PF Contribution', breakup.employerPf) +
+    salaryRow('Gratuity', breakup.gratuity) +
+    salaryRow('ESI', breakup.esi) +
+    salaryRow('Professional Tax', breakup.professionalTax) +
+    salaryRow('Monthly Gross', breakup.monthlyGross) +
+    salaryRow('Net Monthly (take-home estimate)', breakup.netMonthly) +
+    '</tbody>' +
+    '</table>'
+  );
+}
+
+let currentLetterHtml = '';
+let currentLetterMeta = null;
+
+function renderLettersTab(container) {
+  const emp = currentProfileEmployee;
+  const savedLetters = (emp.docs || []).filter(function (d) {
+    return d.doc_type === 'Letter';
+  });
+
+  const savedListHtml = savedLetters.length === 0
+    ? '<div class="message">No letters generated yet.</div>'
+    : '<ul class="saved-letters-list">' + savedLetters.map(function (letter) {
+      const savedDate = letter.uploaded_at ? new Date(letter.uploaded_at).toLocaleDateString('en-IN') : '';
+      return '<li>' +
+        '<span>' + escapeHtml(letter.name) + (savedDate ? ' &mdash; ' + escapeHtml(savedDate) : '') + '</span>' +
+        '<span>' +
+        (letter.file_path ? '<a href="' + escapeHtml(letter.file_path) + '" target="_blank" rel="noopener noreferrer" class="btn-view">View</a>' : '') +
+        '<button type="button" class="icon-btn icon-delete letter-delete-btn" data-doc-id="' + escapeHtml(letter.id) + '" title="Delete">&#128465;</button>' +
+        '</span>' +
+        '</li>';
+    }).join('') + '</ul>';
+
+  container.innerHTML =
+    '<div id="saved-letters-section">' +
+    '<h3>Previously generated letters</h3>' +
+    savedListHtml +
+    '</div>' +
+    '<div class="letters-layout">' +
+    '<div id="letter-generate-panel">' +
+    '<h3>Generate a letter</h3>' +
+    '<div id="letter-form-error" class="form-error"></div>' +
+    '<div class="form-grid">' +
+    '<div class="field">' +
+    '<label for="letter-type">Letter Type</label>' +
+    '<select id="letter-type">' +
+    LETTER_TYPES.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>'; }).join('') +
+    '</select>' +
+    '</div>' +
+    '<div class="field"><label for="letter-name">Name</label><input type="text" id="letter-name" value="' + escapeHtml(emp.name || '') + '"></div>' +
+    '<div class="field"><label for="letter-designation">Designation</label><input type="text" id="letter-designation" value="' + escapeHtml(emp.designation || '') + '"></div>' +
+    '<div class="field"><label for="letter-department">Department</label><input type="text" id="letter-department" value="' + escapeHtml(emp.department || '') + '"></div>' +
+    '<div class="field"><label for="letter-branch">Branch</label><input type="text" id="letter-branch" value="' + escapeHtml(emp.branch || '') + '"></div>' +
+    '<div class="field"><label for="letter-doj">Date of Joining</label><input type="date" id="letter-doj" value="' + escapeHtml(emp.date_of_joining || '') + '"></div>' +
+    '<div class="field"><label for="letter-ctc">Annual CTC</label><input type="number" id="letter-ctc" step="any" value="' + escapeHtml(emp.ctc !== undefined ? emp.ctc : '') + '"></div>' +
+    '<div class="field">' +
+    '<label for="letter-probation">Probation Period</label>' +
+    '<select id="letter-probation">' +
+    '<option value="6 months">6 months</option>' +
+    '<option value="3 months">3 months</option>' +
+    '<option value="None">None</option>' +
+    '</select>' +
+    '</div>' +
+    '<div class="field">' +
+    '<label for="letter-metro">Location Type</label>' +
+    '<select id="letter-metro">' +
+    '<option value="metro">Metro</option>' +
+    '<option value="nonmetro">Non-metro</option>' +
+    '</select>' +
+    '</div>' +
+    '</div>' +
+    '<div class="form-actions">' +
+    '<button type="button" class="btn-primary" id="generate-letter-button">Generate</button>' +
+    '</div>' +
+    '</div>' +
+    '<div id="letter-preview-section" style="display: none;">' +
+    '<div class="letter-preview-card" id="letter-preview-container"></div>' +
+    '<div class="form-actions">' +
+    '<button type="button" class="btn-secondary" id="print-letter-button">&#128424; Print</button>' +
+    '<button type="button" class="btn-secondary" id="download-letter-button">&#11015; Download</button>' +
+    '<button type="button" class="btn-primary" id="save-letter-button">&#128190; Save to Employee Vault</button>' +
+    '</div>' +
+    '</div>' +
+    '</div>';
+
+  container.querySelectorAll('.letter-delete-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      handleDocDelete(btn.getAttribute('data-doc-id'));
+    });
+  });
+
+  document.getElementById('generate-letter-button').addEventListener('click', handleGenerateLetter);
+}
+
+function getLetterFormFields() {
+  const letterType = document.getElementById('letter-type').value;
+  const ctc = parseFloat(document.getElementById('letter-ctc').value) || 0;
+  const doj = document.getElementById('letter-doj').value;
+  const dojFormatted = doj
+    ? new Date(doj + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+    : '';
+
+  return {
+    letterType: letterType,
+    name: document.getElementById('letter-name').value,
+    designation: document.getElementById('letter-designation').value,
+    department: document.getElementById('letter-department').value,
+    branch: document.getElementById('letter-branch').value,
+    doj: dojFormatted,
+    ctc: ctc,
+    ctcFormatted: formatMoney(ctc),
+    probation: document.getElementById('letter-probation').value,
+    isMetro: document.getElementById('letter-metro').value === 'metro',
+    refNumber: buildLetterReferenceNumber(letterType)
+  };
+}
+
+async function handleGenerateLetter() {
+  const letterFormError = document.getElementById('letter-form-error');
+  letterFormError.style.display = 'none';
+
+  const fields = getLetterFormFields();
+  if (!fields.name || !fields.designation || !fields.doj) {
+    letterFormError.textContent = 'Please fill in name, designation, and date of joining before generating.';
+    letterFormError.style.display = 'block';
+    return;
+  }
+
+  if (fields.letterType === 'Appointment Letter' && currentProfileEmployee && currentProfileEmployee.source_candidate_id) {
+    try {
+      const eligResponse = await fetch(
+        API_BASE + '/candidates/' + encodeURIComponent(currentProfileEmployee.source_candidate_id) + '/can-issue-appointment-letter/',
+        { headers: authHeaders(token) }
+      );
+      if (eligResponse.ok) {
+        const eligibility = await eligResponse.json();
+        if (!eligibility.can_issue) {
+          letterFormError.textContent = 'Cannot generate an Appointment Letter yet — this candidate needs at least 2 positive reference checks (currently ' + eligibility.positive_count + '). Add them in Recruitment first.';
+          letterFormError.style.display = 'block';
+          return;
+        }
+      }
+    } catch (err) {
+      // Non-fatal — if the eligibility check itself can't be reached, don't block letter generation on it.
+    }
+  }
+
+  await fetchSalaryStructure();
+  await fetchLetterTemplates();
+  currentLetterHtml = buildLetterHtml(fields);
+  currentLetterMeta = { letterType: fields.letterType, dateStr: new Date().toISOString().slice(0, 10) };
+
+  document.getElementById('letter-preview-container').innerHTML = currentLetterHtml;
+  document.getElementById('letter-preview-section').style.display = 'block';
+
+  document.getElementById('print-letter-button').addEventListener('click', handlePrintLetter);
+  document.getElementById('download-letter-button').addEventListener('click', handleDownloadLetter);
+  document.getElementById('save-letter-button').addEventListener('click', handleSaveLetterToVault);
+}
+
+function buildStandaloneLetterDocument() {
+  // Closing tags below are built via concatenation, not written as literal
+  // contiguous "closing tag" substrings, so dev-server tools that naively
+  // text-scan served HTML for a closing tag to inject into (e.g. Live
+  // Server's auto-reload snippet) don't mistake this JS string for the
+  // page's real markup and inject a stray script tag into the middle of it.
+  var close = '<' + '/';
+  return (
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' +
+    escapeHtml(currentLetterMeta.letterType) +
+    '</title><style>body{font-family:Arial,Helvetica,sans-serif;padding:32px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:14px;} .letterhead{text-align:center;} .letter-title{text-align:center;text-decoration:underline;}</style>' +
+    close + 'head><body>' +
+    currentLetterHtml +
+    close + 'body>' + close + 'html>'
+  );
+}
+
+function handlePrintLetter() {
+  document.body.classList.add('printing-letter');
+  const cleanup = function () {
+    document.body.classList.remove('printing-letter');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  window.print();
+}
+
+function handleDownloadLetter() {
+  if (!currentLetterHtml || !currentLetterMeta) {
+    return;
+  }
+  const blob = new Blob([buildStandaloneLetterDocument()], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = currentLetterMeta.letterType.replace(/\s+/g, '_') + '_' + currentLetterMeta.dateStr + '.html';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+async function handleSaveLetterToVault() {
+  if (!currentLetterHtml || !currentLetterMeta || !currentProfileEmployee) {
+    return;
+  }
+
+  const saveButton = document.getElementById('save-letter-button');
+  const letterFormError = document.getElementById('letter-form-error');
+  letterFormError.style.display = 'none';
+  saveButton.disabled = true;
+
+  const blob = new Blob([buildStandaloneLetterDocument()], { type: 'text/html' });
+  const fileName = currentLetterMeta.letterType.replace(/\s+/g, '_') + '_' + currentLetterMeta.dateStr + '.html';
+  const file = new File([blob], fileName, { type: 'text/html' });
+
+  const formData = new FormData();
+  formData.append('name', currentLetterMeta.letterType + ' - ' + currentLetterMeta.dateStr);
+  formData.append('doc_type', 'Letter');
+  formData.append('status', 'On file');
+  formData.append('file', file);
+
+  try {
+    const response = await fetch(
+      EMPLOYEES_API_BASE + currentProfileEmployee.id + '/documents/',
+      {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: formData
+      }
+    );
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(function () { return {}; });
+      throw new Error(describeApiError(data) || 'Could not save letter.');
+    }
+
+    const updatedEmployee = await response.json();
+    currentProfileEmployee = updatedEmployee;
+    renderProfile();
+  } catch (err) {
+    letterFormError.textContent = err.message || 'Something went wrong. Please try again.';
+    letterFormError.style.display = 'block';
+  } finally {
+    saveButton.disabled = false;
+  }
+}
+
+// ---------- Family member modal ----------
+
+const familyModalOverlay = document.getElementById('family-modal-overlay');
+const familyModalTitle = document.getElementById('family-modal-title');
+const familyForm = document.getElementById('family-form');
+const familyFormError = document.getElementById('family-form-error');
+const familySubmitButton = document.getElementById('family-submit-button');
+const familyCancelButton = document.getElementById('family-cancel-button');
+
+let editingFamilyId = null;
+
+familyForm.addEventListener('submit', handleFamilySubmit);
+familyCancelButton.addEventListener('click', closeFamilyModal);
+familyModalOverlay.addEventListener('click', function (event) {
+  if (event.target === familyModalOverlay) {
+    closeFamilyModal();
+  }
+});
+
+function openFamilyModal(mode, member) {
+  editingFamilyId = mode === 'edit' && member ? member.id : null;
+  familyModalTitle.textContent = mode === 'edit' ? 'Edit Family Member' : 'Add Family Member';
+  familySubmitButton.textContent = mode === 'edit' ? 'Update Member' : 'Add Member';
+
+  document.getElementById('family-relation').value = member ? (member.relation || '') : '';
+  document.getElementById('family-name').value = member ? (member.name || '') : '';
+  document.getElementById('family-dob').value = member ? (member.dob || '') : '';
+
+  familyFormError.style.display = 'none';
+  familyFormError.textContent = '';
+  familyModalOverlay.classList.add('open');
+}
+
+function closeFamilyModal() {
+  familyModalOverlay.classList.remove('open');
+  familyForm.reset();
+  editingFamilyId = null;
+}
+
+async function handleFamilySubmit(event) {
+  event.preventDefault();
+  if (!currentProfileEmployee) {
+    return;
+  }
+
+  familySubmitButton.disabled = true;
+  familyFormError.style.display = 'none';
+
+  const payload = {
+    relation: document.getElementById('family-relation').value,
+    name: document.getElementById('family-name').value,
+    dob: document.getElementById('family-dob').value || null
+  };
+
+  const isEditing = editingFamilyId !== null;
+  const url = isEditing
+    ? EMPLOYEES_API_BASE + currentProfileEmployee.id + '/family/' + editingFamilyId + '/'
+    : EMPLOYEES_API_BASE + currentProfileEmployee.id + '/family/';
+  const method = isEditing ? 'PATCH' : 'POST';
+
+  try {
+    const response = await fetch(url, {
+      method: method,
+      headers: authHeaders(token, true),
+      body: JSON.stringify(payload)
+    });
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(function () { return {}; });
+      throw new Error(describeApiError(data) || 'Could not save family member.');
+    }
+
+    const updatedEmployee = await response.json();
+    currentProfileEmployee = updatedEmployee;
+    closeFamilyModal();
+    renderProfile();
+  } catch (err) {
+    familyFormError.textContent = err.message || 'Something went wrong. Please try again.';
+    familyFormError.style.display = 'block';
+  } finally {
+    familySubmitButton.disabled = false;
+  }
+}
+
+async function handleFamilyDelete(familyId) {
+  if (!currentProfileEmployee) {
+    return;
+  }
+
+  const confirmed = confirm('Are you sure you want to remove this family member?');
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      EMPLOYEES_API_BASE + currentProfileEmployee.id + '/family/' + familyId + '/',
+      {
+        method: 'DELETE',
+        headers: authHeaders(token)
+      }
+    );
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error('Could not remove family member.');
+    }
+
+    const updatedEmployee = await response.json();
+    currentProfileEmployee = updatedEmployee;
+    renderProfile();
+  } catch (err) {
+    showFormError(err.message || 'Something went wrong. Please try again.');
+  }
+}
+
+// ---------- Facility/asset modal ----------
+
+const facilityModalOverlay = document.getElementById('facility-modal-overlay');
+const facilityModalTitle = document.getElementById('facility-modal-title');
+const facilityForm = document.getElementById('facility-form');
+const facilityFormError = document.getElementById('facility-form-error');
+const facilitySubmitButton = document.getElementById('facility-submit-button');
+const facilityCancelButton = document.getElementById('facility-cancel-button');
+
+let editingFacilityId = null;
+
+facilityForm.addEventListener('submit', handleFacilitySubmit);
+facilityCancelButton.addEventListener('click', closeFacilityModal);
+facilityModalOverlay.addEventListener('click', function (event) {
+  if (event.target === facilityModalOverlay) {
+    closeFacilityModal();
+  }
+});
+
+function openFacilityModal(mode, facility) {
+  editingFacilityId = mode === 'edit' && facility ? facility.id : null;
+  facilityModalTitle.textContent = mode === 'edit' ? 'Edit Facility/Asset' : 'Add Facility/Asset';
+  facilitySubmitButton.textContent = mode === 'edit' ? 'Update Item' : 'Add Item';
+
+  document.getElementById('facility-item').value = facility ? (facility.item || '') : '';
+  document.getElementById('facility-issued-date').value = facility ? (facility.issued_date || '') : '';
+
+  facilityFormError.style.display = 'none';
+  facilityFormError.textContent = '';
+  facilityModalOverlay.classList.add('open');
+}
+
+function closeFacilityModal() {
+  facilityModalOverlay.classList.remove('open');
+  facilityForm.reset();
+  editingFacilityId = null;
+}
+
+async function handleFacilitySubmit(event) {
+  event.preventDefault();
+  if (!currentProfileEmployee) {
+    return;
+  }
+
+  facilitySubmitButton.disabled = true;
+  facilityFormError.style.display = 'none';
+
+  const payload = {
+    item: document.getElementById('facility-item').value,
+    issued_date: document.getElementById('facility-issued-date').value || null
+  };
+
+  const isEditing = editingFacilityId !== null;
+  const url = isEditing
+    ? EMPLOYEES_API_BASE + currentProfileEmployee.id + '/facilities/' + editingFacilityId + '/'
+    : EMPLOYEES_API_BASE + currentProfileEmployee.id + '/facilities/';
+  const method = isEditing ? 'PATCH' : 'POST';
+
+  try {
+    const response = await fetch(url, {
+      method: method,
+      headers: authHeaders(token, true),
+      body: JSON.stringify(payload)
+    });
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(function () { return {}; });
+      throw new Error(describeApiError(data) || 'Could not save facility/asset.');
+    }
+
+    const updatedEmployee = await response.json();
+    currentProfileEmployee = updatedEmployee;
+    closeFacilityModal();
+    renderProfile();
+  } catch (err) {
+    facilityFormError.textContent = err.message || 'Something went wrong. Please try again.';
+    facilityFormError.style.display = 'block';
+  } finally {
+    facilitySubmitButton.disabled = false;
+  }
+}
+
+async function handleFacilityDelete(facilityId) {
+  if (!currentProfileEmployee) {
+    return;
+  }
+
+  const confirmed = confirm('Are you sure you want to remove this facility/asset?');
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      EMPLOYEES_API_BASE + currentProfileEmployee.id + '/facilities/' + facilityId + '/',
+      {
+        method: 'DELETE',
+        headers: authHeaders(token)
+      }
+    );
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error('Could not remove facility/asset.');
+    }
+
+    const updatedEmployee = await response.json();
+    currentProfileEmployee = updatedEmployee;
+    renderProfile();
+  } catch (err) {
+    showFormError(err.message || 'Something went wrong. Please try again.');
+  }
+}
+
+// ---------- Document upload modal ----------
+
+const docUploadModalOverlay = document.getElementById('doc-upload-modal-overlay');
+const docUploadForm = document.getElementById('doc-upload-form');
+const docUploadFormError = document.getElementById('doc-upload-form-error');
+const docUploadSubmitButton = document.getElementById('doc-upload-submit-button');
+const docUploadCancelButton = document.getElementById('doc-upload-cancel-button');
+
+docUploadForm.addEventListener('submit', handleDocUploadSubmit);
+docUploadCancelButton.addEventListener('click', closeDocUploadModal);
+docUploadModalOverlay.addEventListener('click', function (event) {
+  if (event.target === docUploadModalOverlay) {
+    closeDocUploadModal();
+  }
+});
+
+function openDocUploadModal(presetName) {
+  document.getElementById('doc-upload-name').value = presetName || '';
+  document.getElementById('doc-upload-type').value = '';
+  document.getElementById('doc-upload-file').value = '';
+  docUploadFormError.style.display = 'none';
+  docUploadFormError.textContent = '';
+  docUploadModalOverlay.classList.add('open');
+}
+
+function closeDocUploadModal() {
+  docUploadModalOverlay.classList.remove('open');
+  docUploadForm.reset();
+}
+
+async function handleDocUploadSubmit(event) {
+  event.preventDefault();
+  if (!currentProfileEmployee) {
+    return;
+  }
+
+  docUploadSubmitButton.disabled = true;
+  docUploadFormError.style.display = 'none';
+
+  const fileInput = document.getElementById('doc-upload-file');
+  const formData = new FormData();
+  formData.append('name', document.getElementById('doc-upload-name').value);
+  formData.append('doc_type', document.getElementById('doc-upload-type').value);
+  if (fileInput.files[0]) {
+    formData.append('file', fileInput.files[0]);
+  }
+
+  try {
+    const response = await fetch(
+      EMPLOYEES_API_BASE + currentProfileEmployee.id + '/documents/',
+      {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: formData
+      }
+    );
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(function () { return {}; });
+      throw new Error(describeApiError(data) || 'Could not upload document.');
+    }
+
+    const updatedEmployee = await response.json();
+    currentProfileEmployee = updatedEmployee;
+    closeDocUploadModal();
+    renderProfile();
+  } catch (err) {
+    docUploadFormError.textContent = err.message || 'Something went wrong. Please try again.';
+    docUploadFormError.style.display = 'block';
+  } finally {
+    docUploadSubmitButton.disabled = false;
+  }
+}
+
+// ---------- Document edit modal ----------
+
+const docEditModalOverlay = document.getElementById('doc-edit-modal-overlay');
+const docEditForm = document.getElementById('doc-edit-form');
+const docEditFormError = document.getElementById('doc-edit-form-error');
+const docEditSubmitButton = document.getElementById('doc-edit-submit-button');
+const docEditCancelButton = document.getElementById('doc-edit-cancel-button');
+
+let editingDocId = null;
+
+docEditForm.addEventListener('submit', handleDocEditSubmit);
+docEditCancelButton.addEventListener('click', closeDocEditModal);
+docEditModalOverlay.addEventListener('click', function (event) {
+  if (event.target === docEditModalOverlay) {
+    closeDocEditModal();
+  }
+});
+
+function openDocEditModal(docItem) {
+  editingDocId = docItem.id;
+  document.getElementById('doc-edit-name').value = docItem.name || '';
+  document.getElementById('doc-edit-type').value = docItem.doc_type || '';
+  document.getElementById('doc-edit-status').value = docItem.status || 'On file';
+  docEditFormError.style.display = 'none';
+  docEditFormError.textContent = '';
+  docEditModalOverlay.classList.add('open');
+}
+
+function closeDocEditModal() {
+  docEditModalOverlay.classList.remove('open');
+  docEditForm.reset();
+  editingDocId = null;
+}
+
+async function handleDocEditSubmit(event) {
+  event.preventDefault();
+  if (!currentProfileEmployee || !editingDocId) {
+    return;
+  }
+
+  docEditSubmitButton.disabled = true;
+  docEditFormError.style.display = 'none';
+
+  const payload = {
+    name: document.getElementById('doc-edit-name').value,
+    doc_type: document.getElementById('doc-edit-type').value,
+    status: document.getElementById('doc-edit-status').value
+  };
+
+  try {
+    const response = await fetch(
+      EMPLOYEES_API_BASE + currentProfileEmployee.id + '/documents/' + editingDocId + '/',
+      {
+        method: 'PATCH',
+        headers: authHeaders(token, true),
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(function () { return {}; });
+      throw new Error(describeApiError(data) || 'Could not update document.');
+    }
+
+    const updatedEmployee = await response.json();
+    currentProfileEmployee = updatedEmployee;
+    closeDocEditModal();
+    renderProfile();
+  } catch (err) {
+    docEditFormError.textContent = err.message || 'Something went wrong. Please try again.';
+    docEditFormError.style.display = 'block';
+  } finally {
+    docEditSubmitButton.disabled = false;
+  }
+}
+
+async function handleDocDelete(docId) {
+  if (!currentProfileEmployee) {
+    return;
+  }
+
+  const confirmed = confirm('Are you sure you want to delete this document?');
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      EMPLOYEES_API_BASE + currentProfileEmployee.id + '/documents/' + docId + '/',
+      {
+        method: 'DELETE',
+        headers: authHeaders(token)
+      }
+    );
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error('Could not delete document.');
+    }
+
+    const updatedEmployee = await response.json();
+    currentProfileEmployee = updatedEmployee;
+    renderProfile();
+  } catch (err) {
+    showFormError(err.message || 'Something went wrong. Please try again.');
+  }
+}
